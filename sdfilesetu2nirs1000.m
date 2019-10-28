@@ -1,0 +1,46 @@
+% Set up an nSD file for fNIRS1000 example
+
+nSD.device='fNIRS1000';
+nSD.lambda=[730, 850];
+nSD.nLambdas=2;
+nSD.nSrcs=4;
+nSD.nDets=4;
+nSD.spatialUnit='mm';
+nSD.measList=[]; 
+nSD.srcPos=[]; %[nSrcs,3]
+nSD.detPos=[]; %[nDets,3]
+nSD.nStates=1;
+nSD.srcFreqMap=[];  %[nSrcs,nWavelengths,nStates]
+
+d=27.5;
+dd=0;
+nSD.srcPos=[-dd,0,0;...
+    d-dd,0,0;...
+    2*d-dd,0,0;...
+    3*d-dd,0,0;...        
+    ];
+
+nSD.detPos=[+dd,-d,0;...
+    d+dd,-d,0;...
+    2*d+dd,-d,0;...
+    3*d+dd,-d,0;...    
+    ];
+
+
+nSD.freqMap=cat(3,[1;3;5;7],[2;4;6;8]);
+
+
+nSD.measList=[1,1,1,1;...    
+    2,2,1,1;...
+    3,2,1,1;...
+    3,3,1,1;...
+    3,4,1,1;...
+    4,4,1,1;...    
+    ]; %[source,detector,state,lambda]
+
+N=size(nSD.measList,1);
+nSD.measList=[nSD.measList;nSD.measList];
+
+nSD.measList(N+1:end,4)=2;
+
+save('mental_math1000.nsd','nSD','-mat')

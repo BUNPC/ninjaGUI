@@ -1,0 +1,128 @@
+<deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
+  <configuration file="C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\fNIRS_interface\fNIRSapp.prj" location="C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\fNIRS_interface" name="fNIRSapp" target="target.ezdeploy.standalone" target-name="Application Compiler">
+    <param.appname>fNIRSapp</param.appname>
+    <param.icon />
+    <param.icons />
+    <param.version>0.1</param.version>
+    <param.authnamewatermark>Antonio Ortega</param.authnamewatermark>
+    <param.email>aortegam@bu.edu</param.email>
+    <param.company>Boston University</param.company>
+    <param.summary>Beta version, for testing purposes</param.summary>
+    <param.description />
+    <param.screenshot />
+    <param.guid />
+    <param.installpath.string>\Boston University\fNIRSapp\</param.installpath.string>
+    <param.installpath.combo>option.installpath.programfiles</param.installpath.combo>
+    <param.logo />
+    <param.install.notes />
+    <param.target.install.notes />
+    <param.intermediate>${PROJECT_ROOT}\fNIRSapp\for_testing</param.intermediate>
+    <param.files.only>${PROJECT_ROOT}\fNIRSapp\for_redistribution_files_only</param.files.only>
+    <param.output>${PROJECT_ROOT}\fNIRSapp\for_redistribution</param.output>
+    <param.logdir>${PROJECT_ROOT}\fNIRSapp</param.logdir>
+    <param.enable.clean.build>false</param.enable.clean.build>
+    <param.user.defined.mcr.options />
+    <param.target.type>subtarget.standalone</param.target.type>
+    <param.support.packages />
+    <param.web.mcr>true</param.web.mcr>
+    <param.package.mcr>false</param.package.mcr>
+    <param.no.mcr>false</param.no.mcr>
+    <param.web.mcr.name>MyAppInstaller_web</param.web.mcr.name>
+    <param.package.mcr.name>MyAppInstaller_mcr</param.package.mcr.name>
+    <param.no.mcr.name>MyAppInstaller_app</param.no.mcr.name>
+    <param.windows.command.prompt>false</param.windows.command.prompt>
+    <param.create.log>false</param.create.log>
+    <param.log.file />
+    <param.native.matlab>false</param.native.matlab>
+    <param.checkbox>false</param.checkbox>
+    <param.example />
+    <param.help.text>Syntax 
+	 fNIRS -? 
+	 fNIRS fname 
+ Input Arguments 
+	 -?  print help on how to use the application 
+	 fname  input arguments</param.help.text>
+    <unset>
+      <param.icon />
+      <param.icons />
+      <param.description />
+      <param.screenshot />
+      <param.guid />
+      <param.installpath.string />
+      <param.installpath.combo />
+      <param.logo />
+      <param.install.notes />
+      <param.target.install.notes />
+      <param.intermediate />
+      <param.files.only />
+      <param.output />
+      <param.logdir />
+      <param.enable.clean.build />
+      <param.user.defined.mcr.options />
+      <param.target.type />
+      <param.support.packages />
+      <param.web.mcr />
+      <param.package.mcr />
+      <param.no.mcr />
+      <param.web.mcr.name />
+      <param.package.mcr.name />
+      <param.no.mcr.name />
+      <param.create.log />
+      <param.log.file />
+      <param.native.matlab />
+      <param.checkbox />
+      <param.example />
+    </unset>
+    <fileset.main>
+      <file>${PROJECT_ROOT}\fNIRS.m</file>
+    </fileset.main>
+    <fileset.resources />
+    <fileset.package />
+    <fileset.depfun>
+      <file>${PROJECT_ROOT}\cw6.cfg</file>
+      <file>${PROJECT_ROOT}\device_functions\CW6\cw6_loadCFG.m</file>
+      <file>${PROJECT_ROOT}\device_functions\CW6\setEnvCW6.m</file>
+      <file>${PROJECT_ROOT}\device_functions\loadCFG.m</file>
+      <file>${PROJECT_ROOT}\device_functions\ninjaNIRS1\ninja_FlushBuffer.m</file>
+      <file>${PROJECT_ROOT}\device_functions\ninjaNIRS1\ninja_MapFrequencies.m</file>
+      <file>${PROJECT_ROOT}\device_functions\ninjaNIRS1\ninja_ReadBytesAvailable.m</file>
+      <file>${PROJECT_ROOT}\device_functions\setEnv.m</file>
+      <file>${PROJECT_ROOT}\fNIRSapp.mlapp</file>
+      <file>${PROJECT_ROOT}\hardwareselect.mlapp</file>
+      <file>${PROJECT_ROOT}\hwcompatlist.txt</file>
+      <file>${PROJECT_ROOT}\mental_math.nsd</file>
+    </fileset.depfun>
+    <build-deliverables>
+      <file location="${PROJECT_ROOT}\fNIRSapp\for_testing" name="fNIRSapp.exe" optional="false">C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\fNIRS_interface\fNIRSapp\for_testing\fNIRSapp.exe</file>
+      <file location="${PROJECT_ROOT}\fNIRSapp\for_testing" name="readme.txt" optional="true">C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\fNIRS_interface\fNIRSapp\for_testing\readme.txt</file>
+      <file location="${PROJECT_ROOT}\fNIRSapp\for_testing" name="splash.png" optional="false">C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\fNIRS_interface\fNIRSapp\for_testing\splash.png</file>
+    </build-deliverables>
+    <workflow />
+    <matlab>
+      <root>C:\Program Files\MATLAB\R2019a</root>
+      <toolboxes>
+        <toolbox name="neuralnetwork" />
+      </toolboxes>
+      <toolbox>
+        <neuralnetwork>
+          <enabled>true</enabled>
+        </neuralnetwork>
+      </toolbox>
+    </matlab>
+    <platform>
+      <unix>false</unix>
+      <mac>false</mac>
+      <windows>true</windows>
+      <win2k>false</win2k>
+      <winxp>false</winxp>
+      <vista>false</vista>
+      <linux>false</linux>
+      <solaris>false</solaris>
+      <osver>10.0</osver>
+      <os32>false</os32>
+      <os64>true</os64>
+      <arch>win64</arch>
+      <matlab>true</matlab>
+    </platform>
+  </configuration>
+</deployment-project>
