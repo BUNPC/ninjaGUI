@@ -1,4 +1,4 @@
-function [data,packlen,remainderbytes,datac,statusdata]=ninja_ReadBytesAvailable(s,dev,SD,prevrbytes,fID)
+function [data,packlen,remainderbytes,triggers,datac,statusdata]=ninja_ReadBytesAvailable(s,dev,SD,prevrbytes,fID)
 % Reads the serial port for a ninjaNIRS device. It reads N_Optodes
 % sequentially. That means that if data is out of order data will be lost
 % (for example, is the data arrive to the buffer in the order 12314234, the
@@ -9,6 +9,9 @@ function [data,packlen,remainderbytes,datac,statusdata]=ninja_ReadBytesAvailable
 % logic is simple and avoids further desync (as long as data gets there in
 % order). The function should probably be more robust to avoid those issues
 % (though that would make it slower).
+%I updated the function with a new return called triggers
+%fID is used to stream the serial bytes straight to file in
+%case there is an application crash. That way the data can be recovered.
 
 
 
@@ -20,8 +23,8 @@ N_FREQ = 6;
 
 N_BYTES_TO_READ_PER_SAMPLE=N_WORDS_PER_DFT * N_BYTES_IN_DFT_WORD * (N_FREQ+1) +5; % N_FREQ+1 : for max/avg data; +3 for [channel, #bytes, DFT count];
 
-
-
+N_ACC_BYTES=14;
+nAux=dev.nAux;
 
 %% DFT constants and data offsets
 
@@ -48,13 +51,16 @@ rb=floor(ba/N_BYTES_TO_READ_PER_SAMPLE/N_OPTODES/npacks)*N_BYTES_TO_READ_PER_SAM
 
 if rb>0
     raw = fread(s,rb,'uchar');
-    %fwrite(fID,raw,'uchar');
+    if ~isempty(fID)
+        fwrite(fID,raw,'uchar');
+    end
 else
     data=[];
     packlen=0;
     datac=[];
     statusdata=[];
     remainderbytes=[];
+    triggers=[];
     return;
 end
 statusdata=[];
@@ -75,17 +81,60 @@ pDatap=packC(raw(packC)>=0&raw(packC)<N_OPTODES); %possible detector positions
 
 %% now look for the stop bytes; if they don't have them, then they are not data packages
 %these are way more likely to be the actual positions of the data packages
-%stop bytes not implemented yet (??)
 pDatap=pDatap(raw(pDatap+N_BYTES_TO_READ_PER_SAMPLE-2,:)==170&raw(pDatap+N_BYTES_TO_READ_PER_SAMPLE-1,:)==170);
 
+%% Find accelerometer packages
+indicator=find(raw==N_ACC_BYTES-2); %the second byte of an accel/aux package is the number of bytes from there to the end
+indicator=indicator((indicator+N_ACC_BYTES-2)<=rawN); %only consider  potentially complete packages
+packC=indicator-1;   %potential initial positions of acc packages
+packC(packC==0)=[];  %this means we missed the initial byte of one acc packet
+pAccp=packC(raw(packC)==201); %has to be 201 for acc
+pAccp=pAccp(raw(pAccp+N_ACC_BYTES-2,:)==170&raw(pAccp+N_ACC_BYTES-1,:)==170); %check that the stop bytes are there
 
+%% Decode accelerometer packages
+seqk=raw(min(pAccp+2,end));  %contains the sequence data of potential data package; real data packages should be on a consecutive sequence
+dseqk=diff(seqk);
+sbreaks=find(dseqk~=1&dseqk~=-255); %sequence breaks
+try
+    if dseqk(1)==1  
+        sbreaks=sbreaks(2:2:end);  %mark the sequence breaking packages; the second one in the sequence will always be the problem
+    else
+        %in the unlikely case the first packet was the sequence breaking one
+        sbreaks=sbreaks(1:2:end);  %mark the sequence breaking packages; the second one in the sequence will always be the problem
+    end
+catch
+   disp('') 
+end
+accind=pAccp;
+accind(sbreaks)=[];  %remove the sequence breaking packages
+maxaccpackpos=0;
+maxaccpackpos=max(max(maxaccpackpos),max(accind));
+
+% accelerometer decoding 
+try 
+    acc=raw(pAccp-1+(4:2:10))*256+raw(pAccp-1+(5:2:11));
+catch
+    disp('bug')
+end
+acc(acc>(2^15-1))=acc(acc>(2^15-1))-2^16;
+acc(:,1:3)=acc(:,1:3)/4* 0.488 /1000;
+acc(:,4)=acc(:,4)/256+25; %this is actually temperature
+
+triggers=raw(pAccp-1+12); %remote trigger byte; 0 means no trigger happened
+% triggers=[];
+% if any(trigg)
+%     %now do something if the trigger did happen
+%     triggers=unique(trigg(~~trigg)); %find triggers that actually happened
+%     triggtimes=;
+% end
 
 %% initialize databuffer
 ML=SD.measList;
 
 maxsampN=ceil(1.5*length(pDatap)/N_OPTODES+3); %max number of samples possibly contained in the data package; actually modified it so it still works under some unforseen circumstances
 datac=complex(nan(N_OPTODES,maxsampN,N_FREQ)); %complex data buffer
-data=nan(size(ML,1),maxsampN); %buffer for intensity data
+data=nan(size(ML,1)+nAux,maxsampN); %buffer for intensity data
+
 
 
 %% decode the optode data packets
@@ -122,9 +171,23 @@ end
     %% now, for each element of dataindk...
     mLength=size(dataindk,1);
     databm=databm*nan;
+    
+%     tic
+%     tmp=permute(dataindk,[3,2,1])-1;
+%     pnm1a=squeeze(sum(raw(part1+tmp).*powso256,2))';
+%     indi=pnm1a>(2^39-1);
+%     pnm1a(indi)=pnm1a(indi)-2^40;    
+%     pnm0a=squeeze(sum(raw(part2+tmp).*powso256,2))';
+%     indi=pnm0a>(2^39-1);
+%     pnm0a(indi)=pnm0a(indi)-2^40;
+%     databma=pnm0a - Kernel.*pnm1a;
+%     toc
+    
+    %tic
     for m=1:mLength
         %% I need to actually convert the data package to intensity data
         indi1=dataindk(m):(dataindk(m)+N_BYTES_TO_READ_PER_SAMPLE-1); %indices for package
+        
         if all(indi1<=rawN)  %this check is to avoid incomplete data packages
             rawp=raw(indi1,:);
             %transform raw data to complex FT
@@ -138,6 +201,7 @@ end
             databm(m,:)=pnm0 - Kernel.*pnm1;
         end
     end
+    %toc
     try
     datac(k+1,:,:)=databm;
     catch
@@ -164,17 +228,33 @@ for k=1:size(ML,1)
     frequs(k)=SD.freqMap(ML(k,1),ML(k,3),ML(k,4));
 end
 
+% ind = sub2ind(size(SD.freqMap),ML(:,1),ML(:,3),ML(:,4));
+% frequs1=squeeze(SD.freqMap(ind));
+% 
+% if ~isequal(frequs,frequs1)
+%     disp('oops')
+% end
+% 
+% tmp=zeros(1,maxsampN*2);
+% tmp(1:2:end)=1:maxsampN;
+% tmp(2:2:end)=1:maxsampN;
+% ind = sub2ind(size(datac),repmat(ML(:,2),[maxsampN,1]),tmp',repmat(abs(frequs),[maxsampN,1]));
+% datafoo
+
 for k=1:size(ML,1)
     data(k,:)=abs(datac(ML(k,2),:,abs(frequs(k))));
 end
-
+%add aux channels
+data(k+1:k+nAux,1:size(acc,1))=acc';
 
 %% now find the remainder bytes, that is, those that were unusued because they likely were part of an incomplete package
 
-finalbyteused=max(maxdatapackpos)+N_BYTES_TO_READ_PER_SAMPLE-1;
+finalbyteuseddata=max(maxdatapackpos)+N_BYTES_TO_READ_PER_SAMPLE-1;
+finalbyteusedacc=max(maxaccpackpos)+N_ACC_BYTES-1;
+finalbyteused=max(finalbyteusedacc,finalbyteuseddata);
 remainderbytes=raw(finalbyteused+1:end); %these bytesshould be appended to beggining of next stream
 
 %% finally, prepare data output
 
 data=data(:,~all(isnan(data))); %eliminate columns with no data
-packlen=sum(~isnan(data),2);  %number of samples in data package per channel
+packlen=sum(~isnan(data),2);  %number of samples in data package per channel; the accelerometer channels will always have an equal number of samples, but I will still broadcast for each individual channel for simplicity
