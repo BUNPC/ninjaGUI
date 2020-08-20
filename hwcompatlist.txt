@@ -1,4 +1,3 @@
-CW6
-CW7
+
 ninjaNIRS
-NIRS500
+NIRS1k
