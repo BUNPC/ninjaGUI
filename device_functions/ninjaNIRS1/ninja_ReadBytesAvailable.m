@@ -28,8 +28,8 @@ nAux=dev.nAux;
 
 %% DFT constants and data offsets
 
-DFT_N=128;
-KD = [18 20 21 24 28 30 32 35]; % demodulation k
+DFT_N=1024;
+KD = [21 24 28 30 32 35]; % demodulation k
 
 offsetA = (0:N_FREQ-1)*N_BYTES_IN_DFT_WORD*N_WORDS_PER_DFT +3;
 offsetB=offsetA+N_BYTES_IN_DFT_WORD;
@@ -49,6 +49,8 @@ ba=s.BytesAvailable;
 npacks=20;   %making this constant larger means we read more packets at a time, reducing processing overhead, but making it too large will affect refresh rate
 rb=floor(ba/N_BYTES_TO_READ_PER_SAMPLE/N_OPTODES/npacks)*N_BYTES_TO_READ_PER_SAMPLE*N_OPTODES*npacks;
 
+triggers=[];
+
 if rb>0
     raw = fread(s,rb,'uchar');
     if ~isempty(fID)
@@ -59,8 +61,7 @@ else
     packlen=0;
     datac=[];
     statusdata=[];
-    remainderbytes=[];
-    triggers=[];
+    remainderbytes=[];    
     return;
 end
 statusdata=[];
@@ -96,31 +97,35 @@ seqk=raw(min(pAccp+2,end));  %contains the sequence data of potential data packa
 dseqk=diff(seqk);
 sbreaks=find(dseqk~=1&dseqk~=-255); %sequence breaks
 try
-    if dseqk(1)==1  
+    if dseqk(1)==1
         sbreaks=sbreaks(2:2:end);  %mark the sequence breaking packages; the second one in the sequence will always be the problem
     else
         %in the unlikely case the first packet was the sequence breaking one
         sbreaks=sbreaks(1:2:end);  %mark the sequence breaking packages; the second one in the sequence will always be the problem
     end
 catch
-   disp('') 
+    disp('')
 end
 accind=pAccp;
 accind(sbreaks)=[];  %remove the sequence breaking packages
 maxaccpackpos=0;
 maxaccpackpos=max(max(maxaccpackpos),max(accind));
 
-% accelerometer decoding 
-try 
+% accelerometer decoding
+if ~isempty(maxaccpackpos)
+try
     acc=raw(pAccp-1+(4:2:10))*256+raw(pAccp-1+(5:2:11));
 catch
-    disp('bug')
+    disp('bug 0')
 end
 acc(acc>(2^15-1))=acc(acc>(2^15-1))-2^16;
 acc(:,1:3)=acc(:,1:3)/4* 0.488 /1000;
 acc(:,4)=acc(:,4)/256+25; %this is actually temperature
 
 triggers=raw(pAccp-1+12); %remote trigger byte; 0 means no trigger happened
+else
+    acc=[];
+end
 % triggers=[];
 % if any(trigg)
 %     %now do something if the trigger did happen
@@ -131,7 +136,8 @@ triggers=raw(pAccp-1+12); %remote trigger byte; 0 means no trigger happened
 %% initialize databuffer
 ML=SD.measList;
 
-maxsampN=ceil(1.5*length(pDatap)/N_OPTODES+3); %max number of samples possibly contained in the data package; actually modified it so it still works under some unforseen circumstances
+%maxsampN=ceil(1.5*length(pDatap)/N_OPTODES+3); %max number of samples possibly contained in the data package; actually modified it so it still works under some unforseen circumstances
+maxsampN=ceil(length(pDatap)); %I modified the last line for an extreme case in which some optodes are not sending data; not sure if it's a good idea because it might create unnecessarily large data buffers
 datac=complex(nan(N_OPTODES,maxsampN,N_FREQ)); %complex data buffer
 data=nan(size(ML,1)+nAux,maxsampN); %buffer for intensity data
 
@@ -147,16 +153,16 @@ for k=0:N_OPTODES-1
     
     dseqk=diff(seqk);
     sbreaks=find(dseqk~=1&dseqk~=-255); %sequence breaks
-try
-    if dseqk(1)==1  
-        sbreaks=sbreaks(2:2:end);  %mark the sequence breaking packages; the second one in the sequence will always be the problem
-    else
-        %in the unlikely case the first packet was the sequence breaking one
-        sbreaks=sbreaks(1:2:end);  %mark the sequence breaking packages; the second one in the sequence will always be the problem
+    try
+        if dseqk(1)==1
+            sbreaks=sbreaks(2:2:end);  %mark the sequence breaking packages; the second one in the sequence will always be the problem
+        else
+            %in the unlikely case the first packet was the sequence breaking one
+            sbreaks=sbreaks(1:2:end);  %mark the sequence breaking packages; the second one in the sequence will always be the problem
+        end
+    catch
+        disp('')
     end
-catch
-   disp('') 
-end
     
     dataindk=indik;
     dataindk(sbreaks)=[];  %remove the sequence breaking packages
@@ -172,16 +178,16 @@ end
     mLength=size(dataindk,1);
     databm=databm*nan;
     
-%     tic
-%     tmp=permute(dataindk,[3,2,1])-1;
-%     pnm1a=squeeze(sum(raw(part1+tmp).*powso256,2))';
-%     indi=pnm1a>(2^39-1);
-%     pnm1a(indi)=pnm1a(indi)-2^40;    
-%     pnm0a=squeeze(sum(raw(part2+tmp).*powso256,2))';
-%     indi=pnm0a>(2^39-1);
-%     pnm0a(indi)=pnm0a(indi)-2^40;
-%     databma=pnm0a - Kernel.*pnm1a;
-%     toc
+    %     tic
+    %     tmp=permute(dataindk,[3,2,1])-1;
+    %     pnm1a=squeeze(sum(raw(part1+tmp).*powso256,2))';
+    %     indi=pnm1a>(2^39-1);
+    %     pnm1a(indi)=pnm1a(indi)-2^40;
+    %     pnm0a=squeeze(sum(raw(part2+tmp).*powso256,2))';
+    %     indi=pnm0a>(2^39-1);
+    %     pnm0a(indi)=pnm0a(indi)-2^40;
+    %     databma=pnm0a - Kernel.*pnm1a;
+    %     toc
     
     %tic
     for m=1:mLength
@@ -203,14 +209,14 @@ end
     end
     %toc
     try
-    datac(k+1,:,:)=databm;
+        datac(k+1,:,:)=databm;
     catch
-        disp('bug')
+        disp('bug 1')
     end
 end
 
 %% the following code determines which of the frequencies from which optode
-% %% we are interested in, based on the experimental design on SD 
+% %% we are interested in, based on the experimental design on SD
 
 %I need to use the frequency map to see which rows and columns I actually
 %want
@@ -230,11 +236,11 @@ end
 
 % ind = sub2ind(size(SD.freqMap),ML(:,1),ML(:,3),ML(:,4));
 % frequs1=squeeze(SD.freqMap(ind));
-% 
+%
 % if ~isequal(frequs,frequs1)
 %     disp('oops')
 % end
-% 
+%
 % tmp=zeros(1,maxsampN*2);
 % tmp(1:2:end)=1:maxsampN;
 % tmp(2:2:end)=1:maxsampN;
