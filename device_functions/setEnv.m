@@ -21,7 +21,7 @@ switch HW
         SP.FlowControl='none';
         SP.InputBufferSize = 1024*1024;
     case 'ninjaNIRS'
-        SP.BaudRate = 2000000;
+        SP.BaudRate = 4e6;
         SP.InputBufferSize = 1000000;
         SP.OutputBufferSize = 1000000;
         SP.FlowControl = 'hardware';

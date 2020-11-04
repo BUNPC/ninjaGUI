@@ -61,7 +61,7 @@ else
     packlen=0;
     datac=[];
     statusdata=[];
-    remainderbytes=[];    
+    remainderbytes=[];
     return;
 end
 statusdata=[];
@@ -93,6 +93,8 @@ pAccp=packC(raw(packC)==201); %has to be 201 for acc
 pAccp=pAccp(raw(pAccp+N_ACC_BYTES-2,:)==170&raw(pAccp+N_ACC_BYTES-1,:)==170); %check that the stop bytes are there
 
 %% Decode accelerometer packages
+
+%identify auxiliary packets
 seqk=raw(min(pAccp+2,end));  %contains the sequence data of potential data package; real data packages should be on a consecutive sequence
 dseqk=diff(seqk);
 sbreaks=find(dseqk~=1&dseqk~=-255); %sequence breaks
@@ -113,16 +115,16 @@ maxaccpackpos=max(max(maxaccpackpos),max(accind));
 
 % accelerometer decoding
 if ~isempty(maxaccpackpos)
-try
-    acc=raw(pAccp-1+(4:2:10))*256+raw(pAccp-1+(5:2:11));
-catch
-    disp('bug 0')
-end
-acc(acc>(2^15-1))=acc(acc>(2^15-1))-2^16;
-acc(:,1:3)=acc(:,1:3)/4* 0.488 /1000;
-acc(:,4)=acc(:,4)/256+25; %this is actually temperature
-
-triggers=raw(pAccp-1+12); %remote trigger byte; 0 means no trigger happened
+    try
+        acc=raw(pAccp-1+(4:2:10))*256+raw(pAccp-1+(5:2:11));
+    catch
+        disp('bug 0')
+    end
+    acc(acc>(2^15-1))=acc(acc>(2^15-1))-2^16;
+    acc(:,1:3)=acc(:,1:3)/4* 0.488 /1000;
+    acc(:,4)=acc(:,4)/256+25; %this is actually temperature
+    
+    triggers=raw(pAccp-1+12); %remote trigger byte; 0 means no trigger happened
 else
     acc=[];
 end
@@ -178,20 +180,8 @@ for k=0:N_OPTODES-1
     mLength=size(dataindk,1);
     databm=databm*nan;
     
-    %     tic
-    %     tmp=permute(dataindk,[3,2,1])-1;
-    %     pnm1a=squeeze(sum(raw(part1+tmp).*powso256,2))';
-    %     indi=pnm1a>(2^39-1);
-    %     pnm1a(indi)=pnm1a(indi)-2^40;
-    %     pnm0a=squeeze(sum(raw(part2+tmp).*powso256,2))';
-    %     indi=pnm0a>(2^39-1);
-    %     pnm0a(indi)=pnm0a(indi)-2^40;
-    %     databma=pnm0a - Kernel.*pnm1a;
-    %     toc
-    
-    %tic
     for m=1:mLength
-        %% I need to actually convert the data package to intensity data
+        %% I need to convert the data package to intensity data
         indi1=dataindk(m):(dataindk(m)+N_BYTES_TO_READ_PER_SAMPLE-1); %indices for package
         
         if all(indi1<=rawN)  %this check is to avoid incomplete data packages
@@ -218,15 +208,7 @@ end
 %% the following code determines which of the frequencies from which optode
 % %% we are interested in, based on the experimental design on SD
 
-%I need to use the frequency map to see which rows and columns I actually
-%want
 
-% % % ind = sub2ind(size(SD.freqMap),ML(:,1),ML(:,3),ML(:,4));
-% % % fMap=SD.freqMap;
-% % % fss=abs(fMap(ind));
-% % % dets=ML(:,2);
-% % % ind2 = sub2ind(size(datac),dets,ones(size(dets)),fss);
-% % % data=abs(datac(ind2));
 
 % there is probably a way to vectorize this
 frequs=zeros(size(ML,1),1);
@@ -234,24 +216,13 @@ for k=1:size(ML,1)
     frequs(k)=SD.freqMap(ML(k,1),ML(k,3),ML(k,4));
 end
 
-% ind = sub2ind(size(SD.freqMap),ML(:,1),ML(:,3),ML(:,4));
-% frequs1=squeeze(SD.freqMap(ind));
-%
-% if ~isequal(frequs,frequs1)
-%     disp('oops')
-% end
-%
-% tmp=zeros(1,maxsampN*2);
-% tmp(1:2:end)=1:maxsampN;
-% tmp(2:2:end)=1:maxsampN;
-% ind = sub2ind(size(datac),repmat(ML(:,2),[maxsampN,1]),tmp',repmat(abs(frequs),[maxsampN,1]));
-% datafoo
-
 for k=1:size(ML,1)
     data(k,:)=abs(datac(ML(k,2),:,abs(frequs(k))));
 end
 %add aux channels
-data(k+1:k+nAux,1:size(acc,1))=acc';
+if nAux>0
+    data(k+1:k+nAux,1:size(acc,1))=acc';
+end
 
 %% now find the remainder bytes, that is, those that were unusued because they likely were part of an incomplete package
 
