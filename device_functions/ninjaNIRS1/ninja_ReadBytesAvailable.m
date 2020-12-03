@@ -1,4 +1,4 @@
-function [data,packlen,remainderbytes,triggers,datac,statusdata]=ninja_ReadBytesAvailable(s,dev,SD,prevrbytes,fID)
+function [data,packlen,remainderbytes,datac,statusdata]=ninja_ReadBytesAvailable(s,dev,SD,prevrbytes,fID)
 % Reads the serial port for a ninjaNIRS device. It reads N_Optodes
 % sequentially. That means that if data is out of order data will be lost
 % (for example, is the data arrive to the buffer in the order 12314234, the
@@ -49,7 +49,7 @@ ba=s.BytesAvailable;
 npacks=20;   %making this constant larger means we read more packets at a time, reducing processing overhead, but making it too large will affect refresh rate
 rb=floor(ba/N_BYTES_TO_READ_PER_SAMPLE/N_OPTODES/npacks)*N_BYTES_TO_READ_PER_SAMPLE*N_OPTODES*npacks;
 
-triggers=[];
+%triggers=[];
 
 if rb>0
     raw = fread(s,rb,'uchar');
@@ -121,10 +121,14 @@ if ~isempty(maxaccpackpos)
         disp('bug 0')
     end
     acc(acc>(2^15-1))=acc(acc>(2^15-1))-2^16;
-    acc(:,1:3)=acc(:,1:3)/4* 0.488 /1000;
+    try
+        acc(:,1:3)=acc(:,1:3)/4* 0.488 /1000;
+    catch
+        disp('Bug line 125')
+    end
     acc(:,4)=acc(:,4)/256+25; %this is actually temperature
-    
-    triggers=raw(pAccp-1+12); %remote trigger byte; 0 means no trigger happened
+    acc(:,5)=raw(pAccp-1+12);
+    %triggers=raw(pAccp-1+12); %remote trigger byte; 0 means no trigger happened
 else
     acc=[];
 end

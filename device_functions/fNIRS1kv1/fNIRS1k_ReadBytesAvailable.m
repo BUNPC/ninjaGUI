@@ -1,4 +1,4 @@
-function [dataoutput,packlen,remainderbytes,triggers,datac,statusdata]=fNIRS1k_ReadBytesAvailable(s,dev,SD,prevrbytes,fID)
+function [dataoutput,packlen,remainderbytes,datac,statusdata]=fNIRS1k_ReadBytesAvailable(s,dev,SD,prevrbytes,fID)
 % Reads the serial port for a fNIRS1k device. s is the serial port object.
 % dev is there just to specify the number of detectors and auxs
 % SD is the sd struct to determine which channels we are actually
@@ -48,7 +48,6 @@ powso256=256.^(0:N_BYTES_IN_DFT_WORD-1);
 Kernel=exp(-1i*(2*pi/DFT_N)*KD(1:N_FREQ));
 
 %% read bytes available as a multiple of bytes in the buffer and number of optodes (and aux)
-triggers=[];
 ba=s.BytesAvailable;
 
 %this code helps prevent reading incomplete data packages
@@ -219,7 +218,6 @@ remainderbytes=raw(finalbyteused+1:end); %these bytesshould be appended to beggi
 %% finally, prepare data output
 
 dataoutput=[data;auxb];
-triggers=nan(1,size(dataoutput,2)); %remote triggers
 dataoutput=dataoutput(:,~all(isnan(dataoutput))); %eliminate columns with no data
 
 packlen=sum(~isnan(dataoutput),2);  %number of samples in data package
