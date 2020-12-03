@@ -18,6 +18,8 @@ function [dataoutput,packlen,remainderbytes,datac,statusdata]=fNIRS1k_ReadBytesA
 % remainderbytes returns unusued bytes from the stream; this is useful in
 % case a data package is incomplete; these bytes should be added to the
 % beginning of the new data stream
+% fID is used to stream the serial bytes straight to file in
+% case there is an application crash. That way the data can be recovered.
 
 %% hardware constants
 N_OPTODES=dev.nDets;
@@ -46,7 +48,6 @@ powso256=256.^(0:N_BYTES_IN_DFT_WORD-1);
 Kernel=exp(-1i*(2*pi/DFT_N)*KD(1:N_FREQ));
 
 %% read bytes available as a multiple of bytes in the buffer and number of optodes (and aux)
-
 ba=s.BytesAvailable;
 
 %this code helps prevent reading incomplete data packages
@@ -54,8 +55,10 @@ npacks=30;   %making this constant larger means we read more packets at a time, 
 rb=floor(ba/N_BYTES_TO_READ_PER_SAMPLE/(N_OPTODES+1)/npacks)*N_BYTES_TO_READ_PER_SAMPLE*(N_OPTODES+1)*npacks;
 
 if rb>0
-    raw = fread(s,rb,'uchar');    
-    %fwrite(fID,raw,'uchar');
+    raw = fread(s,rb,'uchar');
+    if ~isempty(fID)
+        fwrite(fID,raw,'uchar');
+    end
 else
     dataoutput=[];
     packlen=0;

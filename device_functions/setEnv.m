@@ -21,7 +21,7 @@ switch HW
         SP.FlowControl='none';
         SP.InputBufferSize = 1024*1024;
     case 'ninjaNIRS'
-        SP.BaudRate = 2000000;
+        SP.BaudRate = 4e6;
         SP.InputBufferSize = 1000000;
         SP.OutputBufferSize = 1000000;
         SP.FlowControl = 'hardware';
@@ -54,9 +54,9 @@ switch HW
         func.ReadBytesAvailable=@(app)fNIRS1k_ReadBytesAvailable(app.sp,app.devinfo,app.nSD,app.rbytes,app.fstreamID); %reads the data from the serial port and returns only the data specified by the measurement list
         func.FlushBuffer=@(app)fNIRS1k_FlushBuffer(app.sp);
         func.MapFrequencies=@(app,statemap)fNIRS1k_MapFrequencies(app.sp,statemap);
-        func.Ask4Status=@(app)fNIRS1k_Ask4Status(app);        
+        func.Ask4Status=@(app)fNIRS1k_Ask4Status(app);
+        func.Ask4Status=@(app)fNIRS1k_Ask4Status(app);
         func.convBytes2nirs=@(app)fNIRS1k_convBytes2nirs(app.fstreamID,app.devinfo,app.nSD);        
-        %func.Ask4Status=@(app)fNIRS1k_Ask4Status(app);
 end
 env.functions=func;
 
