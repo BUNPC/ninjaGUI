@@ -1,9 +1,9 @@
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration build-checksum="3867968354" file="C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\ninjaGUI\ninjaGUIinstaller.prj" location="C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\ninjaGUI" name="ninjaGUIinstaller" preferred-package-location="C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\ninjaGUI\ninjaGUIinstaller\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="Application Compiler">
+  <configuration build-checksum="1016624396" file="C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\ninjaGUI\ninjaGUIinstaller.prj" location="C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\ninjaGUI" name="ninjaGUIinstaller" preferred-package-location="C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\ninjaGUIdev\ninjaGUIinstaller\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="Application Compiler">
     <param.appname>ninjaGUI</param.appname>
     <param.icon />
     <param.icons />
-    <param.version>1.0</param.version>
+    <param.version>1.4</param.version>
     <param.authnamewatermark>Antonio Ortega</param.authnamewatermark>
     <param.email>aortegam@bu.edu</param.email>
     <param.company>Boston University</param.company>
@@ -16,10 +16,10 @@
     <param.logo />
     <param.install.notes />
     <param.target.install.notes />
-    <param.intermediate>${PROJECT_ROOT}\ninjaGUIinstaller\for_testing</param.intermediate>
-    <param.files.only>${PROJECT_ROOT}\ninjaGUIinstaller\for_redistribution_files_only</param.files.only>
-    <param.output>${PROJECT_ROOT}\ninjaGUIinstaller\for_redistribution</param.output>
-    <param.logdir>${PROJECT_ROOT}\ninjaGUIinstaller</param.logdir>
+    <param.intermediate>C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\ninjaGUIdev\ninjaGUIinstaller\for_testing</param.intermediate>
+    <param.files.only>C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\ninjaGUIdev\ninjaGUIinstaller\for_redistribution_files_only</param.files.only>
+    <param.output>C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\ninjaGUIdev\ninjaGUIinstaller\for_redistribution</param.output>
+    <param.logdir>C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\ninjaGUIdev\ninjaGUIinstaller</param.logdir>
     <param.enable.clean.build>false</param.enable.clean.build>
     <param.user.defined.mcr.options />
     <param.target.type>subtarget.standalone</param.target.type>
@@ -45,7 +45,6 @@
     <unset>
       <param.icon />
       <param.icons />
-      <param.version />
       <param.description />
       <param.screenshot />
       <param.guid />
@@ -54,10 +53,6 @@
       <param.logo />
       <param.install.notes />
       <param.target.install.notes />
-      <param.intermediate />
-      <param.files.only />
-      <param.output />
-      <param.logdir />
       <param.enable.clean.build />
       <param.user.defined.mcr.options />
       <param.target.type />
@@ -79,8 +74,6 @@
     <fileset.resources>
       <file>${PROJECT_ROOT}\device_functions</file>
       <file>${PROJECT_ROOT}\liblsl-Matlab</file>
-      <file>${PROJECT_ROOT}\ninjaExampleConfig.cfg</file>
-      <file>${PROJECT_ROOT}\one_optode_test.nsd</file>
       <file>${PROJECT_ROOT}\snirf</file>
       <file>${PROJECT_ROOT}\snirf\AcqDataClass.m</file>
       <file>${PROJECT_ROOT}\snirf\cd_safe.m</file>
@@ -92,16 +85,28 @@
     <fileset.package />
     <fileset.depfun>
       <file>${MATLAB_ROOT}\toolbox\local\userpath.m</file>
-      <file>C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\homer2_src_v2_3_10202017\PACKAGES\AtlasViewerGUI\Utils\nearest_point.m</file>
+      <file>C:\Users\Antonio\Documents\MATLAB\work\BU\AtlasViewer\Utils\ConfigFileClass.m</file>
+      <file>C:\Users\Antonio\Documents\MATLAB\work\BU\AtlasViewer\Utils\convertToStandardPath.m</file>
+      <file>C:\Users\Antonio\Documents\MATLAB\work\BU\AtlasViewer\Utils\filesepStandard.m</file>
+      <file>C:\Users\Antonio\Documents\MATLAB\work\BU\AtlasViewer\Utils\getAppDir_av.m</file>
+      <file>C:\Users\Antonio\Documents\MATLAB\work\BU\AtlasViewer\Utils\guiOutsideScreenBorders.m</file>
+      <file>C:\Users\Antonio\Documents\MATLAB\work\BU\AtlasViewer\Utils\isalnum.m</file>
+      <file>C:\Users\Antonio\Documents\MATLAB\work\BU\AtlasViewer\Utils\ishandles.m</file>
+      <file>C:\Users\Antonio\Documents\MATLAB\work\BU\AtlasViewer\Utils\ispathvalid.m</file>
+      <file>C:\Users\Antonio\Documents\MATLAB\work\BU\AtlasViewer\Utils\MenuBox.m</file>
+      <file>C:\Users\Antonio\Documents\MATLAB\work\BU\AtlasViewer\Utils\nearest_point.m</file>
+      <file>C:\Users\Antonio\Documents\MATLAB\work\BU\AtlasViewer\Utils\setGuiFonts.m</file>
+      <file>C:\Users\Antonio\Documents\MATLAB\work\BU\AtlasViewer\Utils\sprintf_waitbar.m</file>
+      <file>C:\Users\Antonio\Documents\MATLAB\work\BU\AtlasViewer\Utils\waitbar_improved.m</file>
       <file>${PROJECT_ROOT}\fNIRSapp.mlapp</file>
       <file>${PROJECT_ROOT}\GetExtinctions.m</file>
       <file>${PROJECT_ROOT}\hardwareselect.mlapp</file>
       <file>${PROJECT_ROOT}\hwcompatlist.txt</file>
     </fileset.depfun>
     <build-deliverables>
-      <file location="${PROJECT_ROOT}\ninjaGUIinstaller\for_testing" name="ninjaGUI.exe" optional="false">C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\ninjaGUI\ninjaGUIinstaller\for_testing\ninjaGUI.exe</file>
-      <file location="${PROJECT_ROOT}\ninjaGUIinstaller\for_testing" name="splash.png" optional="false">C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\ninjaGUI\ninjaGUIinstaller\for_testing\splash.png</file>
-      <file location="${PROJECT_ROOT}\ninjaGUIinstaller\for_testing" name="readme.txt" optional="true">C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\ninjaGUI\ninjaGUIinstaller\for_testing\readme.txt</file>
+      <file location="C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\ninjaGUIdev\ninjaGUIinstaller\for_testing" name="ninjaGUI.exe" optional="false">C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\ninjaGUIdev\ninjaGUIinstaller\for_testing\ninjaGUI.exe</file>
+      <file location="C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\ninjaGUIdev\ninjaGUIinstaller\for_testing" name="splash.png" optional="false">C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\ninjaGUIdev\ninjaGUIinstaller\for_testing\splash.png</file>
+      <file location="C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\ninjaGUIdev\ninjaGUIinstaller\for_testing" name="readme.txt" optional="true">C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\ninjaGUIdev\ninjaGUIinstaller\for_testing\readme.txt</file>
     </build-deliverables>
     <workflow />
     <matlab>
