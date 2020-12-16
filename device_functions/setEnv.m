@@ -53,8 +53,7 @@ switch HW
         addpath(genpath(['device_functions',filesep,'fNIRS1kv1']))
         func.ReadBytesAvailable=@(app)fNIRS1k_ReadBytesAvailable(app.sp,app.devinfo,app.nSD,app.rbytes,app.fstreamID); %reads the data from the serial port and returns only the data specified by the measurement list
         func.FlushBuffer=@(app)fNIRS1k_FlushBuffer(app.sp);
-        func.MapFrequencies=@(app,statemap)fNIRS1k_MapFrequencies(app.sp,statemap);
-        func.Ask4Status=@(app)fNIRS1k_Ask4Status(app);
+        func.MapFrequencies=@(app,statemap)fNIRS1k_MapFrequencies(app.sp,statemap);        
         func.Ask4Status=@(app)fNIRS1k_Ask4Status(app);
         func.convBytes2nirs=@(app)fNIRS1k_convBytes2nirs(app.fstreamID,app.devinfo,app.nSD);        
 end
@@ -88,9 +87,7 @@ switch HW
         comms.SourceNOff=@(app,N)[254 0 0 0 0 255-255 255-255 bin2dec(num2str(flipud(app.LEDstate)'))' app.active];  %Turns off source N
         comms.SourceNIndL=@(app,N,L)[254 0 0 0 0 255-255 255-255 bin2dec(num2str(flipud(app.LEDstate)'))' app.active];  %Only one level allowed, so L is not used in this
         comms.Start=@(app)[254 0 0 0 0 255-255 255-255 bin2dec(num2str(flipud(app.LEDstate)'))' 1]; %command to start acquisition
-        comms.Stop=@(app)[254 0 0 0 0 255-255 255-255 bin2dec(num2str(flipud(app.LEDstate)'))' 0]; %command to stop acquisition
-        
-        
+        comms.Stop=@(app)[254 0 0 0 0 255-255 255-255 bin2dec(num2str(flipud(app.LEDstate)'))' 0]; %command to stop acquisition                
 end
 env.commands=comms;
 

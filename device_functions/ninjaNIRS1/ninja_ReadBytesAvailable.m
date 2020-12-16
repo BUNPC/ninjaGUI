@@ -56,12 +56,20 @@ if rb>0
     if ~isempty(fID)
         fwrite(fID,raw,'uchar');
     end
-else
+else    
     data=[];
     packlen=0;
     datac=[];
     statusdata=[];
     remainderbytes=[];
+    
+%     %%test the following later
+%     if ba>0
+%         remainderbytes=[prevrbytes;fread(s,ba,'uchar')];
+%     else
+%         remainderbytes=[];
+%     end    
+    
     return;
 end
 statusdata=[];
