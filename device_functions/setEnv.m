@@ -9,29 +9,36 @@ error=0;
 HW=devinfo.devID;
 
 
-
+%Starting from 12/20/2020, the following serial port parameters HAVE to be
+%specified: BaudRate, Parity, DataBits, StopBits, FlowControl, ByteOrder,
+%TimeOut. Buffersize is not compatible anymore
 
 %set the serial port parameters
 switch HW
     case 'CW6'
-        SP.byteorder='bigendian';
+        SP.BaudRate=9600;
+        SP.Parity='odd';
         SP.DataBits=8;
         SP.StopBits=1;
-        SP.Parity='odd';
-        SP.FlowControl='none';
-        SP.InputBufferSize = 1024*1024;
+        SP.FlowControl='none';        
+        SP.ByteOrder='big-endian';
+        SP.TimeOut=1.6;                
     case 'ninjaNIRS'
-        SP.BaudRate = 4e6;
-        SP.InputBufferSize = 1000000;
-        SP.OutputBufferSize = 1000000;
-        SP.FlowControl = 'hardware';
-        SP.Timeout = 1.6;
+        SP.BaudRate=4e6;
+        SP.Parity='none';
+        SP.DataBits=8;
+        SP.StopBits=1;
+        SP.FlowControl= 'hardware';
+        SP.ByteOrder='little-endian';
+        SP.TimeOut=1.6;                
     case 'fNIRS1k'
-        SP.BaudRate = 12000000;
-        SP.InputBufferSize = 1000000;
-        SP.OutputBufferSize = 1000000;
-        SP.FlowControl = 'hardware';
-        SP.Timeout = 1.6;
+        SP.BaudRate=12000000;
+        SP.Parity='none';
+        SP.DataBits=8;
+        SP.StopBits=1;
+        SP.FlowControl='hardware';        
+        SP.ByteOrder='little-endian';
+        SP.TimeOut=1.6;
     otherwise
         disp('Device not compatible with this version')
         error=1;
@@ -46,13 +53,13 @@ switch HW
     case 'ninjaNIRS'
         addpath(genpath(['device_functions',filesep,'ninjaNIRS1']))
         func.ReadBytesAvailable=@(app)ninja_ReadBytesAvailable(app.sp,app.devinfo,app.nSD,app.rbytes,app.fstreamID); %reads the data from the serial port and returns only the data specified by the measurement list
-        func.FlushBuffer=@(app)ninja_FlushBuffer(app.sp);
+        %func.FlushBuffer=@(app)ninja_FlushBuffer(app.sp);
         func.MapFrequencies=@(app,statemap)ninja_MapFrequencies(app.sp,statemap);
         func.Ask4Status=@(app)ninja_Ask4Status(app);
     case 'fNIRS1k'
         addpath(genpath(['device_functions',filesep,'fNIRS1kv1']))
         func.ReadBytesAvailable=@(app)fNIRS1k_ReadBytesAvailable(app.sp,app.devinfo,app.nSD,app.rbytes,app.fstreamID); %reads the data from the serial port and returns only the data specified by the measurement list
-        func.FlushBuffer=@(app)fNIRS1k_FlushBuffer(app.sp);
+        %func.FlushBuffer=@(app)fNIRS1k_FlushBuffer(app.sp);
         func.MapFrequencies=@(app,statemap)fNIRS1k_MapFrequencies(app.sp,statemap);        
         func.Ask4Status=@(app)fNIRS1k_Ask4Status(app);
         func.convBytes2nirs=@(app)fNIRS1k_convBytes2nirs(app.fstreamID,app.devinfo,app.nSD);        
