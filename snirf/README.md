@@ -31,14 +31,14 @@ Run the demos demo_snirf.m and demo_snirf_readfile.m (which should be available 
 
 	* Save .nirs file in SNIRF format
 
-	nirs = load('neuro_run01.nirs','-mat');
-	snirf1 = SnirfClass(nirs);
-	snirf1.Save('neuro_run01.snirf');
-	snirf1.Info();
+    nirs = load('neuro_run01.nirs','-mat');
+    snirf1 = SnirfClass(nirs);
+    snirf1.Save('neuro_run01.snirf');
+    snirf1.Info();
 
 	* Check that the file was saved correctly by looking at	snirf2 contents and comparing with snirf1 contents
 
-	snirf2 = SnirfClass();
-	snirf2.Load('neuro_run01.snirf');
-	snirf2.Info();
+    snirf2 = SnirfClass();
+    snirf2.Load('neuro_run01.snirf');
+    snirf2.Info();
 
