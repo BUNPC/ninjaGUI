@@ -31,7 +31,7 @@ switch HW
         SP.FlowControl= 'hardware';
         SP.ByteOrder='little-endian';
         SP.TimeOut=1.6;                
-    case 'fNIRS1k'
+    case 'NIRS1k'
         SP.BaudRate=12000000;
         SP.Parity='none';
         SP.DataBits=8;
@@ -56,7 +56,7 @@ switch HW
         %func.FlushBuffer=@(app)ninja_FlushBuffer(app.sp);
         func.MapFrequencies=@(app,statemap)ninja_MapFrequencies(app.sp,statemap);
         func.Ask4Status=@(app)ninja_Ask4Status(app);
-    case 'fNIRS1k'
+    case 'NIRS1k'
         addpath(genpath(['device_functions',filesep,'fNIRS1kv1']))
         func.ReadBytesAvailable=@(app)fNIRS1k_ReadBytesAvailable(app.sp,app.devinfo,app.nSD,app.rbytes,app.fstreamID); %reads the data from the serial port and returns only the data specified by the measurement list
         %func.FlushBuffer=@(app)fNIRS1k_FlushBuffer(app.sp);
@@ -83,7 +83,7 @@ switch HW
         comms.SourceNIndL=@(app,N,L)[2 N-1 CMD_LED_STATE round(5*(sign(L(1))).^2+3*(sign(L(1))))+round(5/2*(sign(L(2))).^2+3/2*(sign(L(2))))];  %Changes state of each LED on source N individually; L should be a 1x2 vector specifying each level
         comms.Start=@(app)[1 255 CMD_ACQ_ON];
         comms.Stop=@(app)[1 255 CMD_ACQ_OFF];
-    case 'fNIRS1k'
+    case 'NIRS1k'
         comms.LightsOff=@(app)[254 0 0 0 0 255-255 255-255 0 0 app.active]; %command to turn all lights off
         comms.LightsOn=@(app)[254 0 0 0 0 255-255 255-255 15 15 app.active]; %command to turn all lights on
         %the three following commands are identical due to the way the
