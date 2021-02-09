@@ -18,11 +18,11 @@ CMD_SEL_F2 = bin2dec('11000100');
 fMap=abs(statefMap);
 
 try
-    if prod(size(fMap))==2   %case of only one optode
-        fwrite(sp,[4 0 CMD_SEL_F1 fMap(1) CMD_SEL_F2 fMap(2)]);
+    if prod(size(fMap))==2   %case of only one optode        
+        write(sp,[4 0 CMD_SEL_F1 fMap(1) CMD_SEL_F2 fMap(2)],'uint8')
     else
         for k=1:length(statefMap)
-            fwrite(sp,[4 k-1 CMD_SEL_F1 fMap(k,1) CMD_SEL_F2 fMap(k,2)]);
+            write(sp,[4 k-1 CMD_SEL_F1 fMap(k,1) CMD_SEL_F2 fMap(k,2)],'uint8');
         end
     end
 catch

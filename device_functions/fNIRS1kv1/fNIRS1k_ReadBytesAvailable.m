@@ -48,14 +48,14 @@ powso256=256.^(0:N_BYTES_IN_DFT_WORD-1);
 Kernel=exp(-1i*(2*pi/DFT_N)*KD(1:N_FREQ));
 
 %% read bytes available as a multiple of bytes in the buffer and number of optodes (and aux)
-ba=s.BytesAvailable;
+ba=s.NumBytesAvailable;
 
 %this code helps prevent reading incomplete data packages
 npacks=30;   %making this constant larger means we read more packets at a time, reducing processing overhead, but making it too large will affect refresh rate
 rb=floor(ba/N_BYTES_TO_READ_PER_SAMPLE/(N_OPTODES+1)/npacks)*N_BYTES_TO_READ_PER_SAMPLE*(N_OPTODES+1)*npacks;
 
 if rb>0
-    raw = fread(s,rb,'uchar');
+    raw = read(s,rb,'uint8')';
     if ~isempty(fID)
         fwrite(fID,raw,'uchar');
     end
@@ -64,7 +64,7 @@ else
     packlen=0;
     datac=[];
     statusdata=[];
-    remainderbytes=[];
+    remainderbytes=prevrbytes;
     return;
 end
 

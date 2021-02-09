@@ -83,7 +83,7 @@ else
     for ii=1:length(snirf.data)
         
         % Display data matrix dimensions and data type
-        d = snirf.data(ii).GetDataMatrix();
+        d = snirf.data(ii).GetDataTimeSeries();
         pretty_print_struct(d, 8, 1);
         
         % Display meas list dimensions and data type
@@ -128,4 +128,16 @@ else
     aux = snirf.GetAuxiliary();
     pretty_print_struct(aux, 8, 1);
     
+end
+
+
+
+% ---------------------------------------------------
+function fnamefullpath = findfile(rootdirexamples, fname)
+fnamefullpath = [rootdirexamples, fname];
+if ~exist(fnamefullpath, 'file')
+    msg = sprintf('%s does not exist. You first have to generate it by running demo_snirf\n', fnamefullpath);
+    MenuBox(msg, 'OK');
+    fnamefullpath = '';
+    return;
 end

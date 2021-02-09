@@ -1,4 +1,5 @@
 function rootdirexamples = findexamplesdir()
 
 rootdir = fileparts(which('SnirfClass.m'));
-rootdirexamples = convertToStandardPath([rootdir, '/Examples/']);
+rootdirexamples = [rootdir, '/Examples/'];
+rootdirexamples(rootdirexamples=='\') = '/';

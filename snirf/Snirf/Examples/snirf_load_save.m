@@ -28,8 +28,7 @@ end
 
 % Get the input and output file names 
 [pname, fname] = fileparts(infile);
-pname = convertToStandardPath(pname);
-outfile = [pname, fname, '.snirf'];
+outfile = [pname, '/', fname, '.snirf'];
 
 % Load .nirs file
 nirs = load(infile,'-mat');

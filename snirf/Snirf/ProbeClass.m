@@ -1,18 +1,29 @@
-classdef ProbeClass < FileLoadSaveClass
+classdef ProbeClass < matlab.mixin.Copyable
     
+    % SNIRF-spec class properties
     properties
         wavelengths
         wavelengthsEmission
-        sourcePos
-        detectorPos
-        frequency
-        timeDelay
-        timeDelayWidth
+        sourcePos2D
+        detectorPos2D
+        landmarkPos2D
+        sourcePos3D
+        detectorPos3D
+        frequencies
+        timeDelays
+        timeDelayWidths
         momentOrder
-        correlationTimeDelay
-        correlationTimeDelayWidth
+        correlationTimeDelays
+        correlationTimeDelayWidths
         sourceLabels
         detectorLabels
+        landmarkLabels
+    end
+    
+    % Non-SNIRF class properties
+    properties (Access = private)
+        filename
+        fileformat
     end
     
     
@@ -29,14 +40,16 @@ classdef ProbeClass < FileLoadSaveClass
                     SD = varargin{1};
                     obj.wavelengths = SD.Lambda;
                     obj.wavelengthsEmission  = [];
-                    obj.sourcePos  = SD.SrcPos;
-                    obj.detectorPos  = SD.DetPos;
-                    obj.frequency  = 1;
-                    obj.timeDelay  = 0;
-                    obj.timeDelayWidth  = 0;
+                    obj.sourcePos2D  = SD.SrcPos;
+                    obj.detectorPos2D  = SD.DetPos;
+                    obj.sourcePos3D  = [];
+                    obj.detectorPos3D  = [];
+                    obj.frequencies  = 1;
+                    obj.timeDelays  = 0;
+                    obj.timeDelayWidths  = 0;
                     obj.momentOrder = [];
-                    obj.correlationTimeDelay = 0;
-                    obj.correlationTimeDelayWidth = 0;
+                    obj.correlationTimeDelays = 0;
+                    obj.correlationTimeDelayWidths = 0;
                     for ii=1:size(SD.SrcPos)
                         obj.sourceLabels{ii} = ['S',num2str(ii)];
                     end
@@ -50,14 +63,16 @@ classdef ProbeClass < FileLoadSaveClass
             else
                 obj.wavelengths          = [];
                 obj.wavelengthsEmission  = [];
-                obj.sourcePos  = [];
-                obj.detectorPos  = [];
-                obj.frequency  = 1;
-                obj.timeDelay  = 0;
-                obj.timeDelayWidth  = 0;
+                obj.sourcePos2D  = [];
+                obj.detectorPos2D  = [];
+                obj.sourcePos3D  = [];
+                obj.detectorPos3D  = [];
+                obj.frequencies  = 1;
+                obj.timeDelays  = 0;
+                obj.timeDelayWidths  = 0;
                 obj.momentOrder = [];
-                obj.correlationTimeDelay = 0;
-                obj.correlationTimeDelayWidth = 0;
+                obj.correlationTimeDelays = 0;
+                obj.correlationTimeDelayWidths = 0;
                 obj.sourceLabels = {};
                 obj.detectorLabels = {};
             end
@@ -66,79 +81,129 @@ classdef ProbeClass < FileLoadSaveClass
         
         
         % -------------------------------------------------------
-        function err = LoadHdf5(obj, fname, parent)
+        function ForwardCompatibility(obj)
+            if size(obj.sourcePos2D,2)<3
+                obj.sourcePos2D       = [obj.sourcePos2D, zeros(size(obj.sourcePos2D,1), 1)];
+            end
+            if size(obj.detectorPos2D,2)<3
+                obj.detectorPos2D     = [obj.detectorPos2D, zeros(size(obj.detectorPos2D,1), 1)];
+            end
+        end
+
+        
+        
+        % -------------------------------------------------------
+        function BackwardCompatibility(obj)
+            if isempty(obj.sourcePos2D)
+                obj.sourcePos2D   = HDF5_DatasetLoad(gid, 'sourcePos', [], '2D');
+            end
+            if isempty(obj.detectorPos2D)
+                obj.detectorPos2D = HDF5_DatasetLoad(gid, 'detectorPos', [], '2D');
+            end
+            if isempty(obj.landmarkPos2D)
+                obj.landmarkPos2D = HDF5_DatasetLoad(gid, 'landmarkPos', [], '2D');
+            end
+        end
+
+        
+        
+        % -------------------------------------------------------
+        function err = LoadHdf5(obj, fileobj, location)
             err = 0;
             
-            % Overwrite 1st argument if the property filename is NOT empty
-            if ~isempty(obj.filename)
-                fname = obj.filename;
-            end
-            
             % Arg 1
-            if ~exist('fname','var')
-                return;
+            if ~exist('fileobj','var') || (ischar(fileobj) && ~exist(fileobj,'file'))
+                fileobj = '';
             end
-            if ~exist(fname,'file')
-                return;
-            end
-            
+                        
             % Arg 2
-            if ~exist('parent', 'var')
-                parent = '/nirs/probe';
-            elseif parent(1)~='/'
-                parent = ['/',parent];
+            if ~exist('location', 'var') || isempty(location)
+                location = '/nirs/probe';
+            elseif location(1)~='/'
+                location = ['/',location];
             end
               
+            % Error checking            
+            if ~isempty(fileobj) && ischar(fileobj)
+                obj.filename = fileobj;
+            elseif isempty(fileobj)
+                fileobj = obj.filename;
+            end 
+            if isempty(fileobj)
+               err = -1;
+               return;
+            end
+            
             try
-                obj.wavelengths               = hdf5read_safe(fname, [parent, '/wavelengths'], obj.wavelengths);
-                obj.wavelengthsEmission       = hdf5read_safe(fname, [parent, '/wavelengthsEmission'], obj.wavelengthsEmission);
-                obj.sourcePos                 = hdf5read_safe(fname, [parent, '/sourcePos'], obj.sourcePos);
-                obj.detectorPos               = hdf5read_safe(fname, [parent, '/detectorPos'], obj.detectorPos);
-                obj.frequency                 = hdf5read_safe(fname, [parent, '/frequency'], obj.frequency);
-                obj.timeDelay                 = hdf5read_safe(fname, [parent, '/timeDelay'], obj.timeDelay);
-                obj.timeDelayWidth            = hdf5read_safe(fname, [parent, '/timeDelayWidth'], obj.timeDelayWidth);
-                obj.momentOrder               = hdf5read_safe(fname, [parent, '/momentOrder'], obj.momentOrder);
-                obj.correlationTimeDelay      = hdf5read_safe(fname, [parent, '/correlationTimeDelay'], obj.correlationTimeDelay);
-                obj.correlationTimeDelayWidth = hdf5read_safe(fname, [parent, '/correlationTimeDelayWidth'], obj.correlationTimeDelayWidth);
-                obj.sourceLabels              = h5read_safe(fname, [parent, '/sourceLabels'], obj.sourceLabels);
-                for ii=1:length(obj.sourceLabels)
-                    obj.sourceLabels{ii} = convertH5StrToStr(obj.sourceLabels{ii}); 
-                end
-                obj.detectorLabels            = h5read_safe(fname, [parent, '/detectorLabels'], obj.detectorLabels);
-                for ii=1:length(obj.detectorLabels)
-                    obj.detectorLabels{ii} = convertH5StrToStr(obj.detectorLabels{ii}); 
-                end
+                % Open group
+                [gid, fid] = HDF5_GroupOpen(fileobj, location);
+                
+                % Load datasets
+                obj.wavelengths               = HDF5_DatasetLoad(gid, 'wavelengths');
+                obj.wavelengthsEmission       = HDF5_DatasetLoad(gid, 'wavelengthsEmission');
+                obj.sourcePos2D               = HDF5_DatasetLoad(gid, 'sourcePos2D', [], '2D');
+                obj.detectorPos2D             = HDF5_DatasetLoad(gid, 'detectorPos2D', [], '2D');
+                obj.landmarkPos2D             = HDF5_DatasetLoad(gid, 'landmarkPos2D', [], '2D');
+                obj.sourcePos3D               = HDF5_DatasetLoad(gid, 'sourcePos3D', [], '2D');
+                obj.detectorPos3D             = HDF5_DatasetLoad(gid, 'detectorPos3D', [], '2D');
+                obj.frequencies               = HDF5_DatasetLoad(gid, 'frequencies');
+                obj.timeDelays                 = HDF5_DatasetLoad(gid, 'timeDelays');
+                obj.timeDelayWidths            = HDF5_DatasetLoad(gid, 'timeDelayWidths');
+                obj.momentOrder               = HDF5_DatasetLoad(gid, 'momentOrder');
+                obj.correlationTimeDelays      = HDF5_DatasetLoad(gid, 'correlationTimeDelays');
+                obj.correlationTimeDelayWidths = HDF5_DatasetLoad(gid, 'correlationTimeDelayWidths');
+                obj.sourceLabels              = HDF5_DatasetLoad(gid, 'sourceLabels', obj.sourceLabels);
+                obj.detectorLabels            = HDF5_DatasetLoad(gid, 'detectorLabels', obj.detectorLabels);
+                obj.landmarkLabels            = HDF5_DatasetLoad(gid, 'landmarkLabels', obj.landmarkLabels);
+                                
+                % Close group
+                HDF5_GroupClose(fileobj, gid, fid);
+                
+                assert(obj.IsValid())
+                
             catch 
                 err=-1;
                 return;
             end
-            obj.err = err;            
+            
+            % Call method to change future current and future versions of
+            % SNIRF data to Homer3 compatible structure
+            obj.ForwardCompatibility();
+            
         end
 
         
+        
         % -------------------------------------------------------
-        function SaveHdf5(obj, fname, parent)
+        function SaveHdf5(obj, fileobj, location)
             % Arg 1
-            if ~exist('fname', 'var') || isempty(fname)
+            if ~exist('fileobj', 'var') || isempty(fileobj)
                 error('Unable to save file. No file name given.')
             end
             
-            if ~exist(fname, 'file')
-                fid = H5F.create(fname, 'H5F_ACC_TRUNC', 'H5P_DEFAULT', 'H5P_DEFAULT');
+            % Arg 2
+            if ~exist('location', 'var') || isempty(location)
+                location = '/nirs/probe';
+            elseif location(1)~='/'
+                location = ['/',location];
+            end
+            
+            if ~exist(fileobj, 'file')
+                fid = H5F.create(fileobj, 'H5F_ACC_TRUNC', 'H5P_DEFAULT', 'H5P_DEFAULT');
                 H5F.close(fid);
             end     
-            hdf5write_safe(fname, [parent, '/wavelengths'], obj.wavelengths);
-            hdf5write_safe(fname, [parent, '/wavelengthsEmission'], obj.wavelengthsEmission);
-            h5write_safe(fname, [parent, '/sourcePos'], obj.sourcePos);
-            h5write_safe(fname, [parent, '/detectorPos'], obj.detectorPos);
-            hdf5write(fname, [parent, '/frequency'], obj.frequency, 'WriteMode','append');
-            hdf5write(fname, [parent, '/timeDelay'], obj.timeDelay, 'WriteMode','append');
-            hdf5write(fname, [parent, '/timeDelayWidth'], obj.timeDelayWidth, 'WriteMode','append');
-            hdf5write_safe(fname, [parent, '/momentOrder'], obj.momentOrder);
-            hdf5write(fname, [parent, '/correlationTimeDelay'], obj.correlationTimeDelay, 'WriteMode','append');
-            hdf5write(fname, [parent, '/correlationTimeDelayWidth'], obj.correlationTimeDelayWidth, 'WriteMode','append');
-            hdf5write_safe(fname, [parent, '/sourceLabels'], obj.sourceLabels);
-            hdf5write_safe(fname, [parent, '/detectorLabels'], obj.detectorLabels);
+            hdf5write_safe(fileobj, [location, '/wavelengths'], obj.wavelengths);
+            hdf5write_safe(fileobj, [location, '/wavelengthsEmission'], obj.wavelengthsEmission);
+            hdf5write_safe(fileobj, [location, '/sourcePos2D'], obj.sourcePos2D(:,1:2), 'rw:2D');
+            hdf5write_safe(fileobj, [location, '/detectorPos2D'], obj.detectorPos2D(:,1:2), 'rw:2D');
+            hdf5write_safe(fileobj, [location, '/frequencies'], obj.frequencies);
+            hdf5write_safe(fileobj, [location, '/timeDelays'], obj.timeDelays);
+            hdf5write_safe(fileobj, [location, '/timeDelayWidths'], obj.timeDelayWidths);
+            hdf5write_safe(fileobj, [location, '/momentOrder'], obj.momentOrder);
+            hdf5write_safe(fileobj, [location, '/correlationTimeDelays'], obj.correlationTimeDelays);
+            hdf5write_safe(fileobj, [location, '/correlationTimeDelayWidths'], obj.correlationTimeDelayWidths);
+            hdf5write_safe(fileobj, [location, '/sourceLabels'], obj.sourceLabels);
+            hdf5write_safe(fileobj, [location, '/detectorLabels'], obj.detectorLabels);
         end
         
         
@@ -152,13 +217,13 @@ classdef ProbeClass < FileLoadSaveClass
         
         % ---------------------------------------------------------
         function srcpos = GetSrcPos(obj)
-            srcpos = obj.sourcePos;
+            srcpos = obj.sourcePos2D;
         end
         
         
         % ---------------------------------------------------------
         function detpos = GetDetPos(obj)
-            detpos = obj.detectorPos;
+            detpos = obj.detectorPos2D;
         end
         
         
@@ -171,28 +236,28 @@ classdef ProbeClass < FileLoadSaveClass
             if ~all(obj.wavelengthsEmission(:)==obj2.wavelengthsEmission(:))
                 return;
             end
-            if ~all(obj.sourcePos(:)==obj2.sourcePos(:))
+            if ~all(obj.sourcePos2D(:)==obj2.sourcePos2D(:))
                 return;
             end
-            if ~all(obj.detectorPos(:)==obj2.detectorPos(:))
+            if ~all(obj.detectorPos2D(:)==obj2.detectorPos2D(:))
                 return;
             end
-            if ~all(obj.frequency(:)==obj2.frequency(:))
+            if ~all(obj.frequencies(:)==obj2.frequencies(:))
                 return;
             end
-            if ~all(obj.timeDelay(:)==obj2.timeDelay(:))
+            if ~all(obj.timeDelays(:)==obj2.timeDelays(:))
                 return;
             end
-            if ~all(obj.timeDelayWidth(:)==obj2.timeDelayWidth(:))
+            if ~all(obj.timeDelayWidths(:)==obj2.timeDelayWidths(:))
                 return;
             end
             if ~all(obj.momentOrder(:)==obj2.momentOrder(:))
                 return;
             end
-            if ~all(obj.correlationTimeDelay(:)==obj2.correlationTimeDelay(:))
+            if ~all(obj.correlationTimeDelays(:)==obj2.correlationTimeDelays(:))
                 return;
             end
-            if ~all(obj.correlationTimeDelayWidth(:)==obj2.correlationTimeDelayWidth(:))
+            if ~all(obj.correlationTimeDelayWidths(:)==obj2.correlationTimeDelayWidths(:))
                 return;
             end
             if length(obj.sourceLabels)~=length(obj2.sourceLabels)
@@ -222,7 +287,47 @@ classdef ProbeClass < FileLoadSaveClass
             for ii=1:length(fields)
                 nbytes = nbytes + eval(sprintf('sizeof(obj.%s)', fields{ii}));
             end
-        end        
+        end
+        
+        
+        % ----------------------------------------------------------------------------------
+        function b = IsEmpty(obj)
+            b = true;
+            if isempty(obj.wavelengths)
+                return;
+            end
+            if isempty(obj.sourcePos2D) && isempty(obj.detectorPos2D) && ...
+                    isempty(obj.sourcePos3D) && isempty(obj.detectorPos3D) 
+                return;
+            end
+            b = false;
+        end
+
+        
+        % ----------------------------------------------------------------------------------
+        function b = IsValid(obj)
+            b = false;
+            if obj.IsEmpty()
+                return;
+            end
+            if iscolumn(obj.sourcePos2D)
+                return;
+            end
+            if length(obj.sourcePos2D)>4
+                if size(obj.sourcePos2D,2) > size(obj.sourcePos2D,1)
+                    return;
+                end
+            end
+            if iscolumn(obj.detectorPos2D)
+                return;
+            end
+            if length(obj.detectorPos2D)>4
+                if size(obj.detectorPos2D,2) > size(obj.detectorPos2D,1)
+                    return;
+                end
+            end
+            b = true;
+        end
         
     end
     
