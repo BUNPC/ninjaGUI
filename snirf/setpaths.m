@@ -1,4 +1,4 @@
-function setpaths(options)
+function setpaths(option)
 
 %
 % USAGE: 
@@ -8,42 +8,24 @@ function setpaths(options)
 %   setpaths(0)
 %
 
-currpaths = regexp(path, pathsep, 'split');
-
-p = genpath('.');
-newpaths = regexp(p, pathsep, 'split');
-
-% Parse arguments
-if ~exist('options','var')
-    options = 1;
+if ~exist('option','var')
+    option = 1;
 end
-
-
-
-for ii=1:length(newpaths)
-    if isempty(newpaths{ii})
-        continue;
-    end
+setpathsPath = which('setpaths');
+rootdir = fileparts(setpathsPath);
+p = { 
+    'Snirf';
+    'Snirf/Examples';
+    'Utils';
+    'Utils/Hdf5';
+    };
     
-    p = fullpath(newpaths{ii}, 'native');
-    if p(end)==filesep
-        p(end)='';
-    end
-    
-    if exist(p, 'dir') ~= 7
-        continue;
-    end
-    
-    if options
-        if ismember(p, currpaths)
-            continue;
-        end
-        addpath(p, '-end')
+for ii = 1:length(p)
+    pname = [rootdir, '/', p{ii}];
+    if option
+        addpath(pname, '-end');
     else
-        if ~ismember(p, currpaths)
-            continue;
-        end
-        rmpath(p)
+        rmpath(pname);
     end
 end
 

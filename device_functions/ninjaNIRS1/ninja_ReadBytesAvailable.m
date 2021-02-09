@@ -43,25 +43,21 @@ Kernel=exp(-1i*(2*pi/DFT_N)*KD(1:N_FREQ));
 
 %% read bytes available as a multiple of bytes in the buffer and number of optodes (and aux)
 
-ba=s.BytesAvailable;
-
-%this code helps prevent reading incomplete data packages
-npacks=20;   %making this constant larger means we read more packets at a time, reducing processing overhead, but making it too large will affect refresh rate
-rb=floor(ba/N_BYTES_TO_READ_PER_SAMPLE/N_OPTODES/npacks)*N_BYTES_TO_READ_PER_SAMPLE*N_OPTODES*npacks;
+rb=s.NumBytesAvailable;
 
 %triggers=[];
 
 if rb>0
-    raw = fread(s,rb,'uchar');
+    raw = read(s,rb,'uint8')';
     if ~isempty(fID)
         fwrite(fID,raw,'uchar');
     end
-else
+else    
     data=[];
     packlen=0;
     datac=[];
     statusdata=[];
-    remainderbytes=[];
+    remainderbytes=prevrbytes;         
     return;
 end
 statusdata=[];
@@ -77,7 +73,6 @@ packC=indicator-1;   %potential initial positions of data packets
 packC(packC==0)=[];  %this means we missed the initial byte of one data packet
 
 %% now, find candidate data packages by making sure the previous byte to the indicator corresponds to one of the optodes
-
 pDatap=packC(raw(packC)>=0&raw(packC)<N_OPTODES); %possible detector positions
 
 %% now look for the stop bytes; if they don't have them, then they are not data packages
@@ -115,18 +110,25 @@ maxaccpackpos=max(max(maxaccpackpos),max(accind));
 
 % accelerometer decoding
 if ~isempty(maxaccpackpos)
-    try
+    try        
         acc=raw(pAccp-1+(4:2:10))*256+raw(pAccp-1+(5:2:11));
+        if length(pAccp)==1
+            acc=acc';
+        end
     catch
         disp('bug 0')
     end
     acc(acc>(2^15-1))=acc(acc>(2^15-1))-2^16;
     try
         acc(:,1:3)=acc(:,1:3)/4* 0.488 /1000;
-    catch
-        disp('Bug line 125')
+    catch ME
+        disp(ME.meesage)
     end
+    try
     acc(:,4)=acc(:,4)/256+25; %this is actually temperature
+    catch ME
+        disp(ME.meesage)
+    end
     acc(:,5)=raw(pAccp-1+12);
     %triggers=raw(pAccp-1+12); %remote trigger byte; 0 means no trigger happened
 else
@@ -146,8 +148,6 @@ ML=SD.measList;
 maxsampN=ceil(length(pDatap)); %I modified the last line for an extreme case in which some optodes are not sending data; not sure if it's a good idea because it might create unnecessarily large data buffers
 datac=complex(nan(N_OPTODES,maxsampN,N_FREQ)); %complex data buffer
 data=nan(size(ML,1)+nAux,maxsampN); %buffer for intensity data
-
-
 
 %% decode the optode data packets
 databm=complex(nan(maxsampN,N_FREQ));
@@ -172,8 +172,8 @@ for k=0:N_OPTODES-1
     
     dataindk=indik;
     dataindk(sbreaks)=[];  %remove the sequence breaking packages
-    
-    maxdatapackpos=max(max(maxdatapackpos),max(dataindk));
+
+    maxdatapackpos=max([maxdatapackpos;max(dataindk)]);
     
     %the previous code is also potentially losing the last data point, but
     %1) doing that prevents errors, 2) it also prevents errors in the
@@ -212,8 +212,6 @@ end
 %% the following code determines which of the frequencies from which optode
 % %% we are interested in, based on the experimental design on SD
 
-
-
 % there is probably a way to vectorize this
 frequs=zeros(size(ML,1),1);
 for k=1:size(ML,1)
@@ -232,8 +230,9 @@ end
 
 finalbyteuseddata=max(maxdatapackpos)+N_BYTES_TO_READ_PER_SAMPLE-1;
 finalbyteusedacc=max(maxaccpackpos)+N_ACC_BYTES-1;
-finalbyteused=max(finalbyteusedacc,finalbyteuseddata);
+finalbyteused=max([finalbyteusedacc,finalbyteuseddata]);
 remainderbytes=raw(finalbyteused+1:end); %these bytesshould be appended to beggining of next stream
+
 
 %% finally, prepare data output
 
