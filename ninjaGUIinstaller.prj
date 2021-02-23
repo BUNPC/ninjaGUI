@@ -1,9 +1,9 @@
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration build-checksum="1016624396" file="C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\ninjaGUI\ninjaGUIinstaller.prj" location="C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\ninjaGUI" name="ninjaGUIinstaller" preferred-package-location="C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\ninjaGUIdev\ninjaGUIinstaller\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="Application Compiler">
+  <configuration build-checksum="1291544291" file="C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\ninjaGUI\ninjaGUIinstaller.prj" location="C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\ninjaGUI" name="ninjaGUIinstaller" preferred-package-location="C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\ninjaGUIdev\ninjaGUIinstaller\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="Application Compiler">
     <param.appname>ninjaGUI</param.appname>
     <param.icon />
     <param.icons />
-    <param.version>1.4</param.version>
+    <param.version>1.75</param.version>
     <param.authnamewatermark>Antonio Ortega</param.authnamewatermark>
     <param.email>aortegam@bu.edu</param.email>
     <param.company>Boston University</param.company>
@@ -75,29 +75,12 @@
       <file>${PROJECT_ROOT}\device_functions</file>
       <file>${PROJECT_ROOT}\liblsl-Matlab</file>
       <file>${PROJECT_ROOT}\snirf</file>
-      <file>${PROJECT_ROOT}\snirf\AcqDataClass.m</file>
-      <file>${PROJECT_ROOT}\snirf\cd_safe.m</file>
-      <file>${PROJECT_ROOT}\snirf\fullpath.m</file>
-      <file>${PROJECT_ROOT}\snirf\pretty_print_struct.m</file>
       <file>${PROJECT_ROOT}\snirf\README.md</file>
       <file>${PROJECT_ROOT}\snirf\setpaths.m</file>
     </fileset.resources>
     <fileset.package />
     <fileset.depfun>
       <file>${MATLAB_ROOT}\toolbox\local\userpath.m</file>
-      <file>C:\Users\Antonio\Documents\MATLAB\work\BU\AtlasViewer\Utils\ConfigFileClass.m</file>
-      <file>C:\Users\Antonio\Documents\MATLAB\work\BU\AtlasViewer\Utils\convertToStandardPath.m</file>
-      <file>C:\Users\Antonio\Documents\MATLAB\work\BU\AtlasViewer\Utils\filesepStandard.m</file>
-      <file>C:\Users\Antonio\Documents\MATLAB\work\BU\AtlasViewer\Utils\getAppDir_av.m</file>
-      <file>C:\Users\Antonio\Documents\MATLAB\work\BU\AtlasViewer\Utils\guiOutsideScreenBorders.m</file>
-      <file>C:\Users\Antonio\Documents\MATLAB\work\BU\AtlasViewer\Utils\isalnum.m</file>
-      <file>C:\Users\Antonio\Documents\MATLAB\work\BU\AtlasViewer\Utils\ishandles.m</file>
-      <file>C:\Users\Antonio\Documents\MATLAB\work\BU\AtlasViewer\Utils\ispathvalid.m</file>
-      <file>C:\Users\Antonio\Documents\MATLAB\work\BU\AtlasViewer\Utils\MenuBox.m</file>
-      <file>C:\Users\Antonio\Documents\MATLAB\work\BU\AtlasViewer\Utils\nearest_point.m</file>
-      <file>C:\Users\Antonio\Documents\MATLAB\work\BU\AtlasViewer\Utils\setGuiFonts.m</file>
-      <file>C:\Users\Antonio\Documents\MATLAB\work\BU\AtlasViewer\Utils\sprintf_waitbar.m</file>
-      <file>C:\Users\Antonio\Documents\MATLAB\work\BU\AtlasViewer\Utils\waitbar_improved.m</file>
       <file>${PROJECT_ROOT}\fNIRSapp.mlapp</file>
       <file>${PROJECT_ROOT}\GetExtinctions.m</file>
       <file>${PROJECT_ROOT}\hardwareselect.mlapp</file>
@@ -110,8 +93,15 @@
     </build-deliverables>
     <workflow />
     <matlab>
-      <root>C:\Program Files\MATLAB\R2020a</root>
-      <toolboxes />
+      <root>C:\Program Files\MATLAB\R2020b</root>
+      <toolboxes>
+        <toolbox name="neuralnetwork" />
+      </toolboxes>
+      <toolbox>
+        <neuralnetwork>
+          <enabled>true</enabled>
+        </neuralnetwork>
+      </toolbox>
     </matlab>
     <platform>
       <unix>false</unix>

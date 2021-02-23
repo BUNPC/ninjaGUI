@@ -1,5 +1,10 @@
-function [dataoutput,packlen,remainderbytes,datac,statusdata]=fNIRS1k_ReadBytesAvailable(s,dev,SD,prevrbytes,fID)
-% Reads the serial port for a NIRS1k device. s is the serial port object.
+function [data,packlen,remainderbytes,datac,statusdata]=ninja_ReadBytesAvailable(s,dev,SD,prevrbytes,fID)
+% Reads the serial port for a ninjaNIRS 2021a device. 
+% The firmware for this version is very different and it's based on NIRS1k
+% with some differences, such as customizable frequencies and two power
+% levels for the LEDs. Thus, this function is almost a copy/paste of the
+% NIRS1k function.
+%s is the serial port object.
 % dev is there just to specify the number of detectors and auxs
 % SD is the sd struct to determine which channels we are actually
 % interested in
@@ -20,6 +25,7 @@ function [dataoutput,packlen,remainderbytes,datac,statusdata]=fNIRS1k_ReadBytesA
 % beginning of the new data stream
 % fID is used to stream the serial bytes straight to file in
 % case there is an application crash. That way the data can be recovered.
+
 
 %% hardware constants
 N_OPTODES=dev.nDets;
@@ -218,5 +224,3 @@ dataoutput=[data;auxb];
 dataoutput=dataoutput(:,~all(isnan(dataoutput))); %eliminate columns with no data
 
 packlen=sum(~isnan(dataoutput),2);  %number of samples in data package
-
-
