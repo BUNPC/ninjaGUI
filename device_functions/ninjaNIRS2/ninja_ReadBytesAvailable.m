@@ -1,4 +1,4 @@
-function [data,packlen,remainderbytes,datac,statusdata]=ninja_ReadBytesAvailable(s,dev,SD,prevrbytes,fID)
+function [dataoutput,packlen,remainderbytes,datac,statusdata]=ninja_ReadBytesAvailable(s,dev,SD,prevrbytes,fID)
 % Reads the serial port for a ninjaNIRS 2021a device. 
 % The firmware for this version is very different and it's based on NIRS1k
 % with some differences, such as customizable frequencies and two power

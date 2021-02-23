@@ -52,11 +52,11 @@ switch HW
         %command words are written for this device; we cannot control each
         %individually nor without sending a command to the ACQ. 
         
-        comms.SourceNOn=@(app,N,L)[254 0 0 0 0 255-255 255-255 bin2dec(num2str(flipud(app.LEDstate)'))' app.active];  %Turns on source N at level L: L=0 off, L=1 high, L=-1 low
-        comms.SourceNOff=@(app,N)[254 0 0 0 0 255-255 255-255 bin2dec(num2str(flipud(app.LEDstate)'))' app.active];  %Turns off source N
-        comms.SourceNIndL=@(app,N,L)[254 0 0 0 0 255-255 255-255 bin2dec(num2str(flipud(app.LEDstate)'))' app.active];  %Only one level allowed, so L is not used in this
-        comms.Start=@(app)[254 0 0 0 0 0 0 bin2dec(num2str(flipud(app.LEDstate)'))' 1]; %command to start acquisition
-        comms.Stop=@(app)[254 0 0 0 0 0 0 bin2dec(num2str(flipud(app.LEDstate)'))' 0]; %command to stop acquisition
+        comms.SourceNOn=@(app,N,L)[254 0 0 0 0 255-255 255-255 fliplr(bin2dec(num2str(flipud(app.LEDstate)'))') 2+app.active];  %Turns on source N at level L: L=0 off, L=1 high, L=-1 low
+        comms.SourceNOff=@(app,N)[254 0 0 0 0 255-255 255-255 fliplr(bin2dec(num2str(flipud(app.LEDstate)'))') 2+app.active];  %Turns off source N
+        comms.SourceNIndL=@(app,N,L)[254 0 0 0 0 255-255 255-255 fliplr(bin2dec(num2str(flipud(app.LEDstate)'))') 2+app.active];  %Only one level allowed, so L is not used in this
+        comms.Start=@(app)[254 0 0 0 0 0 0 fliplr(bin2dec(num2str(flipud(app.LEDstate)'))') 3]; %command to start acquisition
+        comms.Stop=@(app)[254 0 0 0 0 0 0 fliplr(bin2dec(num2str(flipud(app.LEDstate)'))') 2]; %command to stop acquisition
     case {'ninjaNIRS','ninjaNIRS2020'}
         SP.BaudRate=4e6;
         SP.Parity='none';
