@@ -73,6 +73,7 @@ switch devType
         %newSrcId
         nSD.measList=SD.MeasList;
         nSD.measList(:,1)=newSrcId(SD.MeasList(:,1));
+        nSD.newSrcId=newSrcId; %new variable; each row indicates what the sources were renumbered to; for example, if there is a 5 in position 10, it means source 10 in the original design was renumbered as 5
         
         %now, the source and detector positions are simply the optode
         %positions with an offset (as the sources and detectors are
