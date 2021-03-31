@@ -190,14 +190,14 @@ for k=0:N_OPTODES-1
             indi1=dataindk(m):(dataindk(m)+N_BYTES_TO_READ_PER_SAMPLE-1); %indices for package
         catch ME
             disp('Gathering error information')
-            BytesAvail_When_error=app.sp.NumBytesAvailable; %was there data in the buffer?
+            BytesAvail_When_error=s.NumBytesAvailable; %was there data in the buffer?
      
-            pause(.1)
-            BytesAvail_When_error_2=app.sp.NumBytesAvailable; %is data still coming after error
+            pause(.05)
+            BytesAvail_When_error_2=s.NumBytesAvailable; %is data still coming after error
             %write(app.sp,[1,255,197],"uint8");
             
             errorLog.BytesAvail_When_error=BytesAvail_When_error;
-            errorLog.BytesAvail_When_error=BytesAvail_When_error_2;
+            errorLog.BytesAvail_When_error2=BytesAvail_When_error_2;
             errorLog.dataindk_causingerror=dataindk;
             errorLog.ME=ME;
             errorLog.raw=raw;
@@ -209,7 +209,7 @@ for k=0:N_OPTODES-1
             packlen=0;
             datac=[];
             statusdata=[];
-            remainderbytes=prevrbytes;
+            remainderbytes=raw;
             return;
             
             %disp(ME)
