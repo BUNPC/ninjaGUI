@@ -50,7 +50,7 @@ rb=s.NumBytesAvailable;
 if rb>0
     raw = read(s,rb,'uint8')';
     if ~isempty(fID)
-        fwrite(fID,raw,'uchar');
+        write(fID,raw,'uchar');
     end
 else    
     data=[];
@@ -205,6 +205,9 @@ for k=0:N_OPTODES-1
             save(['error_ninjaGUI_',datestr(now,'yyyy-MM-dd-HH-mm-ss')],'errorLog')            
             
             %try to recover
+            write(s,[1 255 198],"uint8"); %stop acquisition
+            pause(0.5)  %pause 0.5 seconds
+            write(s,[1 255 197],"uint8"); %restart acquisition                        
             data=[];
             packlen=0;
             datac=[];
