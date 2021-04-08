@@ -39,7 +39,7 @@ N_BYTES_TO_READ_PER_SAMPLE=N_WORDS_PER_DFT * N_BYTES_IN_DFT_WORD * (N_FREQ+1) +5
 
 %% DFT constants and data offsets
 
-DFT_N=512;
+DFT_N=1024;
 KD = [56 60 64 70 80 84 96 105]; % demodulation k
 
 offsetA = (0:N_FREQ-1)*N_BYTES_IN_DFT_WORD*N_WORDS_PER_DFT +3;

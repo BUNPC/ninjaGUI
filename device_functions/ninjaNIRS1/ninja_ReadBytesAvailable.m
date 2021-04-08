@@ -50,7 +50,7 @@ rb=s.NumBytesAvailable;
 if rb>0
     raw = read(s,rb,'uint8')';
     if ~isempty(fID)
-        write(fID,raw,'uchar');
+        fwrite(fID,raw,'uchar');
     end
 else    
     data=[];
@@ -206,13 +206,14 @@ for k=0:N_OPTODES-1
             
             %try to recover
             write(s,[1 255 198],"uint8"); %stop acquisition
+            flush(s);  %flush buffer
             pause(0.5)  %pause 0.5 seconds
             write(s,[1 255 197],"uint8"); %restart acquisition                        
             data=[];
             packlen=0;
             datac=[];
             statusdata=[];
-            remainderbytes=raw;
+            remainderbytes=[];  %assume the bytes I read were bad and discard them
             return;
             
             %disp(ME)
