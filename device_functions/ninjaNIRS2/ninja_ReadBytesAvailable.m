@@ -205,7 +205,7 @@ end
 %% select which data channels we are actually interested in based on sd file
 
 
-frequs=2*(ML(:,1)-1)+(3-ML(:,4));  %frequencies are fixed per source, so easy to calculate
+frequs=2*(ML(:,1)-1)+ML(:,4);  %frequencies are fixed per source, so easy to calculate
 
 for k=1:size(ML,1)
     data(k,:)=abs(datac(ML(k,2),:,frequs(k)));
