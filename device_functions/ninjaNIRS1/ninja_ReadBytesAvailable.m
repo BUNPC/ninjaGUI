@@ -186,7 +186,39 @@ for k=0:N_OPTODES-1
     
     for m=1:mLength
         %% I need to convert the data package to intensity data
-        indi1=dataindk(m):(dataindk(m)+N_BYTES_TO_READ_PER_SAMPLE-1); %indices for package
+        try
+            indi1=dataindk(m):(dataindk(m)+N_BYTES_TO_READ_PER_SAMPLE-1); %indices for package
+        catch ME
+            disp('Gathering error information')
+            BytesAvail_When_error=s.NumBytesAvailable; %was there data in the buffer?
+     
+            pause(.05)
+            BytesAvail_When_error_2=s.NumBytesAvailable; %is data still coming after error
+            %write(app.sp,[1,255,197],"uint8");
+            
+            errorLog.BytesAvail_When_error=BytesAvail_When_error;
+            errorLog.BytesAvail_When_error2=BytesAvail_When_error_2;
+            errorLog.dataindk_causingerror=dataindk;
+            errorLog.ME=ME;
+            errorLog.raw=raw;
+            errorLog.prevrbytes=prevrbytes;
+            save(['error_ninjaGUI_',datestr(now,'yyyy-MM-dd-HH-mm-ss')],'errorLog')            
+            
+            %try to recover
+            write(s,[1 255 198],"uint8"); %stop acquisition
+            flush(s);  %flush buffer
+            pause(0.5)  %pause 0.5 seconds
+            write(s,[1 255 197],"uint8"); %restart acquisition                        
+            data=[];
+            packlen=0;
+            datac=[];
+            statusdata=[];
+            remainderbytes=[];  %assume the bytes I read were bad and discard them
+            return;
+            
+            %disp(ME)
+            
+        end
         
         if all(indi1<=rawN)  %this check is to avoid incomplete data packages
             rawp=raw(indi1,:);

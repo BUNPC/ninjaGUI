@@ -1,3 +1,4 @@
 
-ninjaNIRS
+ninjaNIRS2020
+ninjaNIRS2021a
 NIRS1k

@@ -1,5 +1,10 @@
-function [dataoutput,packlen,remainderbytes,datac,statusdata]=fNIRS1k_ReadBytesAvailable(s,dev,SD,prevrbytes,fID)
-% Reads the serial port for a NIRS1k device. s is the serial port object.
+function [dataoutput,packlen,remainderbytes,datac,statusdata]=ninja_ReadBytesAvailable(s,dev,SD,prevrbytes,fID)
+% Reads the serial port for a ninjaNIRS 2021a device. 
+% The firmware for this version is very different and it's based on NIRS1k
+% with some differences, such as customizable frequencies and two power
+% levels for the LEDs. Thus, this function is almost a copy/paste of the
+% NIRS1k function.
+%s is the serial port object.
 % dev is there just to specify the number of detectors and auxs
 % SD is the sd struct to determine which channels we are actually
 % interested in
@@ -21,6 +26,7 @@ function [dataoutput,packlen,remainderbytes,datac,statusdata]=fNIRS1k_ReadBytesA
 % fID is used to stream the serial bytes straight to file in
 % case there is an application crash. That way the data can be recovered.
 
+
 %% hardware constants
 N_OPTODES=dev.nDets;
 N_WORDS_PER_DFT = 2;
@@ -33,7 +39,7 @@ N_BYTES_TO_READ_PER_SAMPLE=N_WORDS_PER_DFT * N_BYTES_IN_DFT_WORD * (N_FREQ+1) +5
 
 %% DFT constants and data offsets
 
-DFT_N=512;
+DFT_N=1024;
 KD = [56 60 64 70 80 84 96 105]; % demodulation k
 
 offsetA = (0:N_FREQ-1)*N_BYTES_IN_DFT_WORD*N_WORDS_PER_DFT +3;
@@ -199,7 +205,7 @@ end
 %% select which data channels we are actually interested in based on sd file
 
 
-frequs=2*(ML(:,1)-1)+(3-ML(:,4));  %frequencies are fixed per source, so easy to calculate
+frequs=2*(ML(:,1)-1)+ML(:,4);  %frequencies are fixed per source, so easy to calculate
 
 for k=1:size(ML,1)
     data(k,:)=abs(datac(ML(k,2),:,frequs(k)));
@@ -218,5 +224,3 @@ dataoutput=[data;auxb];
 dataoutput=dataoutput(:,~all(isnan(dataoutput))); %eliminate columns with no data
 
 packlen=sum(~isnan(dataoutput),2);  %number of samples in data package
-
-
