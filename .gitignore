@@ -16,3 +16,4 @@ device_functions/fNIRS1kv1/matlab.mat
 device_functions/fNIRS1kv1/probe_test_2021.nsd
 matlab.mat
 device_functions/ninjaNIRS2/ninja_ReadBytesAvailable.asv
+dummy.mat
