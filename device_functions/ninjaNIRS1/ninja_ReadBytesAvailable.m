@@ -1,4 +1,4 @@
-function [data,packlen,remainderbytes,datac,statusdata]=ninja_ReadBytesAvailable(s,dev,SD,prevrbytes,fID)
+function [data,packlen,remainderbytes,datac,statusdata,maxvout,avgvout]=ninja_ReadBytesAvailable(s,dev,SD,prevrbytes,fID)
 % Reads the serial port for a ninjaNIRS device. It reads N_Optodes
 % sequentially. That means that if data is out of order data will be lost
 % (for example, is the data arrive to the buffer in the order 12314234, the
@@ -38,6 +38,8 @@ wordpos=1:N_BYTES_IN_DFT_WORD;
 [Foo2,Bar2]=meshgrid(wordpos,offsetB);
 part1=Foo1+Bar1;
 part2=Foo2+Bar2;
+part3=max(part2(:));
+part4=part3 + N_BYTES_IN_DFT_WORD;
 powso256=256.^(0:N_BYTES_IN_DFT_WORD-1);
 Kernel=exp(-1i*(2*pi/DFT_N)*KD(1:N_FREQ));
 
@@ -53,6 +55,8 @@ if rb>0
         fwrite(fID,raw,'uchar');
     end
 else    
+    maxvout=[];
+    avgvout=[];
     data=[];
     packlen=0;
     datac=[];
@@ -152,6 +156,8 @@ data=nan(size(ML,1)+nAux,maxsampN); %buffer for intensity data
 %% decode the optode data packets
 databm=complex(nan(maxsampN,N_FREQ));
 maxdatapackpos=0;
+maxvout=nan(N_OPTODES,size(databm,1));
+avgvout=nan(N_OPTODES,size(databm,1));
 for k=0:N_OPTODES-1
     indik=pDatap(raw(pDatap)==k);  %contain the indices of the potential data packages on raw for optode k
     
@@ -231,16 +237,21 @@ for k=0:N_OPTODES-1
             pnm0(indi)=pnm0(indi)-2^40;
             %             datab(k+1,m,:)=pnm0 - Kernel.*pnm1;
             databm(m,:)=pnm0 - Kernel.*pnm1;
+            try
+                maxvout(k+1,m)=sum(rawp((1:N_BYTES_IN_DFT_WORD) + part3).* powso256');
+                avgvout(k+1,m) = sum(rawp((1:N_BYTES_IN_DFT_WORD) + part4).* powso256')/DFT_N;             
+            catch ME
+                disp(ME.message)
+            end
         end
     end
     %toc
     try
         datac(k+1,:,:)=databm;
-    catch
-        disp('bug 1')
+    catch ME
+        disp(ME.message)
     end
 end
-
 %% the following code determines which of the frequencies from which optode
 % %% we are interested in, based on the experimental design on SD
 
@@ -267,6 +278,14 @@ remainderbytes=raw(finalbyteused+1:end); %these bytesshould be appended to beggi
 
 
 %% finally, prepare data output
+avgvout=avgvout(:,~all(isnan(avgvout)));
+maxvout=maxvout(:,~all(isnan(maxvout)));
+
+avgvout=avgvout(ML(:,2),:);
+maxvout=maxvout(ML(:,2),:);
+
+avgvout=[avgvout;nan(nAux,size(avgvout,2))];
+maxvout=[maxvout;nan(nAux,size(maxvout,2))];
 
 data=data(:,~all(isnan(data))); %eliminate columns with no data
 packlen=sum(~isnan(data),2);  %number of samples in data package per channel; the accelerometer channels will always have an equal number of samples, but I will still broadcast for each individual channel for simplicity
