@@ -2,6 +2,11 @@
 *.nirs
 *.bin
 *.snirf
+*.asv
+*.cfg
+*.sd
+*.nsd
+*.prj
 ninja12testB.nsd
 ninja12test.nsd
 configninja12com7.cfg
@@ -17,3 +22,8 @@ device_functions/fNIRS1kv1/probe_test_2021.nsd
 matlab.mat
 device_functions/ninjaNIRS2/ninja_ReadBytesAvailable.asv
 dummy.mat
+config24optodescom7.cfg
+config2021a_fake.cfg
+config24optodescom11.cfg
+config24optodescom3.cfg
+config12aux.cfg
