@@ -190,6 +190,8 @@ for m=1:length(pAux)
     end
 end
 
+auxb=3.3*auxb/(2^16-1);
+
 %% now decode the remote board packages
 
 %identify remote board packets
