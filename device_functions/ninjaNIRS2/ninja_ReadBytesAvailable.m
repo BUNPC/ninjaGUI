@@ -1,4 +1,4 @@
-function [dataoutput,packlen,remainderbytes,datac,statusdata]=ninja_ReadBytesAvailable(s,dev,SD,prevrbytes,fID)
+function [dataoutput,packlen,remainderbytes,datac,statusdata,maxvout,avgvout]=ninja_ReadBytesAvailable(s,dev,SD,prevrbytes,fID)
 % Reads the serial port for a ninjaNIRS 2021a device. 
 % The firmware for this version is very different and it's based on NIRS1k
 % with some differences, such as customizable frequencies and two power
@@ -64,6 +64,8 @@ if rb>0
     end
 else
     dataoutput=[];
+    maxvout=[];
+    avgvout=[];
     packlen=0;
     datac=[];
     statusdata=[];
@@ -109,6 +111,8 @@ data=nan(size(ML,1),maxsampN); %buffer for intensity data
 %% decode the optode data packets
 databm=complex(nan(maxsampN,N_FREQ));
 maxdatapackpos=0;
+maxvout=nan(N_OPTODES,size(databm,1));
+avgvout=nan(N_OPTODES,size(databm,1));
 for k=0:N_OPTODES-1
     indik=pDatap(raw(pDatap)==k);  %contain the indices of the potential data packages on raw for optode k
     seqk=raw(min(indik+2,end));  %contains the sequence data of potential data package; real data packages should be on a consecutive sequence
@@ -149,6 +153,12 @@ for k=0:N_OPTODES-1
             indi=pnm0>(2^39-1);
             pnm0(indi)=pnm0(indi)-2^40;
             databm(m,:)=pnm0 - Kernel.*pnm1;
+            try
+                maxvout(k+1,m)=sum(rawp((1:N_BYTES_IN_DFT_WORD) + part3).* powso256');
+                avgvout(k+1,m) = sum(rawp((1:N_BYTES_IN_DFT_WORD) + part4).* powso256')/DFT_N;             
+            catch ME
+                disp(ME.message)
+            end
         end
     end
     datac(k+1,:,:)=databm;
@@ -218,6 +228,15 @@ remainderbytes=raw(finalbyteused+1:end); %these bytesshould be appended to beggi
 
 
 %% finally, prepare data output
+
+avgvout=avgvout(:,~all(isnan(avgvout)));
+maxvout=maxvout(:,~all(isnan(maxvout)));
+
+avgvout=avgvout(ML(:,2),:);
+maxvout=maxvout(ML(:,2),:);
+
+avgvout=[avgvout;nan(nAux,size(avgvout,2))];
+maxvout=[maxvout;nan(nAux,size(maxvout,2))];
 
 dataoutput=[data;auxb];
 dataoutput=dataoutput(:,~all(isnan(dataoutput))); %eliminate columns with no data
