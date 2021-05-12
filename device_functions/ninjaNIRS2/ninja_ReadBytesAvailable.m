@@ -47,6 +47,8 @@ offsetB=offsetA+N_BYTES_IN_DFT_WORD;
 wordpos=1:N_BYTES_IN_DFT_WORD;
 part1=wordpos+offsetA';
 part2=wordpos+offsetB';
+part3=max(part2(:));
+part4=part3 + N_BYTES_IN_DFT_WORD;
 powso256=256.^(0:N_BYTES_IN_DFT_WORD-1);
 Kernel=exp(-1i*(2*pi/DFT_N)*KD(1:N_FREQ));
 
