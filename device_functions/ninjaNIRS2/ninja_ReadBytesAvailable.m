@@ -234,11 +234,11 @@ remainderbytes=raw(finalbyteused+1:end); %these bytesshould be appended to beggi
 avgvout=avgvout(:,~all(isnan(avgvout)));
 maxvout=maxvout(:,~all(isnan(maxvout)));
 
-avgvout=avgvout(ML(:,2),:);
-maxvout=maxvout(ML(:,2),:);
-
-avgvout=[avgvout;nan(nAux,size(avgvout,2))];
-maxvout=[maxvout;nan(nAux,size(maxvout,2))];
+% avgvout=avgvout(ML(:,2),:);
+% maxvout=maxvout(ML(:,2),:);
+% 
+% avgvout=[avgvout;nan(N_AUX,size(avgvout,2))];
+% maxvout=[maxvout;nan(N_AUX,size(maxvout,2))];
 
 dataoutput=[data;auxb];
 dataoutput=dataoutput(:,~all(isnan(dataoutput))); %eliminate columns with no data
