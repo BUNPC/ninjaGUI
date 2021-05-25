@@ -281,11 +281,5 @@ remainderbytes=raw(finalbyteused+1:end); %these bytesshould be appended to beggi
 avgvout=avgvout(:,~all(isnan(avgvout)));
 maxvout=maxvout(:,~all(isnan(maxvout)));
 
-avgvout=avgvout(ML(:,2),:);
-maxvout=maxvout(ML(:,2),:);
-
-avgvout=[avgvout;nan(nAux,size(avgvout,2))];
-maxvout=[maxvout;nan(nAux,size(maxvout,2))];
-
 data=data(:,~all(isnan(data))); %eliminate columns with no data
 packlen=sum(~isnan(data),2);  %number of samples in data package per channel; the accelerometer channels will always have an equal number of samples, but I will still broadcast for each individual channel for simplicity
