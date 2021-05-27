@@ -282,7 +282,7 @@ end
 
 %% now find the remainder bytes, that is, those that were unusued because they likely were part of an incomplete package
 
-finalbyteused=max([pAux;maxdatapackpos;pStatp])+N_BYTES_TO_READ_PER_SAMPLE-1;
+finalbyteused=max([pAux;maxdatapackpos;pStatp;pRemp])+N_BYTES_TO_READ_PER_SAMPLE-1;
 remainderbytes=raw(finalbyteused+1:end); %these bytesshould be appended to beggining of next stream
 
 
