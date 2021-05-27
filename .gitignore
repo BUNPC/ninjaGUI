@@ -19,3 +19,6 @@ device_functions/ninjaNIRS2/ninja_ReadBytesAvailable.asv
 dummy.mat
 config24optodescom7.cfg
 config2021a_fake.cfg
+config2021ab.cfg
+autosave/2021-05-26/analyzebin.m
+*.asv
