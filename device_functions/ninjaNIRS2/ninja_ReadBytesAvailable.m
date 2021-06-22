@@ -1,4 +1,4 @@
-function [dataoutput,packlen,remainderbytes,datac,statusdata]=ninja_ReadBytesAvailable(s,dev,SD,prevrbytes,fID)
+function [dataoutput,packlen,remainderbytes,datac,statusdata,maxvout,avgvout]=ninja_ReadBytesAvailable(s,dev,SD,prevrbytes,fID)
 % Reads the serial port for a ninjaNIRS 2021a device. 
 % The firmware for this version is very different and it's based on NIRS1k
 % with some differences, such as customizable frequencies and two power
@@ -25,6 +25,9 @@ function [dataoutput,packlen,remainderbytes,datac,statusdata]=ninja_ReadBytesAva
 % beginning of the new data stream
 % fID is used to stream the serial bytes straight to file in
 % case there is an application crash. That way the data can be recovered.
+% maxvout returns the maximum value for each optode. avgout returns the
+% average value for each optode; these two can be used for saturation
+% purposes
 
 
 %% hardware constants
@@ -34,6 +37,7 @@ N_BYTES_IN_DFT_WORD = 5;
 N_FREQ = 8;
 N_AUX = dev.nAux;
 N_BYTES_PER_AUX = 2;
+N_ONBOARD_AUX=2;  %the current firmware has 2 AUX on board, the rest are remote
 
 N_BYTES_TO_READ_PER_SAMPLE=N_WORDS_PER_DFT * N_BYTES_IN_DFT_WORD * (N_FREQ+1) +5; % N_FREQ+1 : for max/avg data; +3 for [channel, #bytes, DFT count];
 
@@ -47,6 +51,8 @@ offsetB=offsetA+N_BYTES_IN_DFT_WORD;
 wordpos=1:N_BYTES_IN_DFT_WORD;
 part1=wordpos+offsetA';
 part2=wordpos+offsetB';
+part3=max(part2(:));
+part4=part3 + N_BYTES_IN_DFT_WORD;
 powso256=256.^(0:N_BYTES_IN_DFT_WORD-1);
 Kernel=exp(-1i*(2*pi/DFT_N)*KD(1:N_FREQ));
 
@@ -64,6 +70,8 @@ if rb>0
     end
 else
     dataoutput=[];
+    maxvout=[];
+    avgvout=[];
     packlen=0;
     datac=[];
     statusdata=[];
@@ -84,6 +92,7 @@ packC(packC==0)=[];  %this means we missed the initial byte of one data packet
 %% now, segregate candidate packages on data, aux or status
 
 pAuxp=packC(raw(packC)==200); %possible aux positions
+pRemp=packC(raw(packC)==201); %possible remote board positions
 pStatp=packC(raw(packC)==254); %possible Status positions
 pDatap=packC(raw(packC)>=0&raw(packC)<N_OPTODES); %possible detector positions
 
@@ -93,6 +102,7 @@ pDatap=packC(raw(packC)>=0&raw(packC)<N_OPTODES); %possible detector positions
 pAux=pAuxp(raw(pAuxp+N_BYTES_TO_READ_PER_SAMPLE-2,:)==171&raw(pAuxp+N_BYTES_TO_READ_PER_SAMPLE-1,:)==171);
 pStatp=pStatp(raw(pStatp+N_BYTES_TO_READ_PER_SAMPLE-2,:)==172&raw(pStatp+N_BYTES_TO_READ_PER_SAMPLE-1,:)==172);
 pDatap=pDatap(raw(pDatap+N_BYTES_TO_READ_PER_SAMPLE-2,:)==170&raw(pDatap+N_BYTES_TO_READ_PER_SAMPLE-1,:)==170);
+pRemp=pRemp(raw(pRemp+N_BYTES_TO_READ_PER_SAMPLE-2,:)==170&raw(pRemp+N_BYTES_TO_READ_PER_SAMPLE-1,:)==170);
 
 
 
@@ -101,7 +111,8 @@ ML=SD.measList;
 
 maxsampN=ceil(length(pDatap)/N_OPTODES)+3; %max number of samples possibly contained in the data package
 datac=complex(nan(N_OPTODES,maxsampN,N_FREQ)); %complex data buffer
-auxb=nan(N_AUX,maxsampN);  %aux data buffer
+auxb=nan(N_ONBOARD_AUX,maxsampN);  %aux data buffer
+auxrem=nan(N_AUX-N_ONBOARD_AUX,maxsampN); %placeholder for the remote trigger auxiliaries
 
 data=nan(size(ML,1),maxsampN); %buffer for intensity data
 
@@ -109,6 +120,8 @@ data=nan(size(ML,1),maxsampN); %buffer for intensity data
 %% decode the optode data packets
 databm=complex(nan(maxsampN,N_FREQ));
 maxdatapackpos=0;
+maxvout=nan(N_OPTODES,size(databm,1));
+avgvout=nan(N_OPTODES,size(databm,1));
 for k=0:N_OPTODES-1
     indik=pDatap(raw(pDatap)==k);  %contain the indices of the potential data packages on raw for optode k
     seqk=raw(min(indik+2,end));  %contains the sequence data of potential data package; real data packages should be on a consecutive sequence
@@ -149,6 +162,12 @@ for k=0:N_OPTODES-1
             indi=pnm0>(2^39-1);
             pnm0(indi)=pnm0(indi)-2^40;
             databm(m,:)=pnm0 - Kernel.*pnm1;
+            try
+                maxvout(k+1,m)=sum(rawp((1:N_BYTES_IN_DFT_WORD) + part3).* powso256');
+                avgvout(k+1,m) = sum(rawp((1:N_BYTES_IN_DFT_WORD) + part4).* powso256')/DFT_N;             
+            catch ME
+                disp(ME.message)
+            end
         end
     end
     datac(k+1,:,:)=databm;
@@ -173,18 +192,68 @@ end
 
 pAux(sbreaks)=[]; %remove the sequence breaking packages from consideration
 
-
 pows256b=256.^(0:N_BYTES_PER_AUX-1)';
-
 for m=1:length(pAux)
-    indi1=pAux(m):pAux(m)+92;
+    indi1=pAux(m):pAux(m)+N_BYTES_TO_READ_PER_SAMPLE-3;
     if all(indi1<rawN)
         rawp=raw(indi1,:);
         %extract the raw data info from data package
-        offset=((1:N_AUX)-1)*N_BYTES_PER_AUX +3;
+        offset=((1:N_ONBOARD_AUX)-1)*N_BYTES_PER_AUX +3; 
         auxb(:,m) = sum(rawp(offset+(1:N_BYTES_PER_AUX)') .* pows256b)'; %this line of code will only work in newer versions of matlab, sorry!
     end
 end
+auxb=3.3*auxb/(2^16-1);
+
+%% now decode the remote board packages
+
+%identify remote board packets
+seqk=raw(min(pRemp+2,end));  %contains the sequence data of potential data package; real data packages should be on a consecutive sequence
+dseqk=diff(seqk);
+sbreaks=find(dseqk~=1&dseqk~=-255); %sequence breaks
+
+try
+    if dseqk(1)==1
+        sbreaks=sbreaks(2:2:end);  %mark the sequence breaking packages; the second one in the sequence will always be the problem
+    else
+        %in the unlikely case the first packet was the sequence breaking one
+        sbreaks=sbreaks(1:2:end);  %mark the sequence breaking packages; the second one in the sequence will always be the problem
+    end
+catch
+    disp('')
+end
+
+accind=pRemp;
+accind(sbreaks)=[];  %remove the sequence breaking packages
+maxrempackpos=0;
+maxrempackpos=max(max(maxrempackpos),max(accind));
+
+% accelerometer decoding
+if ~isempty(maxrempackpos)
+    try        
+        rem=raw(pRemp-1+(4:2:10))*256+raw(pRemp-1+(5:2:11));
+        if length(pRemp)==1
+            rem=rem';
+        end
+    catch ME
+        disp(ME.meesage)
+    end
+    rem(rem>(2^15-1))=rem(rem>(2^15-1))-2^16;
+    try
+        rem(:,1:3)=rem(:,1:3)/4* 0.488 /1000;
+    catch ME
+        disp(ME.meesage)
+    end
+    try
+    rem(:,4)=rem(:,4)/256+25; %this is actually temperature
+    catch ME
+        disp(ME.meesage)
+    end
+    rem(:,5)=raw(pRemp-1+12);
+    %triggers=raw(pAccp-1+12); %remote trigger byte; 0 means no trigger happened
+else
+    rem=[];
+end
+auxrem(:,1:size(rem,1))=rem';
 
 %% now decode the status packages
 
@@ -204,8 +273,7 @@ end
 
 %% select which data channels we are actually interested in based on sd file
 
-
-frequs=2*(ML(:,1)-1)+ML(:,4);  %frequencies are fixed per source, so easy to calculate
+frequs=2*mod(ML(:,1)-1,4)+ML(:,4);  %this assumes fixed frequencies and only 8 different ones, so they repeat after source 4
 
 for k=1:size(ML,1)
     data(k,:)=abs(datac(ML(k,2),:,frequs(k)));
@@ -214,13 +282,16 @@ end
 
 %% now find the remainder bytes, that is, those that were unusued because they likely were part of an incomplete package
 
-finalbyteused=max([pAux;maxdatapackpos;pStatp])+N_BYTES_TO_READ_PER_SAMPLE-1;
+finalbyteused=max([pAux;maxdatapackpos;pStatp;pRemp])+N_BYTES_TO_READ_PER_SAMPLE-1;
 remainderbytes=raw(finalbyteused+1:end); %these bytesshould be appended to beggining of next stream
 
 
 %% finally, prepare data output
 
-dataoutput=[data;auxb];
+avgvout=avgvout(:,~all(isnan(avgvout)));
+maxvout=maxvout(:,~all(isnan(maxvout)));
+
+dataoutput=[data;auxb;auxrem];
 dataoutput=dataoutput(:,~all(isnan(dataoutput))); %eliminate columns with no data
 
 packlen=sum(~isnan(dataoutput),2);  %number of samples in data package

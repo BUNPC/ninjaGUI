@@ -1,9 +1,9 @@
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration build-checksum="1291544291" file="C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\ninjaGUI\ninjaGUIinstaller.prj" location="C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\ninjaGUI" name="ninjaGUIinstaller" preferred-package-location="C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\ninjaGUIdev\ninjaGUIinstaller\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="Application Compiler">
+  <configuration build-checksum="4257805962" file="C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\ninjaGUI\ninjaGUIinstaller.prj" location="C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\ninjaGUI" name="ninjaGUIinstaller" preferred-package-location="C:\Users\Antonio\Documents\MATLAB\work\BU\boas lab\rtfNIRS\ninjaGUIdev\ninjaGUIinstaller\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="Application Compiler">
     <param.appname>ninjaGUI</param.appname>
     <param.icon />
     <param.icons />
-    <param.version>1.85</param.version>
+    <param.version>1.90.95</param.version>
     <param.authnamewatermark>Antonio Ortega</param.authnamewatermark>
     <param.email>aortegam@bu.edu</param.email>
     <param.company>Boston University</param.company>
