@@ -3,7 +3,7 @@
     <param.appname>ninjaGUI</param.appname>
     <param.icon />
     <param.icons />
-    <param.version>1.90.96</param.version>
+    <param.version>1.90.99</param.version>
     <param.authnamewatermark>Antonio Ortega</param.authnamewatermark>
     <param.email>aortegam@bu.edu</param.email>
     <param.company>Boston University</param.company>
@@ -93,15 +93,8 @@
     </build-deliverables>
     <workflow />
     <matlab>
-      <root>C:\Program Files\MATLAB\R2020b</root>
-      <toolboxes>
-        <toolbox name="neuralnetwork" />
-      </toolboxes>
-      <toolbox>
-        <neuralnetwork>
-          <enabled>true</enabled>
-        </neuralnetwork>
-      </toolbox>
+      <root>C:\Program Files\MATLAB\R2021a</root>
+      <toolboxes />
     </matlab>
     <platform>
       <unix>false</unix>
