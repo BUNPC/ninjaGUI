@@ -39,3 +39,15 @@ config2.cfg
 frontal_walking_20210713.SD
 frontal_walking_AO.SD
 autosave/2021-09-7/ninjaNIRS2021a2021-09-7-20-27-48.nirs.mat
+config files test/config2021a_1moredetector.cfg
+config files test/tested/config2021_correct_parameters.cfg
+config files test/tested/config2021a_1lessdetector.cfg
+config files test/testprobefulloptodes.SD
+config files test/testprobelessdetectors.SD
+config files test/testprobelesssources.SD
+config files test/testprobelesssourcesanddetectors.SD
+config files test/testprobemoredetectors.SD
+config files test/testprobemoresources.SD
+config files test/testprobemoresourcesanddetectors.SD
+config_wrongport.cfg
+file2021example.cfg
