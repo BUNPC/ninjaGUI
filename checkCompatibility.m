@@ -5,7 +5,7 @@ function compDevices = checkCompatibility()
 devFoldName='device_functions';
 communicationsFname='communicationSpecs.txt';
 
-addpath(genpath(devFoldName))
+addpath(devFoldName)
 
 dire=dir(devFoldName);
 %find the valid folders
@@ -35,7 +35,7 @@ for ki=1:length(compDevFoldNames)
     %check the required functions are present
     functionFiles=dir(fullfile(devFoldName,compDevFoldNames{ki},'*.m'));
     requiredFunctionNameList={'Ask4Status','StateSetup',...
-        'ReadBytesAvailable'};
+        'ReadBytesAvailable','Acquisition'};
     for kii=1:length(requiredFunctionNameList)
         %if one of the required functions is missing, mark it as
         %incompatible

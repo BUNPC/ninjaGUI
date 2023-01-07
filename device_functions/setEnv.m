@@ -10,7 +10,7 @@ HW=devinfo.devID;
 directory=fullfile(devinfo.specFolder,HW);
 %dire=dir();
 
-addpath(genpath(fullfile(directory)))
+addpath(fullfile(directory))
 
 commSpecsFile=dir(fullfile(directory,devinfo.comSpecFile));
 
@@ -24,12 +24,26 @@ end
 
 %read serial port parameters
 
-func.ReadBytesAvailable=@(app)ReadBytesAvailable(app.sp,app.devinfo,app.nSD,app.rbytes,app.fstreamID); %reads the data from the serial port and returns only the data specified by the measurement list
-func.MapFrequencies=@(app,statemap)StateSetup(app.sp,statemap);
+func.ReadBytesAvailable=@(app)ReadBytesAvailable(app); %reads the data from the serial port and returns only the data specified by the measurement list
+func.StateSetup=@(app,statemap)StateSetup(app.sp,statemap); %
 func.Ask4Status=@(app)Ask4Status(app);
 func.Acquisition=@(app,command)Acquisition(app,command);
 
 device.functions=func;
+
+%         comms.LightsOff=@(app)[254 0 0 0 0 0 255*app.active 0 0 2+app.active]; %command to turn all lights off
+%         comms.LightsOn=@(app)[254 0 0 0 0 0 255*app.active 255 255 2+app.active]; %command to turn all lights on
+%         %the three following commands are identical due to the way the
+%         %command words are written for this device; we cannot control each
+%         %individually nor without sending a command to the ACQ. 
+%         
+%         comms.SourceNOn=@(app,N,L)[254 0 0 0 0 0 255*app.active fliplr(bin2dec(num2str(flipud(app.LEDstate)'))') 2+app.active];  %Turns on source N at level L: L=0 off, L=1 high, L=-1 low
+%         comms.SourceNOff=@(app,N)[254 0 0 0 0 0 255*app.active fliplr(bin2dec(num2str(flipud(app.LEDstate)'))') 2+app.active];  %Turns off source N
+%         comms.SourceNIndL=@(app,N,L)[254 0 0 0 0 0 255*app.active fliplr(bin2dec(num2str(flipud(app.LEDstate)'))') 2+app.active];  %Only one level allowed, so L is not used in this
+%         comms.Start=@(app)[254 0 0 0 0 0 255 fliplr(bin2dec(num2str(flipud(app.LEDstate)'))') 3]; %command to start acquisition
+%         comms.Stop=@(app)[254 0 0 0 0 0 0 fliplr(bin2dec(num2str(flipud(app.LEDstate)'))') 2]; %command to stop acquisition
+
+
 
 % %Starting from 12/20/2020, the following serial port parameters HAVE to be
 % %specified: BaudRate, Parity, DataBits, StopBits, FlowControl, ByteOrder,

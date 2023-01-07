@@ -33,7 +33,7 @@ elseif ~strcmp(fname(end-3:end),'.cfg')
 end
 
 %set path to functions
-addpath(genpath(specFolderName))
+addpath(specFolderName)
 
 %% check existence of of cfg
 disp(['Looking for ',fname,'...'])

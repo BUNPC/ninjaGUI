@@ -1,4 +1,4 @@
-function [dataoutput,packlen,remainderbytes,datac,statusdata,maxvout,avgvout]=ReadBytesAvailable(s,dev,SD,prevrbytes,fID)
+function [dataoutput,packlen,remainderbytes,datac,statusdata,maxvout,avgvout]=ReadBytesAvailable(app)
 % Used to read the serial port and translate it to Matlab format
 % s is the serial port object.
 % dev is there just to specify the number of detectors and auxs
@@ -25,6 +25,13 @@ function [dataoutput,packlen,remainderbytes,datac,statusdata,maxvout,avgvout]=Re
 % average value for each optode; these two can be used for saturation
 % purposes
 
+%% parse app variables
+
+s=app.sp;
+dev=app.deviceInformation;
+SD=app.nSD;
+prevrbytes=app.rbytes;
+fID=app.fstreamID;
 
 %% hardware constants
 N_OPTODES=dev.nDets;
