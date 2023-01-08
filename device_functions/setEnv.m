@@ -24,10 +24,15 @@ end
 
 %read serial port parameters
 
+func.CreateCommunicationObject=@(app)CommunicationObject(app)
+
+
 func.ReadBytesAvailable=@(app)ReadBytesAvailable(app); %reads the data from the serial port and returns only the data specified by the measurement list
 func.StateSetup=@(app,statemap)StateSetup(app.sp,statemap); %
 func.Ask4Status=@(app)Ask4Status(app);
-func.Acquisition=@(app,command)Acquisition(app,command);
+func.Acquisition=@(app,command)Acquisition(app,command); %function to start or stop the acquisition 
+func.SwitchLights=@(app,command)SwitchLights(app,command); %function to turn all the lights at the same time
+func.CommunicationPort=@(app,command)CommunicationPort(app,command); %this function is used to start, stop the communication port and also to flush it
 
 device.functions=func;
 
