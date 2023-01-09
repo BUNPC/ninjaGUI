@@ -1,12 +1,9 @@
 function [port,errors] = CommunicationPort(app,command)
 %CommunicationPort Used to open or close the serial communication, and also
 %to flush the communications buffer
-%  commands are 'open', 'close' and 'flush'
-outputArg1 = inputArg1;
-outputArg2 = inputArg2;
-
-
-
+%  commands are 'open', 'close' and 'flush'. 'open' is used to create the
+%  port object and open it. 'close' should close the communication and
+%  delete the object. 'flush' is used to flush the buffer
 
 switch command
     case 'open'
@@ -27,9 +24,11 @@ switch command
             error(['Serial communication NOT established! Make sure USB is ' ...
                 'properly connected, serial port is correct and drivers are installed'])
         end
-
+        port=app.sp;
     case 'close'
-
+        delete(app.sp);%close serial communication
+        port=[];
     case 'flush'
         flush(app.sp);
+        port=app.sp;
 end
