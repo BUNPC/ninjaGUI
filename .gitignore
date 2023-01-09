@@ -51,3 +51,6 @@ config files test/testprobemoresources.SD
 config files test/testprobemoresourcesanddetectors.SD
 config_wrongport.cfg
 file2021example.cfg
+temp.mat
+configCOM5.cfg
+config.cfg
