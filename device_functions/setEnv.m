@@ -24,9 +24,6 @@ end
 
 %read serial port parameters
 
-func.CreateCommunicationObject=@(app)CommunicationObject(app)
-
-
 func.ReadBytesAvailable=@(app)ReadBytesAvailable(app); %reads the data from the serial port and returns only the data specified by the measurement list
 func.StateSetup=@(app,statemap)StateSetup(app.sp,statemap); %
 func.Ask4Status=@(app)Ask4Status(app);

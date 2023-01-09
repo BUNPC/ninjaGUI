@@ -38,7 +38,7 @@ addpath(specFolderName)
 %% check existence of of cfg
 disp(['Looking for ',fname,'...'])
 if exist(fname,'file')
-    disp(['Loading ',fname,'...'])    
+    disp(['Loading ',fname,'...'])
     [devinfo,error]=loadCFG(fname);
     if error
         disp([filename, ' corrupt, starting configuration dialog'])
@@ -51,34 +51,33 @@ else
     okflag=0;
 end
 
-devinfo.specFolder=specFolderName;
-devinfo.comSpecFile=comSpecfName;
-
-%verify that config file corresponds with a compatible device
-%first, handle special cases of inconsistent device name conventions;
-%hopefully this will be cleaned up in the future/more consistent names will
-%be used
-switch devinfo.devID
-    case 'ninjaNIRS'
-        devinfo.devID='ninjaNIRS2020';
-    case 'fNIRS1k'
-        devinfo.devID='NIRS1k';
-end
-%now, make sure the devID is in the compatible list
-if ~any(ismember(compatDevices,devinfo.devID))
-    disp('This device configuration is not compatible with the current install of ninjaGUI. Make sure the device specifications are correctly installed or that the config file corresponds with your device')
-    return
-end
-
+%send to hardware configuration app if necessary
 if okflag
+    devinfo.specFolder=specFolderName;
+    devinfo.comSpecFile=comSpecfName;
+    %verify that config file corresponds with a compatible device
+    %first, handle special cases of inconsistent device name conventions;
+    %hopefully this will be cleaned up in the future/more consistent names will
+    %be used
+    switch devinfo.devID
+        case 'ninjaNIRS'
+            devinfo.devID='ninjaNIRS2020';
+        case 'fNIRS1k'
+            devinfo.devID='NIRS1k';
+    end
+    %now, make sure the devID is in the compatible list
+    if ~any(ismember(compatDevices,devinfo.devID))
+        disp('This device configuration is not compatible with the current install of ninjaGUI. Make sure the device specifications are correctly installed or that the config file corresponds with your device')
+        return
+    end
     %call set environment function with devinfo input
-    disp(['Setting GUI environment for device ',devinfo.devID])    
+    disp(['Setting GUI environment for device ',devinfo.devID])
     environment=setEnv(devinfo);
-    disp('Starting ninjaGUI application')    
+    disp('Starting ninjaGUI application')
     %start main app with environment input
     fNIRSapp(devinfo,environment)
-    %disp('Success')
+    %disp('Success')    
 else
     %start configuration dialog
-    hardwareselect()
+    hardwareselect()    
 end
