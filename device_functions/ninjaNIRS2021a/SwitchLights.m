@@ -1,4 +1,4 @@
-function error = SwitchLights(app,command)
+function errors = SwitchLights(app,command)
 %SwitchLights Used to either turn all the lights on or off at the same time
 %   command here is either "on" or "off"
 
@@ -12,6 +12,6 @@ switch command
         write(app.sp,LightsOff,"uint8");
 end
 
-error=0;
+errors=0;
 
 end
