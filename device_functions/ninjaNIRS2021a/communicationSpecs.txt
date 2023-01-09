@@ -1,5 +1,5 @@
 Type	Serial
-BaudRate	12000000
+BaudRate	6000000
 Parity	none
 DataBits	8
 StopBits	1

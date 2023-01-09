@@ -4,6 +4,8 @@ function [port,errors] = CommunicationPort(app,command)
 %  commands are 'open', 'close' and 'flush'. 'open' is used to create the
 %  port object and open it. 'close' should close the communication and
 %  delete the object. 'flush' is used to flush the buffer
+% the output 'errors' can be used by the GUI to stop if the communication
+% was not established successfully
 
 switch command
     case 'open'
@@ -20,9 +22,7 @@ switch command
             errors=0;
         catch ME
             disp(ME.message)           
-            error=1;
-            error(['Serial communication NOT established! Make sure USB is ' ...
-                'properly connected, serial port is correct and drivers are installed'])
+            errors=1;            
         end
         port=app.sp;
     case 'close'
