@@ -35,7 +35,8 @@ for ki=1:length(compDevFoldNames)
     %check the required functions are present
     functionFiles=dir(fullfile(devFoldName,compDevFoldNames{ki},'*.m'));
     requiredFunctionNameList={'Ask4Status','StateSetup',...
-        'ReadBytesAvailable','Acquisition'};
+        'ReadBytesAvailable','Acquisition','CommunicationPort',...
+        'SwitchLights','TurnSourceN'};
     for kii=1:length(requiredFunctionNameList)
         %if one of the required functions is missing, mark it as
         %incompatible

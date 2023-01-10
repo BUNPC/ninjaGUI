@@ -117,7 +117,7 @@ stat.ramb(n_state_b:end,18) = 1; % mark sequence end
 
 %% serial port
 
-stat.s = serialport("COM4", 6000000, 'FlowControl', 'hardware');
+stat.s = serialport("COM7", 6000000, 'FlowControl', 'hardware');
 
 
 
