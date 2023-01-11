@@ -1,4 +1,4 @@
-function data=translateNinja2022Bytes(inputBytes)
+function [data,N_STATES]=translateNinja2022Bytes(inputBytes)
 
 raw=inputBytes';
 
@@ -71,7 +71,7 @@ sample_counter_length=1;
 
 N_DET_PER_BOARD = 8;
 N_BYTES_PER_DET = 3;
-N_STATES = 2;
+
 
 %% now I can start prototyping the actual translator
 
@@ -108,13 +108,25 @@ end
 %negative value correction
 A = (A > 2^23-1).*2^24 - A;
 
+%% identify number of states
+estados=1+raw(indicator+length(header_indicator)+1);
+states=unique(estados);
+
+%maybe add some code to make sure the numbers are sequential
+statesToEliminate=[false;diff(states)~=1];
+if sum(statesToEliminate)>0
+    %then there is a problem with the data
+end
+
+N_STATES = length(states);
+
 %% now sort them by state
 
 isStateki=zeros(length(indicator),N_STATES);
 lengthStateki=zeros(1,N_STATES);
-for ki=0:N_STATES-1
-    isStateki(:,ki+1)=raw(indicator+length(header_indicator)+1)==ki;
-    lengthStateki(ki+1)=sum(isStateki(:,ki+1));    
+for ki=1:N_STATES
+    isStateki(:,ki)=estados==ki;
+    lengthStateki(ki)=sum(isStateki(:,ki));    
 end
 
 %find which state got the most samples

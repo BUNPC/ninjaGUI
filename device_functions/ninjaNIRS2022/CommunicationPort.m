@@ -29,6 +29,7 @@ switch command
         delete(app.sp);%close serial communication
         port=[];
     case 'flush'
+        app.deviceInformation.stat=ResetCounters(app.sp,app.deviceInformation.stat);
         flush(app.sp);
         port=app.sp;
 end

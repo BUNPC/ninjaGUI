@@ -1,10 +1,11 @@
-% Matlab helper functions for NN22_ControlBoard00
-% 
 % Initial version: 2023-1-2
 % Bernhard Zimmermann - bzim@bu.edu
 % Boston University Neurophotonics Center
+% Modified on 1/11 by Antonio Ortega. Now the ramA map is not a constant.
+% It also does not create the serial port since that is going to be done
+% elsewhere
 
-function stat = initStat()
+function stat = initStat(stateMap)
 %%
 stat.vn22clk_en = false;
 stat.vn3p4_en = false;
@@ -36,58 +37,7 @@ stat.sreg = zeros(1,32);
 
 %% RAM A
 
-stat.rama = zeros(1024,32);
-
-
-
-stat.rama(1,[1 9]) = 1; % select LED
-stat.rama(1,19:21) = [0 1 0]; % power level mid
-stat.rama(3,[1 10]) = 1; % select LED
-stat.rama(3,19:21) = [0 1 0]; % power level mid
-
-stat.rama(5,[3 9]) = 1; % select LED
-stat.rama(5,19:21) = [0 1 0]; % power level mid
-stat.rama(7,[3 10]) = 1; % select LED
-stat.rama(7,19:21) = [0 1 0]; % power level mid
-
-% dark state inbetween
-stat.rama(8:end,27) = 1; % mark sequence end
-
-
-
-% Example switching through all power states and wavelength of source 1
-% with a dark state after each on state
-
-% %red wavelength
-% stat.rama(1,[1 9]) = 1; % select LED
-% stat.rama(1,19:21) = [1 0 0]; % power level high
-% % dark state inbetween
-% stat.rama(3,[1 9]) = 1; % select LED
-% stat.rama(3,19:21) = [0 1 0]; % power level mid
-% % dark state inbetween
-% stat.rama(5,[1 9]) = 1; % select LED
-% stat.rama(5,19:21) = [0 0 1]; % power level low
-% % dark state inbetween
-% 
-% %IR wavelength
-% stat.rama(7,[1 10]) = 1; % select LED
-% stat.rama(7,19:21) = [1 0 0]; % power level high
-% % dark state inbetween
-% stat.rama(9,[1 10]) = 1; % select LED
-% stat.rama(9,19:21) = [0 1 0]; % power level mid
-% % dark state inbetween
-% stat.rama(11,[1 10]) = 1; % select LED
-% stat.rama(11,19:21) = [0 0 1]; % power level low
-% % dark state inbetween
-% stat.rama(12:end,27) = 1; % mark sequence end
-
-% % Example using only one wavelength and power setting of source 1
-% % Used e.g. for filter wheel tests
-% stat.rama(1,[1 9]) = 1; % select LED
-% stat.rama(1,19:21) = [1 0 0]; % power level med
-% stat.rama(2:end,27) = 1; % mark sequence end
-
-
+stat.rama = stateMap; 
 
 %% RAM B
 
@@ -134,10 +84,6 @@ for ii = 1:n_detb
 end
 
 stat.ramb(n_state_b:end,18) = 1; % mark sequence end
-
-%% serial port
-
-stat.s = serialport("COM7", 6000000, 'FlowControl', 'hardware');
 
 
 

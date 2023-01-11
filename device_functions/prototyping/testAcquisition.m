@@ -1,4 +1,6 @@
 
+N=10; %number of seconds to acquire
+
 %% connect to device
 stat = initStat();
 
@@ -17,7 +19,7 @@ stat=StartAcquisition(stat);
 
 
 %% acquire for N seconds
-N=40;
+
 pause(N)
 
 %% read bytes available
@@ -33,20 +35,27 @@ stat = updateStatReg(stat);
 % Q: what if I want to stop the device and turn it on again later? what is
 % the sequence
 
-%% close device
-clear stat
 
 %% translate bytestream to readable data
-B=translateNinja2022Bytes(A);
-fs=500;
+[B,Nstates]=translateNinja2022Bytes(A);
+fs=1e3/Nstates;
 
-t=(1:length(B))/fs;
+%% plot
+plotN=ceil(sqrt(Nstates));
 
-figure(1)
-semilogy(t,B(:,:,1))
+t=(1:length(B))/fs-1;
 
-figure(2)
-semilogy(t,B(:,:,2))
+tiledlayout(plotN,plotN);
 
-figure(3)
-semilogy(t,B(:,:,2)-B(:,:,1))
+limites=[1,1.1*max(B(:))];
+
+for ki=1:Nstates
+    nexttile
+    semilogy(t,B(:,:,ki))
+    ylim(limites)
+    xlim([0,max(t)])
+    title(num2str(ki-1))
+end
+
+%% close device
+clear stat
