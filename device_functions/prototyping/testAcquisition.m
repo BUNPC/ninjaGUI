@@ -25,7 +25,6 @@ pause(N)
 %% read bytes available
 A=read(stat.s, stat.s.NumBytesAvailable, 'uint8');
 
-
 %% stop acquisition 
 
 
@@ -37,8 +36,10 @@ stat = updateStatReg(stat);
 
 
 %% translate bytestream to readable data
-[B,Nstates]=translateNinja2022Bytes(A);
+[B,unusedBytes]=translateNinja2022Bytes(A);
+Nstates=size(B,3);
 fs=1e3/Nstates;
+
 
 %% plot
 plotN=ceil(sqrt(Nstates));

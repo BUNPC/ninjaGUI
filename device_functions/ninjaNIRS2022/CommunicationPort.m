@@ -18,6 +18,8 @@ switch command
                 'FlowControl',app.communicationParameters.FlowControl,...
                 'ByteOrder',app.communicationParameters.ByteOrder,...
                 "Timeout",app.communicationParameters.TimeOut);
+
+            app.deviceInformation.stat=ResetCounters(app.sp,app.deviceInformation.stat);
             disp('Serial communication established!')
             errors=0;
         catch ME
