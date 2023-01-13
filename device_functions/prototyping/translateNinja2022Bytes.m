@@ -71,7 +71,9 @@ sample_counter_length=1;
 
 N_DET_PER_BOARD = 8;
 N_BYTES_PER_DET = 3;
-
+payloadSize=N_DET_PER_BOARD*N_BYTES_PER_DET;
+offset=length(header_indicator)+state_number_length+length(detector_header_indicator)+sample_counter_length; %offset for first payload byte
+packageLength=offset+payloadSize+1;  %I am not sure what the last byte is for
 
 %% now I can start prototyping the actual translator
 
@@ -89,15 +91,31 @@ indicator=indicator( ...
     indicator-length(detector_header_indicator)-state_number_length)...
     ==header_indicator);
 
-%make the indicators to mark the FPGA header
+%move the indicator to mark the start of the packages
 indicator=indicator-length(detector_header_indicator)-state_number_length;
 
 raw(indicator+4);
 
+%figure out if last package is incomplete
+if (indicator(end)+packageLength-1)>length(raw)
+    %if the last package indicator detected is for a package that was not
+    %read in its totality, then remove this indicator and use it to mark
+    %the position of the last used byte
+    lastByteUsed=indicator(end)-1;
+    indicator(end)=[];
+else
+    %this to cover the possibility that the final package marker was not
+    %identified if we only captured the headers partially
+    positionOfIncompleteHeader=indicator(end)+packageLength;
+    lastByteUsed=positionOfIncompleteHeader-1;
+end
+
+remainderBytes=raw(lastByteUsed+1:end);
+
+
 %ignore potential indicators that are less than one data package away from
 %the end of the captured data
 
-offset=length(header_indicator)+state_number_length+length(detector_header_indicator)+sample_counter_length; %offset for first payload byte
 ii=1;
 indicator_matrix=indicator+offset+(0:N_BYTES_PER_DET:(N_DET_PER_BOARD*N_BYTES_PER_DET)-1);
 A=raw(ii-1+indicator_matrix)*256^(ii-1);
