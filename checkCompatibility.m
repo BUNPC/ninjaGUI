@@ -39,8 +39,8 @@ for ki=1:length(compDevFoldNames)
         'SwitchLights','TurnSourceN'};
     for kii=1:length(requiredFunctionNameList)
         %if one of the required functions is missing, mark it as
-        %incompatible
-        indi=contains({functionFiles.name},requiredFunctionNameList{kii});
+        %incompatible        
+        indi=ismember({functionFiles.name},[requiredFunctionNameList{kii},'.m']);
         if any(indi)
             %now if it contains it, make sure it is identical
             if ~strcmp(functionFiles(indi).name(1:end-2),requiredFunctionNameList{kii})

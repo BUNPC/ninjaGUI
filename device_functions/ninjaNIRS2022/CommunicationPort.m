@@ -18,8 +18,6 @@ switch command
                 'FlowControl',app.communicationParameters.FlowControl,...
                 'ByteOrder',app.communicationParameters.ByteOrder,...
                 "Timeout",app.communicationParameters.TimeOut);
-
-            app.deviceInformation.stat=ResetCounters(app.sp,app.deviceInformation.stat);
             disp('Serial communication established!')
             errors=0;
         catch ME
@@ -31,7 +29,6 @@ switch command
         delete(app.sp);%close serial communication
         port=[];
     case 'flush'
-        app.deviceInformation.stat=ResetCounters(app.sp,app.deviceInformation.stat);
         flush(app.sp);
         port=app.sp;
 end
