@@ -25,9 +25,7 @@ payloadSize=N_DET_PER_BOARD*N_BYTES_PER_DET;
 offset=length(header_indicator)+state_number_length+length(detector_header_indicator)+sample_counter_length; %offset for first payload byte
 packageLength=offset+payloadSize+1;  %I am not sure what the last byte is for, supposed to be checksum
 
-%% start the translation
-
-%find detector header indicators
+%% find detector header indicators
 indicator=find(raw==detector_header_indicator(end)); %find header indicators
 for ki=1:length(detector_header_indicator)-1
     indicator=indicator(raw(indicator-ki)==detector_header_indicator(end-ki));    
@@ -44,14 +42,32 @@ indicator=indicator( ...
 %move the indicators to mark the FPGA header instead
 indicator=indicator-length(detector_header_indicator)-state_number_length;
 
-%find if the last data package is complete
-%figure out if last package is incomplete
+%% identify number of states in data read
+estados=1+raw(indicator+length(header_indicator)+1);
+states=unique(estados);
+
+%use the states to figure out if there is a packet that shouldn't be a
+%packet
+statesToEliminate=[false;diff(states)~=1];
+if sum(statesToEliminate)>0
+    %then there is a problem with the data
+    toEliminate=find(estados==states(statesToEliminate));
+    indicator(toEliminate)=[];
+    %do states again
+    estados=1+raw(indicator+length(header_indicator)+1);
+    states=unique(estados);
+end
+
+
+%% figure out if last package is incomplete
+
 if (indicator(end)+packageLength-1)>length(raw)
     %if the last package indicator detected is for a package that was not
     %read in its totality, then remove this indicator and use it to mark
     %the position of the last used byte
     lastByteUsed=indicator(end)-1;
     indicator(end)=[];
+    estados(end)=[];
 else
     %this to cover the possibility that the final package marker was not
     %identified if we only captured the headers partially
@@ -59,12 +75,12 @@ else
     lastByteUsed=positionOfIncompleteHeader-1;
 end
 
-unusedBytes=raw(lastByteUsed+1:end);
-
 %ignore potential indicators that are less than one data package away from
 %the end of the captured data
 
-offset=length(header_indicator)+state_number_length+length(detector_header_indicator)+sample_counter_length; %offset for first payload byte
+unusedBytes=raw(lastByteUsed+1:end);
+
+%% translate
 ii=1;
 indicator_matrix=indicator+offset+(0:N_BYTES_PER_DET:(N_DET_PER_BOARD*N_BYTES_PER_DET)-1);
 A=raw(ii-1+indicator_matrix)*256^(ii-1);
@@ -97,16 +113,21 @@ for ki=1:N_DETECTOR_BOARDS
         A(logicalIndicesOfDetectork,:);
 end
 
+%samplesProcessedPerDetector is returning the number of samples per
+%detector across all states I think; I am not sure if this number is
+%actually useful, need to think what is the most useful count to return
+
 %% identify number of states
 %estados=1+raw(indicator+length(header_indicator)+1); %this is how it
 %should be done when we have the whole bytestream. For a partial
 %bytestream, we should instead read from the statemap
 %number of states
+estados=1+raw(indicator+length(header_indicator)+1);
 foo=find(stateMap(:,27)==1);
 N_STATES=foo(1);
 states=1:N_STATES;
 
-%% now sort them by state
+%% now sort data by state
 
 isStateki=zeros(length(indicator),N_STATES);
 lengthStateki=zeros(1,N_STATES);
@@ -123,9 +144,6 @@ dataOrganizedByState=nan(maxSamples,N_DET_PER_BOARD*N_DETECTOR_BOARDS,N_STATES);
 for ki=1:N_STATES
     dataOrganizedByState(1:lengthStateki(ki),:,ki)=B(~~isStateki(:,ki),:);  %<-- this will break or will be bugged if there is more than one detector board, change the logic
 end
-
-
-
 
 %% output
 

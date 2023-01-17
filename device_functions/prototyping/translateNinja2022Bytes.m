@@ -64,20 +64,24 @@ raw=inputBytes';
 % some of these might need to be updated dynamically in the future when
 % there are multiple detector boards, I am not sure
 
+N_DETECTOR_BOARDS=1; %there should be a way dynamic way to find this number
+
 header_indicator=254; %byte indicating the header
 detector_header_indicator=[253,252]; %bytes indicating the detector header
 state_number_length=2;
 sample_counter_length=1;
 
+%these two might remain constants forever
 N_DET_PER_BOARD = 8;
 N_BYTES_PER_DET = 3;
+
+N_DETECTORS=N_DET_PER_BOARD*N_DETECTOR_BOARDS;
+
 payloadSize=N_DET_PER_BOARD*N_BYTES_PER_DET;
 offset=length(header_indicator)+state_number_length+length(detector_header_indicator)+sample_counter_length; %offset for first payload byte
 packageLength=offset+payloadSize+1;  %I am not sure what the last byte is for
 
-%% now I can start prototyping the actual translator
-
-%find detector header indicators
+%% find detector header indicators
 indicator=find(raw==detector_header_indicator(end)); %find header indicators
 for ki=1:length(detector_header_indicator)-1
     indicator=indicator(raw(indicator-ki)==detector_header_indicator(end-ki));    
@@ -91,18 +95,37 @@ indicator=indicator( ...
     indicator-length(detector_header_indicator)-state_number_length)...
     ==header_indicator);
 
-%move the indicator to mark the start of the packages
+%move the indicators to mark the FPGA header instead
 indicator=indicator-length(detector_header_indicator)-state_number_length;
 
-raw(indicator+4);
 
-%figure out if last package is incomplete
+%% identify number of states
+estados=1+raw(indicator+length(header_indicator)+1);
+states=unique(estados);
+
+%use the states to figure out if there is a packet that shouldn't be a
+%packet
+statesToEliminate=[false;diff(states)~=1];
+if sum(statesToEliminate)>0
+    %then there is a problem with the data
+    toEliminate=find(estados==states(statesToEliminate));
+    indicator(toEliminate)=[];
+    %do states again
+    estados=1+raw(indicator+length(header_indicator)+1);
+    states=unique(estados);
+end
+
+N_STATES = length(states);
+
+%% figure out if last package is incomplete
+
 if (indicator(end)+packageLength-1)>length(raw)
     %if the last package indicator detected is for a package that was not
     %read in its totality, then remove this indicator and use it to mark
     %the position of the last used byte
     lastByteUsed=indicator(end)-1;
     indicator(end)=[];
+    estados(end)=[];
 else
     %this to cover the possibility that the final package marker was not
     %identified if we only captured the headers partially
@@ -110,12 +133,13 @@ else
     lastByteUsed=positionOfIncompleteHeader-1;
 end
 
-remainderBytes=raw(lastByteUsed+1:end);
-
 
 %ignore potential indicators that are less than one data package away from
 %the end of the captured data
 
+unusedBytes=raw(lastByteUsed+1:end);
+
+%% translate
 ii=1;
 indicator_matrix=indicator+offset+(0:N_BYTES_PER_DET:(N_DET_PER_BOARD*N_BYTES_PER_DET)-1);
 A=raw(ii-1+indicator_matrix)*256^(ii-1);
@@ -125,18 +149,6 @@ end
 
 %negative value correction
 A = (A > 2^23-1).*2^24 - A;
-
-%% identify number of states
-estados=1+raw(indicator+length(header_indicator)+1);
-states=unique(estados);
-
-%maybe add some code to make sure the numbers are sequential
-statesToEliminate=[false;diff(states)~=1];
-if sum(statesToEliminate)>0
-    %then there is a problem with the data
-end
-
-N_STATES = length(states);
 
 %% now sort them by state
 
@@ -155,12 +167,6 @@ dataOrganizedByState=nan(maxSamples,N_DET_PER_BOARD,N_STATES);
 for ki=1:N_STATES
     dataOrganizedByState(1:lengthStateki(ki),:,ki)=A(~~isStateki(:,ki),:);
 end
-
-%foo=dataOrganizedByState(:,:,1)-dataOrganizedByState(:,:,2);
-
-
-%% assign each state to its correct channel based on the state
-
 
 %% output
 

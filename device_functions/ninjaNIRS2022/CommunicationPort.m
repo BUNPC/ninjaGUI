@@ -10,8 +10,17 @@ function [port,errors] = CommunicationPort(app,command)
 switch command
     case 'open'
         try
+            %dummy state map, a new one will be chosen after the SD file; I
+            %am just doing this because I am not sure if the device will
+            %break if I power it on or if I connect to it without writing a
+            %ram first
+            stateMap = zeros(1024,32);
+            stateMap(1,[1 9]) = 1; % select LED
+            stateMap(1,19:21) = [0 1 0]; % power level mid            
+            stateMap(3:end,27) = 1; % mark sequence end
+            stat=initStat(stateMap);
             %Create serial port object
-            app.sp=serialport(app.deviceInformation.commPort,app.communicationParameters.BaudRate,...
+            s=serialport(app.deviceInformation.commPort,app.communicationParameters.BaudRate,...
                 'Parity',app.communicationParameters.Parity,...
                 'DataBits',app.communicationParameters.DataBits,...
                 'StopBits',app.communicationParameters.StopBits,...
@@ -19,7 +28,13 @@ switch command
                 'ByteOrder',app.communicationParameters.ByteOrder,...
                 "Timeout",app.communicationParameters.TimeOut);
             disp('Serial communication established!')
-            errors=0;
+            uploadToRAM(s, stat.rama, 'a', false);
+            uploadToRAM(s, stat.ramb, 'b', false);
+            stat = powerOn(s,stat);
+            stat = ResetCounters(s,stat);
+            app.sp=s;
+            app.deviceInformation.stat=stat;
+            errors=0;            
         catch ME
             disp(ME.message)           
             errors=1;            
@@ -29,6 +44,6 @@ switch command
         delete(app.sp);%close serial communication
         port=[];
     case 'flush'
-        flush(app.sp);
+        app.deviceInformation.stat=ResetCounters(app.sp,app.deviceInformation.stat);        
         port=app.sp;
 end

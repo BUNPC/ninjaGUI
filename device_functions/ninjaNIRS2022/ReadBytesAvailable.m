@@ -1,13 +1,16 @@
-function [dataoutput,packlen,remainderbytes,datac,statusdata,maxvout,avgvout]=ReadBytesAvailable(app)
+function [dataoutput,packlen,remainderbytes]=ReadBytesAvailable(app)
 % Used to read the data sent from the instrument and translate it to a a
 % matlab array. The only input is app, which is the structure containing
 % the GUI variables. The specific implementation of this function will use
 % whichever app properties are useful or necessary to calculate the
 % required outputs
+
+%all outputs [dataoutput,packlen,remainderbytes,datac,statusdata,maxvout,avgvout]
 % The required outputs for this functions to interact
 % correctly with the GUI are:
 % dataoutput is the data of the fNIRS and aux channels: channels in the
-% array need to be sorted the same was as in the measurement list
+% array need to be sorted the same was as in the measurement list, with
+% time or samples across columns, channels across rows
 % packlen says how many samples were collected for each channel;
 % this could be a scalar if all channels acquired the same number of
 % channels in the iteration, but in general is an array in which each
@@ -31,6 +34,8 @@ function [dataoutput,packlen,remainderbytes,datac,statusdata,maxvout,avgvout]=Re
 % optodes are saturared (field 'optodeSaturationThreshold' from the config
 % file)
 
+%current implementation ignores optional outputs
+
 %% parse app variables
 
 s=app.sp; %serial port
@@ -49,7 +54,7 @@ fID=app.fstreamID;  %file streamer for debug mode; this can be used to stream th
 % acquisition more efficient
 ba=s.NumBytesAvailable;
 
-rb=300; %minimum number of bytes to read per operation
+rb=30000; %minimum number of bytes to read per operation
 
 if ba>rb
     raw = read(s,ba,'uint8')';
@@ -72,6 +77,16 @@ rawN=size(raw,1);
 
 %% translate data to a numeric array
 [B,unusedBytes,numberOfSamples]=translateNinja2022Bytes(raw,app.deviceInformation.stateMap);
+
+%circshift to the left in the third dimension since packets marked as 1
+%actually store the last state, packets marked as 2 are state 1 etc
+
+B=circshift(B,-1,3);
+
+%for some reason, some elements of B are negative, which the GUI does not
+%handle well due to log visualization, so I will make those elements 1
+B(B<=0)=1;
+
 % Nstates=size(B,3);
 % fs=1e3/Nstates;
 
@@ -86,19 +101,24 @@ rawN=size(raw,1);
 
 %% code to go from detector and state number to positions in the measurement list
 
-%%THIS MAP SHOULD BE GENERATED ELSEWHERE SINCE IT'S A CONSTANT FOR THE
-%%ACQUISITION AND IF WE PUT IT IN THIS FUNCTION THEN THE MAP WILL BE
-%%GENERATED AT EACH READING OPERATION INSTEAD, WASTING PROCESSING TIME
-indices=mapToMeasurementList(app.deviceInformation.stateMap,SD.measList);
+indices=app.deviceInformation.stateIndices; %this is calculated when the state is setup
+%indices is not what it should be optimally. Right now it's first column
+%state, second column detector
 
+organizedData=nan(size(B,1),size(SD.measList,1));
+% for loop is likely not the best way to do it
+
+nStates=size(B,3);
+for ki=1:size(SD.measList,1)    
+    try
+        organizedData(:,ki)=B(:,indices(ki,2),indices(ki,1));
+    end
+end
 
 %% assign all outputs
-dataoutput=B(indices);
-packlen=A;
+dataoutput=organizedData';
+packlen=sum(~isnan(dataoutput),2);  %number of samples in data package
 remainderbytes=unusedBytes;
-
-
-%% prepare output variables
 
 
 % %% hardware constants

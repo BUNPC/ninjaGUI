@@ -20,9 +20,23 @@ stateMap(5,19:21) = [0 1 0]; % power level mid
 stateMap(7,[3 10]) = 1; % select LED
 stateMap(7,19:21) = [0 1 0]; % power level mid
 
-% dark state inbetween
-stateMap(8:end,27) = 1; % mark sequence end
+stateMap(9,[2 9]) = 1; % select LED
+stateMap(9,19:21) = [0 1 0]; % power level mid
+stateMap(11,[2 10]) = 1; % select LED
+stateMap(11,19:21) = [0 1 0]; % power level mid
 
+stateMap(13,[4 9]) = 1; % select LED
+stateMap(13,19:21) = [0 1 0]; % power level mid
+stateMap(15,[4 10]) = 1; % select LED
+stateMap(15,19:21) = [0 1 0]; % power level mid
+
+% dark state inbetween
+stateMap(16:end,27) = 1; % mark sequence end
+
+foo=find(stateMap(:,27)==1);
+
+nStates=foo(1);
+fs=1000/nStates;
 %initialize both RAMs
 
 stat=initStat(stateMap);
@@ -31,6 +45,10 @@ stat=initStat(stateMap);
 
 % for now I will save the statemap as a field of deviceInformation (other fields are the cfg file)
 app.deviceInformation.stateMap=stateMap;
+app.deviceInformation.Rate=fs;
+app.editRate.Value=app.deviceInformation.Rate;
+
+app.deviceInformation.stateIndices=mapToMeasurementList(app.deviceInformation.stateMap,app.nSD.measList);
 
 
 %%

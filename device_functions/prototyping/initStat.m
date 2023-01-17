@@ -40,6 +40,22 @@ stat.rama = zeros(1024,32);
 
 
 
+% stat.rama(1,[1 9]) = 1; % select LED
+% stat.rama(1,19:21) = [0 1 0]; % power level mid
+% stat.rama(3,[1 10]) = 1; % select LED
+% stat.rama(3,19:21) = [0 1 0]; % power level mid
+% 
+% stat.rama(5,[3 9]) = 1; % select LED
+% stat.rama(5,19:21) = [0 1 0]; % power level mid
+% stat.rama(7,[3 10]) = 1; % select LED
+% stat.rama(7,19:21) = [0 1 0]; % power level mid
+% 
+% % dark state inbetween
+% stat.rama(8:end,27) = 1; % mark sequence end
+
+
+stat.rama= zeros(1024,32);
+
 stat.rama(1,[1 9]) = 1; % select LED
 stat.rama(1,19:21) = [0 1 0]; % power level mid
 stat.rama(3,[1 10]) = 1; % select LED
@@ -50,9 +66,18 @@ stat.rama(5,19:21) = [0 1 0]; % power level mid
 stat.rama(7,[3 10]) = 1; % select LED
 stat.rama(7,19:21) = [0 1 0]; % power level mid
 
-% dark state inbetween
-stat.rama(8:end,27) = 1; % mark sequence end
+stat.rama(9,[2 9]) = 1; % select LED
+stat.rama(9,19:21) = [0 1 0]; % power level mid
+stat.rama(11,[2 10]) = 1; % select LED
+stat.rama(11,19:21) = [0 1 0]; % power level mid
 
+stat.rama(13,[4 9]) = 1; % select LED
+stat.rama(13,19:21) = [0 1 0]; % power level mid
+stat.rama(15,[4 10]) = 1; % select LED
+stat.rama(15,19:21) = [0 1 0]; % power level mid
+
+% dark state inbetween
+stat.rama(16:end,27) = 1; % mark sequence end
 
 
 % Example switching through all power states and wavelength of source 1

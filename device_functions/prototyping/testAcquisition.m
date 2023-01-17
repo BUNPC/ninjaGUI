@@ -1,5 +1,5 @@
 
-N=10; %number of seconds to acquire
+N=50; %number of seconds to acquire
 
 %% connect to device
 stat = initStat();
@@ -42,6 +42,7 @@ fs=1e3/Nstates;
 
 
 %% plot
+
 plotN=ceil(sqrt(Nstates));
 
 t=(1:length(B))/fs-1;
