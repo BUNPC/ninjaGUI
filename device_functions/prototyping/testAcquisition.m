@@ -1,5 +1,5 @@
 
-N=50; %number of seconds to acquire
+N=10; %number of seconds to acquire
 
 %% connect to device
 stat = initStat();
@@ -43,9 +43,10 @@ fs=1e3/Nstates;
 
 %% plot
 
+figure(1)
 plotN=ceil(sqrt(Nstates));
 
-t=(1:length(B))/fs-1;
+t=((1:length(B))-1)/fs;
 
 tiledlayout(plotN,plotN);
 
@@ -58,6 +59,10 @@ for ki=1:Nstates
     xlim([0,max(t)])
     title(num2str(ki-1))
 end
+
+%%
+% figure(2)
+% semilogy(t,B(:,2,2))
 
 %% close device
 clear stat

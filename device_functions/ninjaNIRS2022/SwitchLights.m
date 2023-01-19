@@ -7,6 +7,10 @@ LightsOff=[254 0 0 0 0 0 255*app.active 0 0 2+app.active]; %command to turn all 
 
 switch command
     case 'on'
+        %% generate a state map for all sources on
+        ramA=zeros(1024,32);
+        % turn them all on sequentially
+
         write(app.sp,LightsOn,"uint8");
     case 'off'
         write(app.sp,LightsOff,"uint8");
