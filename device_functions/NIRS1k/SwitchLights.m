@@ -2,9 +2,8 @@ function errors = SwitchLights(app,command)
 %SwitchLights Used to either turn all the lights on or off at the same time
 %   command here is either "on" or "off"
 
-CMD_LED_STATE = bin2dec('11000010');
-LightsOff=[2 255 CMD_LED_STATE 0]; %command to turn all lights off
-LightsOn=[2 255 CMD_LED_STATE 12]; %command to turn all lights on
+LightsOn=[254 0 0 0 0 255-255 255-255 15 15 app.active]; %command to turn all lights on
+LightsOff=[254 0 0 0 0 255-255 255-255 0 0 app.active]; %command to turn all lights off
 
 switch command
     case 'on'

@@ -3,11 +3,9 @@ function errors = Acquisition(app,action)
 %   action is either 'start' or 'stop'
 errors=0;
 
-CMD_ACQ_ON = bin2dec('11000101');
-CMD_ACQ_OFF = bin2dec('11000110');
+startCommand=[254 0 0 0 0 0 0 bin2dec(num2str(flipud(app.LEDstate)'))' 1]; %command to start acquisition
+stopCommand=[254 0 0 0 0 0 0 bin2dec(num2str(flipud(app.LEDstate)'))' 0]; %command to stop acquisition
 
-startCommand=[1 255 CMD_ACQ_ON];
-stopCommand=[1 255 CMD_ACQ_OFF];
 
 try
     switch action
