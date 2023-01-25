@@ -4,7 +4,9 @@ function errors = TurnSourceN(app,N,L)
 %   wavelengths on each source
 
 errors=0;
-SourceNIndL=[254 0 0 0 0 0 255*app.active fliplr(bin2dec(num2str(flipud(app.LEDstate)'))') 2+app.active]; %command for this device
+%SourceNIndL=[254 0 0 0 0 0 255*app.active fliplr(bin2dec(num2str(flipud(app.LEDstate)'))') 2+app.active]; %command for this device
+
+%generate 
 
 %for this type of device, N and L are not used since sources cannot be
 %controlled individually: all sources need to be set at the same time
