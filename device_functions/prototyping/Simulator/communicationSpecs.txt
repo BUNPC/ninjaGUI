@@ -1,0 +1,8 @@
+Type	Serial
+BaudRate	6000000
+Parity	none
+DataBits	8
+StopBits	1
+FlowControl	hardware
+ByteOrder	little-endian
+TimeOut	1.6
