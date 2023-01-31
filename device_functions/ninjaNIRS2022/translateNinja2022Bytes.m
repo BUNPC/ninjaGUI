@@ -51,7 +51,7 @@ states=unique(estados);
 statesToEliminate=[false;diff(states)~=1];
 if sum(statesToEliminate)>0
     %then there is a problem with the data
-    toEliminate=find(estados==states(statesToEliminate));
+    toEliminate=estados==states(statesToEliminate);
     indicator(toEliminate)=[];
     %do states again
     estados=1+raw(indicator+length(header_indicator)+1);
@@ -144,6 +144,7 @@ dataOrganizedByState=nan(maxSamples,N_DET_PER_BOARD*N_DETECTOR_BOARDS,N_STATES);
 for ki=1:N_STATES
     dataOrganizedByState(1:lengthStateki(ki),:,ki)=B(~~isStateki(:,ki),:);  %<-- this will break or will be bugged if there is more than one detector board, change the logic
 end
+
 
 %% output
 
