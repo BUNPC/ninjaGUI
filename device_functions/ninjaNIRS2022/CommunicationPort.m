@@ -34,6 +34,7 @@ switch command
             stat = ResetCounters(s,stat);
             app.sp=s;
             app.deviceInformation.stat=stat;
+            app.deviceInformation.nDetBoards=ceil(app.deviceInformation.nDets/8); %In case we do not find an automatic way to assign this, it can be based on the number of detectors connected to the system, assuming no empty detector boards
             errors=0;            
         catch ME
             disp(ME.message)           

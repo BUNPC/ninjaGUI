@@ -77,18 +77,12 @@ raw=[prevrbytes;raw];
 rawN=size(raw,1);
 
 %% translate data to a numeric array
-[B,unusedBytes,numberOfSamples]=translateNinja2022Bytes(raw,app.deviceInformation.stateMap);
+[B,unusedBytes]=translateNinja2022Bytes(raw,app.deviceInformation.stateMap,app.deviceInformation.nDetBoards);
 
 %circshift to the left in the third dimension since packets marked as 1
 %actually store the last state, packets marked as 2 are state 1 etc
 
 B=circshift(B,-1,3);
-
-%for some reason, some elements of B are negative, which the GUI does not
-%handle well due to log visualization, so I will make those elements 1
-%B(B<=0)=1;
-%commented the previous line so I can use the negatives in dark state
-%subtraction
 
 % Nstates=size(B,3);
 % fs=1e3/Nstates;
@@ -112,14 +106,18 @@ organizedData=nan(size(B,1),size(SD.measList,1));
 % for loop is likely not the best way to do it
 
 nStates=size(B,3);
+cumDark=0;
 for ki=1:size(SD.measList,1)    
     try
-        organizedData(:,ki)=B(:,indices(ki,2),indices(ki,1));
+        organizedData(:,ki)=B(:,indices(ki,2),indices(ki,1));        
         if subtractDark
+            darkState=B(:,indices(ki,2),indices(ki,1)+1);
             %subtracts the adjacent state (after the current). Assumes
             %there is a dark state between each active state
-            organizedData(:,ki)=organizedData(:,ki)-B(:,indices(ki,2),indices(ki,1)+1);
+            organizedData(:,ki)=organizedData(:,ki)-darkState;
+            cumDark=cumDark+mean(darkState);
         end
+        
     end
 end
 

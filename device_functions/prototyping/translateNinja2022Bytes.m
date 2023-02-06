@@ -1,70 +1,12 @@
-function [data,N_STATES]=translateNinja2022Bytes(inputBytes)
-
-raw=inputBytes';
-
-% raw=inputBytes(1:1000);
-% 
-% %first sample of the header must be 254, second are third are state number,
-% %and fourth and fifth are [253,252]
-% 
-% %254 is the FPGA header. Can it vary?
-% %[253,252] is the detector board header. Can it vary? I currently only have
-% %one detector board and one source board. The source board has 4 sources
-% %and the detector board has 8 detectors
-% 
-% %data packages seem to be 31 bytes, thus 26 when removing the header. But
-% %still there is the sample counter, status flag (?), payload and checksum.
-% %I don't yet know how long each is
-% 
-% % sixth byte is sample counter, apparently there is only one byte for this,
-% % so now 25 bytes left
-% 
-% 
-% N_DETBOARDS = 1;
-% N_DET_PER_BOARD = 8;
-% val = zeros(1,N_DETBOARDS*N_DET_PER_BOARD); %used to store the value for each detector
-% 
-% % each detector returns 3 bytes
-% N_BYTES_PER_DET = 3;
-% 
-% % so payload seems to be N_DETBOARDS*N_DET_PER_BOARD*N_BYTES_PER_DET=24
-% % bytes
-% 
-% % so only one byte remains, not sure if at start or end, so either status
-% % flag or checksum are not used
-% 
-% 
-% N_STATES = 2;
-% 
-% N_BYTES_TO_READ_PER_DETB = N_DET_PER_BOARD*N_BYTES_PER_DET + 4;
-% N_BYTES_TO_READ_PER_HEADER = 3;
-% 
-% % so, each detector board is 28 bytes; 24 bytes of payload 2 of header and
-% % 2 of ???
-% 
-% OFFSET_ARRAY = 0:N_BYTES_TO_READ_PER_DETB:((N_DETBOARDS-1)*N_BYTES_TO_READ_PER_DETB);
-% OFFSET_ARRAY_RES = OFFSET_ARRAY + (0:N_BYTES_PER_DET:((N_DET_PER_BOARD-1)*N_BYTES_PER_DET))';
-% OFFSET_ARRAY_RES = OFFSET_ARRAY_RES(:)'+N_BYTES_TO_READ_PER_HEADER;
-% 
-% 
-% %so, in this example, the data bytes are from 7 to 30; the first three are
-% %for the first detector, second three for the second detector and so on
-% % byte 4 is the least significant and byte 6 is the most significant
-% 
-% %this reads the data from the first detector board and translates it to a DL
-% for ii = 1:N_BYTES_PER_DET
-%         val = val + 256^(ii-1)*raw(3 + ii + OFFSET_ARRAY_RES);
-% end
-% 
-% val = (val > 2^23-1).*2^24 - val;
-% 
-% % 
-
+function [data,unusedBytes]=translateNinja2022Bytes(inputBytes,stateMap,N_DETECTOR_BOARDS)
+% data is the translated data output. It has 3 dimensions: 1 is time
+% (samples) 2 is detectors; the third dimension is the state number, which
+% could be a proxy for detector number if the state acquisition sequence is
+% source by source (well, detector number and wavelength)
+raw=inputBytes;
 %% constants
 % some of these might need to be updated dynamically in the future when
 % there are multiple detector boards, I am not sure
-
-N_DETECTOR_BOARDS=1; %there should be a way dynamic way to find this number
 
 header_indicator=254; %byte indicating the header
 detector_header_indicator=[253,252]; %bytes indicating the detector header
@@ -77,9 +19,10 @@ N_BYTES_PER_DET = 3;
 
 N_DETECTORS=N_DET_PER_BOARD*N_DETECTOR_BOARDS;
 
-payloadSize=N_DET_PER_BOARD*N_BYTES_PER_DET;
-offset=length(header_indicator)+state_number_length+length(detector_header_indicator)+sample_counter_length; %offset for first payload byte
-packageLength=offset+payloadSize+1;  %I am not sure what the last byte is for
+offsetBoard=N_DET_PER_BOARD*N_BYTES_PER_DET+length(detector_header_indicator)+sample_counter_length+1;
+payloadSize=N_DETECTOR_BOARDS*offsetBoard;
+offset=length(header_indicator)+state_number_length; %offset for first payload byte
+packageLength=offset+payloadSize;  
 
 %% find detector header indicators
 indicator=find(raw==detector_header_indicator(end)); %find header indicators
@@ -98,8 +41,7 @@ indicator=indicator( ...
 %move the indicators to mark the FPGA header instead
 indicator=indicator-length(detector_header_indicator)-state_number_length;
 
-
-%% identify number of states
+%% identify number of states in data read
 estados=1+raw(indicator+length(header_indicator)+1);
 states=unique(estados);
 
@@ -108,14 +50,13 @@ states=unique(estados);
 statesToEliminate=[false;diff(states)~=1];
 if sum(statesToEliminate)>0
     %then there is a problem with the data
-    toEliminate=find(estados==states(statesToEliminate));
+    toEliminate=estados==states(statesToEliminate);
     indicator(toEliminate)=[];
     %do states again
     estados=1+raw(indicator+length(header_indicator)+1);
     states=unique(estados);
 end
 
-N_STATES = length(states);
 
 %% figure out if last package is incomplete
 
@@ -133,24 +74,41 @@ else
     lastByteUsed=positionOfIncompleteHeader-1;
 end
 
-
 %ignore potential indicators that are less than one data package away from
 %the end of the captured data
 
 unusedBytes=raw(lastByteUsed+1:end);
 
 %% translate
-ii=1;
-indicator_matrix=indicator+offset+(0:N_BYTES_PER_DET:(N_DET_PER_BOARD*N_BYTES_PER_DET)-1);
-A=raw(ii-1+indicator_matrix)*256^(ii-1);
-for ii=2:N_BYTES_PER_DET
-    A=A+raw(ii-1+indicator_matrix)*256^(ii-1);
+
+B=nan(length(indicator),N_DETECTORS); 
+
+for ki=1:N_DETECTOR_BOARDS
+    ii=1;
+
+    indicator_matrix=indicator+offset+(0:N_BYTES_PER_DET:(N_DET_PER_BOARD*N_BYTES_PER_DET)-1)+(ki-1)*offsetBoard+length(detector_header_indicator)+sample_counter_length;
+    A=raw(ii-1+indicator_matrix)*256^(ii-1);
+    for ii=2:N_BYTES_PER_DET
+        A=A+raw(ii-1+indicator_matrix)*256^(ii-1);
+    end
+
+    %negative value correction
+    A = (A > 2^23-1).*2^24 - A;
+    B(:,(1:N_DET_PER_BOARD)+(ki-1)*N_DET_PER_BOARD)=A;
 end
 
-%negative value correction
-A = (A > 2^23-1).*2^24 - A;
 
-%% now sort them by state
+%% identify number of states
+%estados=1+raw(indicator+length(header_indicator)+1); %this is how it
+%should be done when we have the whole bytestream. For a partial
+%bytestream, we should instead read from the statemap
+%number of states
+estados=1+raw(indicator+length(header_indicator)+1);
+foo=find(stateMap(:,27)==1);
+N_STATES=foo(1);
+states=1:N_STATES;
+
+%% now sort data by state
 
 isStateki=zeros(length(indicator),N_STATES);
 lengthStateki=zeros(1,N_STATES);
@@ -162,11 +120,12 @@ end
 %find which state got the most samples
 maxSamples=max(lengthStateki);
 
-dataOrganizedByState=nan(maxSamples,N_DET_PER_BOARD,N_STATES);
+dataOrganizedByState=nan(maxSamples,N_DET_PER_BOARD*N_DETECTOR_BOARDS,N_STATES);
 
 for ki=1:N_STATES
-    dataOrganizedByState(1:lengthStateki(ki),:,ki)=A(~~isStateki(:,ki),:);
+    dataOrganizedByState(1:lengthStateki(ki),:,ki)=B(~~isStateki(:,ki),:);  %<-- this will break or will be bugged if there is more than one detector board, change the logic
 end
+
 
 %% output
 

@@ -2,7 +2,7 @@
 N=10; %number of seconds to acquire
 
 %% connect to device
-stat = initStat();
+stat = initStat1(150e-6);
 
 %% upload state definitions and power on; NOTE: MAKE SURE YOU UNDERSTAND THE POWER ON AND POWER OFF SEQUENCE AND HOW IT RELATES TO CREATING/CONNECTING THE DEVICE
 uploadToRAM(stat.s, stat.rama, 'a', false);
@@ -36,7 +36,8 @@ stat = updateStatReg(stat);
 
 
 %% translate bytestream to readable data
-[B,unusedBytes]=translateNinja2022Bytes(A);
+stateMap=stat.rama;
+[B,unusedBytes]=translateNinja2022Bytes(A',stateMap,2);
 Nstates=size(B,3);
 fs=1e3/Nstates;
 
@@ -52,9 +53,9 @@ tiledlayout(plotN,plotN);
 
 limites=[1,1.1*max(B(:))];
 
-for ki=1:Nstates
+for ki=1:Nstates-1
     nexttile
-    semilogy(t,B(:,:,ki))
+    semilogy(t,B(:,:,ki)-B(:,:,ki+1))
     ylim(limites)
     xlim([0,max(t)])
     title(num2str(ki-1))
