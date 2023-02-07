@@ -1,4 +1,4 @@
-function [data,unusedBytes]=translateNinja2022Bytes(inputBytes,stateMap,N_DETECTOR_BOARDS)
+function [data,unusedBytes,darkLevelAvg]=translateNinja2022Bytes(inputBytes,stateMap,N_DETECTOR_BOARDS)
 % data is the translated data output. It has 3 dimensions: 1 is time
 % (samples) 2 is detectors; the third dimension is the state number, which
 % could be a proxy for detector number if the state acquisition sequence is
@@ -25,21 +25,24 @@ offset=length(header_indicator)+state_number_length; %offset for first payload b
 packageLength=offset+payloadSize;  
 
 %% find detector header indicators
-indicator=find(raw==detector_header_indicator(end)); %find header indicators
-for ki=1:length(detector_header_indicator)-1
-    indicator=indicator(raw(indicator-ki)==detector_header_indicator(end-ki));    
-end
+endByte=0;
 
-%now indicator has potential data packages identified based on the last
-%byte of the detector header; now find if there is the FPGA header too
+%first identify the end byte of the package
+indicator=find(raw==endByte);
+indicator(indicator<packageLength)=[];
 
-indicator=indicator( ...
-    raw( ...
-    indicator-length(detector_header_indicator)-state_number_length)...
-    ==header_indicator);
+%now find which ones start with 254
+indicator=indicator(raw(indicator+1-packageLength)==header_indicator);
 
-%move the indicators to mark the FPGA header instead
-indicator=indicator-length(detector_header_indicator)-state_number_length;
+%move indicators to start of package
+indicator=indicator-packageLength+1;
+
+%now make sure the detector header indicators are in the correct position
+indicator=indicator(raw(indicator+offset)==detector_header_indicator(1));
+indicator=indicator(raw(indicator+offset+1)==detector_header_indicator(2));
+
+%the previous test could be repeated if multiple detector boards for better
+%accuracy
 
 %% identify number of states in data read
 estados=1+raw(indicator+length(header_indicator)+1);
@@ -56,7 +59,6 @@ if sum(statesToEliminate)>0
     estados=1+raw(indicator+length(header_indicator)+1);
     states=unique(estados);
 end
-
 
 %% figure out if last package is incomplete
 
@@ -87,7 +89,9 @@ for ki=1:N_DETECTOR_BOARDS
     ii=1;
 
     indicator_matrix=indicator+offset+(0:N_BYTES_PER_DET:(N_DET_PER_BOARD*N_BYTES_PER_DET)-1)+(ki-1)*offsetBoard+length(detector_header_indicator)+sample_counter_length;
+    
     A=raw(ii-1+indicator_matrix)*256^(ii-1);
+    
     for ii=2:N_BYTES_PER_DET
         A=A+raw(ii-1+indicator_matrix)*256^(ii-1);
     end
@@ -96,7 +100,6 @@ for ki=1:N_DETECTOR_BOARDS
     A = (A > 2^23-1).*2^24 - A;
     B(:,(1:N_DET_PER_BOARD)+(ki-1)*N_DET_PER_BOARD)=A;
 end
-
 
 %% identify number of states
 %estados=1+raw(indicator+length(header_indicator)+1); %this is how it
@@ -126,6 +129,12 @@ for ki=1:N_STATES
     dataOrganizedByState(1:lengthStateki(ki),:,ki)=B(~~isStateki(:,ki),:);  %<-- this will break or will be bugged if there is more than one detector board, change the logic
 end
 
+%% identify dark states
+darkStateIdx=~any(stateMap(states,19:21),2);
+% sort dark states by detector
+darkSamplesbyState=dataOrganizedByState(:,:,darkStateIdx);
+% summarize dark state intensity for each detector
+darkLevelAvg=nanmean(nanmean(darkSamplesbyState,3),1);
 
 %% output
 

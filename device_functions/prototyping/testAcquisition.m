@@ -1,5 +1,5 @@
 
-N=10; %number of seconds to acquire
+N=50; %number of seconds to acquire
 
 %% connect to device
 stat = initStat1(150e-6);

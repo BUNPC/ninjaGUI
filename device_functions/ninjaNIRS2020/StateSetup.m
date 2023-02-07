@@ -4,6 +4,8 @@ function result = StateSetup(app,statefMap)
 %frequencies of the LEDs, or the power levels if they are fixed, or the
 %state sequences if there is temporal multiplexion
 
+statefMap=squeeze(statefMap(:,1,:));
+
 sp=app.sp;
 
 result=0;

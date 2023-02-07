@@ -34,8 +34,13 @@ function [dataoutput,packlen,remainderbytes,datac,statusdata,maxvout,avgvout]=Re
 % optodes are saturared (field 'optodeSaturationThreshold' from the config
 % file)
 
-%current implementation ignores optional outputs
-subtractDark=1;
+
+if isfield(app.deviceInformation,'subtractDark')
+    subtractDark=app.deviceInformation.subtractDark;
+else
+    subtractDark=0;
+end
+
 
 %% parse app variables
 

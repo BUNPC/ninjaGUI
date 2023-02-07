@@ -8,6 +8,11 @@ function result = StateSetup(app,stateMap)
 %hard code the states for now; I will have to find a convenient and
 %compatible way to do 
 
+%2/7/23 update; currently the app will send an empty map, unless there is a
+%stored map in the SD file somehow. Still hard coded here; I would
+%recommend that somehow the state map for a given experiment is stored in
+%the SD file for the experiment
+
 stateMap= zeros(1024,32);
 
 stateMap(1,[1 9]) = 1; % select LED
@@ -44,6 +49,7 @@ stat=initStat(stateMap);
 %% Add the state map to the GUI variables for latter use
 
 % for now I will save the statemap as a field of deviceInformation (other fields are the cfg file)
+app.nSD.freqMap=stateMap;
 app.deviceInformation.stateMap=stateMap;
 app.deviceInformation.Rate=fs;
 app.editRate.Value=app.deviceInformation.Rate;
