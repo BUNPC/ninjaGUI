@@ -16,7 +16,7 @@ N_STATES=foo(1);
 %cropped ID lists to the valid states
 sourceIDs=stateMap(1:N_STATES,1:8);
 wavelengthIDs=stateMap(1:N_STATES,9:10); 
-sourceBoardIds=stateMap(1:N_STATES,11:16); 
+%sourceBoardIds=stateMap(1:N_STATES,11:16); 
 
 %% LOOP MEASUREMENT BY MEASUREMENT TO FIND IN STATES
 estados=nan(1,length(measList));
