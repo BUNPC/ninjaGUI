@@ -38,11 +38,17 @@ indicator=indicator(raw(indicator+1-packageLength)==header_indicator);
 indicator=indicator-packageLength+1;
 
 %now make sure the detector header indicators are in the correct position
-indicator=indicator(raw(indicator+offset)==detector_header_indicator(1));
-indicator=indicator(raw(indicator+offset+1)==detector_header_indicator(2));
+for ki=1:N_DETECTOR_BOARDS
+    indicator=indicator(raw(indicator+offset+offsetBoard*(ki-1))==detector_header_indicator(1));
+    indicator=indicator(raw(indicator+offset+1+offsetBoard*(ki-1))==detector_header_indicator(2));
+end
+% if length(unique(diff(indicator)))>1
+%     disp('stop')
+% end
 
-%the previous test could be repeated if multiple detector boards for better
-%accuracy
+
+%the previous test should be repeated if multiple detector boards for better
+%accuracy; otherwise there will be misidentified packages
 
 %% identify number of states in data read
 estados=1+raw(indicator+length(header_indicator)+1);
@@ -126,7 +132,7 @@ maxSamples=max(lengthStateki);
 dataOrganizedByState=nan(maxSamples,N_DET_PER_BOARD*N_DETECTOR_BOARDS,N_STATES);
 
 for ki=1:N_STATES
-    dataOrganizedByState(1:lengthStateki(ki),:,ki)=B(~~isStateki(:,ki),:);  %<-- this will break or will be bugged if there is more than one detector board, change the logic
+    dataOrganizedByState(1:lengthStateki(ki),:,ki)=B(~~isStateki(:,ki),:);  %<-- CHECK THIS WORKS AS INTENDED FOR MORE THAN ONE DETECTOR BOARD
 end
 
 %% identify dark states
