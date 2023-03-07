@@ -50,9 +50,9 @@ n_detb = 16; % number of detector boards
 % plugged in
 t_end_cyc = 10e-6; % duration of end cycle pulse period
 t_bsel_holdoff = 1e-6; % holdoff between different selected detector board uart transmissions
-t_smp_holdoff_start = 150e-6; % time to hold off sampling after state switch to let analog signal settle
+t_smp_holdoff_start = 500e-6; % time to hold off sampling after state switch to let analog signal settle
 t_smp_holdoff_end = 10e-6; % time to hold off sampling before state switch (at end of cycle)
-fs_target = 2e3; % target sampling frequency
+fs_target = 100e3; % target sampling frequency
 
 t_state_b = stat.clk_div*8/96e6; % duration of each RAM B state
 t_state_a = t_state_b * n_state_b;
