@@ -1,36 +1,29 @@
-classdef MetaDataTagsClass  < matlab.mixin.Copyable
+classdef MetaDataTagsClass  < FileLoadSaveClass
 
-    % SNIRF-spec class properties
     properties
         tags
     end
-    
-    % Non-SNIRF class properties
-    properties (Access = private)
-        filename
-        fileformat
-    end
-    
-        
+
     methods
         
         % -------------------------------------------------------
         function obj = MetaDataTagsClass(varargin)
             % Set class properties not part of the SNIRF format
-            obj.fileformat = 'hdf5';
-
+            obj.SetFileFormat('hdf5');
             obj.tags.SubjectID = 'default';
             obj.tags.MeasurementDate = datestr(now,29);
             obj.tags.MeasurementTime = datestr(now,'hh:mm:ss');
             obj.tags.LengthUnit = 'mm';
             obj.tags.TimeUnit = 'unknown';
             obj.tags.FrequencyUnit = 'unknown';
-            obj.tags.AppName  = 'snirf-homer3';
-            obj.tags.SnirfDraft = '3';
-            
-            if nargin==1
-                obj.filename = varargin{1};
+            obj.tags.AppName  = 'homer3-DataTree';
+
+            if nargin==1 && ~isempty(varargin{1})
+                obj.SetFilename(varargin{1});
                 obj.Load();
+            end
+            if nargin==2
+                obj.tags.LengthUnit = varargin{2};
             end
         end
     
@@ -54,10 +47,10 @@ classdef MetaDataTagsClass  < matlab.mixin.Copyable
                        
             % Error checking
             if ~isempty(fileobj) && ischar(fileobj)
-                obj.filename = fileobj;
+                obj.SetFilename(fileobj);
             elseif isempty(fileobj)
-                fileobj = obj.filename;
-            end 
+                fileobj = obj.GetFilename();
+            end
             if isempty(fileobj)
                err = -1;
                return;
@@ -89,7 +82,8 @@ classdef MetaDataTagsClass  < matlab.mixin.Copyable
                 err = -1;
                 
             end
-            
+            obj.SetError(err);
+
         end
         
         
@@ -104,15 +98,15 @@ classdef MetaDataTagsClass  < matlab.mixin.Copyable
             if ~exist('location', 'var') || isempty(location)
                 location = '/nirs/metaDataTags';
             elseif location(1)~='/'
-                location = ['/',location];
+                location = ['/',location]; %#ok<*NASGU>
             end
             
             if ~exist(fileobj, 'file')
                 fid = H5F.create(fileobj, 'H5F_ACC_TRUNC', 'H5P_DEFAULT', 'H5P_DEFAULT');
                 H5F.close(fid);
             end
-            props = propnames(obj.tags);
-            for ii=1:length(props)
+            props = propnames(obj.tags);            
+            for ii = 1:length(props)
                 eval(sprintf('hdf5write_safe(fileobj, [location, ''/%s''], obj.tags.%s);', props{ii}, props{ii}));
             end
         end
@@ -161,7 +155,7 @@ classdef MetaDataTagsClass  < matlab.mixin.Copyable
         
         
         % -------------------------------------------------------
-        function Add(obj, key, value)
+        function Add(obj, key, value) %#ok<INUSL>
             key(key==' ') = '';
             eval(sprintf('obj.tags.%s = value', key));
         end
@@ -169,13 +163,31 @@ classdef MetaDataTagsClass  < matlab.mixin.Copyable
         
         
         % ----------------------------------------------------------------------------------
-        function tags = Get(obj)
-            fields = propnames(obj.tags);
-            tags = repmat(struct('key','','value',[]),length(fields),1);
-            for ii=1:length(fields)
-                eval(sprintf('tags(ii).key = ''%s'';', fields{ii}));
-                eval(sprintf('tags(ii).value = obj.tags.%s;', fields{ii}));
+        function val = Get(obj, name)
+            val = [];
+            if ~exist('name', 'var')
+                return;
             end
+            if isfield(obj.tags, name)
+                val = eval( sprintf('obj.tags.%s;', name) );
+            end
+        end
+        
+        
+        % ----------------------------------------------------------------------------------
+        function Set(obj, name, value)
+            if ~exist('name', 'var') || ~exist('value', 'var')
+                retrun
+            end                                     
+            eval( sprintf('obj.tags.%s = ''%s'';', name, value) )   
+        end        
+        
+        % ----------------------------------------------------------------------------------
+        function SetLengthUnit(obj, unit)
+            if isempty(obj)
+                return
+            end
+            obj.tags.LengthUnit = unit;
         end
         
         

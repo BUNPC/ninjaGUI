@@ -13,10 +13,10 @@ function demo_snirf()
 examplesDir = findexamplesdir(); 
 
 % Delete any previously generated .snirf files to make sure to start from scratch
-delete([examplesDir, '*.snirf']);
+DeleteDataFiles(examplesDir, '.snirf', 'standalone');
 
 % Start with .nirs files
-nirsfiles = dir([examplesDir, '*.nirs']);
+nirsfiles = mydir([examplesDir, '*.nirs']);
 
 fprintf('\n')
 
@@ -25,8 +25,9 @@ for ii=1:length(nirsfiles)
     
     % Convert sample .nirs file to SNIRF file (*.snirf) 
     [pname,fname,ext] = fileparts([examplesDir, nirsfiles(ii).name]);
-    fprintf('Converting %s to %s\n', [pname, '/', fname, ext], [pname, '/', fname, '.snirf']);
-    [snirf_saved, snirf_loaded] = snirf_load_save([pname, '/', nirsfiles(ii).name]);
+    pname = filesepStandard(pname);
+    fprintf('Converting %s to %s\n', [pname, fname, ext], [pname, fname, '.snirf']);
+    [snirf_saved, snirf_loaded] = snirf_load_save([pname, nirsfiles(ii).name]);
     
     % Compare the saved and loaded SnirfClass objects, using overloaded == operator 
     if snirf_saved == snirf_loaded

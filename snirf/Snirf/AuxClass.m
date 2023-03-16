@@ -1,33 +1,32 @@
-classdef AuxClass < matlab.mixin.Copyable
+classdef AuxClass < FileLoadSaveClass
     
-    % SNIRF-spec class properties
     properties
         name
         dataTimeSeries
         time
         timeOffset
     end
-    
-    % Non-SNIRF class properties
+
+    % Properties not part of the SNIRF spec. These parameters aren't loaded or saved to files
     properties (Access = private)
-        filename
-        fileformat
-    end
-    
-    
+        debuglevel
+    end    
+
     methods
         
         % -------------------------------------------------------
-        function obj = AuxClass(varargin)            
+        function obj = AuxClass(varargin)
             % Set class properties not part of the SNIRF format
-            obj.fileformat = 'hdf5';
+            obj.SetFileFormat('hdf5');
+
+            obj.debuglevel = DebugLevel('none');
             
             obj.timeOffset = 0;
             if nargin==1
                 if isa(varargin{1}, 'AuxClass')
                     obj = varargin{1}.copy();
                 elseif ischar(varargin{1})
-                    obj.filename = varargin{1};
+                    obj.SetFilename(varargin{1});
                     obj.Load();
                 end
             elseif nargin==3
@@ -38,14 +37,12 @@ classdef AuxClass < matlab.mixin.Copyable
                 obj.name = '';
                 obj.dataTimeSeries = [];
                 obj.time = [];
-            end
-            
+            end                        
         end
         
         
         % -------------------------------------------------------
         function err = LoadHdf5(obj, fileobj, location)
-            err = 0;
             
             % Arg 1
             if ~exist('fileobj','var') || (ischar(fileobj) && ~exist(fileobj,'file'))
@@ -59,11 +56,11 @@ classdef AuxClass < matlab.mixin.Copyable
                 location = ['/',location];
             end
             
-            % Error checking            
+            % Error checking for file existence
             if ~isempty(fileobj) && ischar(fileobj)
-                obj.filename = fileobj;
+                obj.SetFilename(fileobj);
             elseif isempty(fileobj)
-                fileobj = obj.filename;
+                fileobj = obj.GetFilename();
             end 
             if isempty(fileobj)
                err = -1;
@@ -71,24 +68,50 @@ classdef AuxClass < matlab.mixin.Copyable
             end
             
             %%%%%%%%%%%% Ready to load from file
-            try
+            try               
                 % Open group
                 [gid, fid] = HDF5_GroupOpen(fileobj, location);
-                if gid<0
-                    err = -1;
+                
+                % Absence of optional aux field raises error > 0
+                if gid.double < 0
+                    err = 1;
                     return;
                 end
-
+                
                 obj.name            = HDF5_DatasetLoad(gid, 'name');
                 obj.dataTimeSeries  = HDF5_DatasetLoad(gid, 'dataTimeSeries');
                 obj.time            = HDF5_DatasetLoad(gid, 'time');
                 obj.timeOffset      = HDF5_DatasetLoad(gid, 'timeOffset');
-
+               
+                % Name should not be loaded as a 1x1 cell array, but some
+                % Python interfaces lead to it being saved this way.
+                %
+                % This is due to the string being saved in fixed vs.
+                % variable length format. See: https://support.hdfgroup.org/HDF5/doc1.6/UG/11_Datatypes.html
+                %
+                % As of version 1.0 of the SNIRF specification, this is not
+                % an issue of spec compliance.
+                if iscell(obj.name) && length(obj.name) == 1
+                    obj.name = obj.name{1};
+                end
+                
+                err = obj.ErrorCheck();
+                
                 % Close group
                 HDF5_GroupClose(fileobj, gid, fid);
+                
             catch
-                err = -2;
+                
+                if gid.double > 0
+                    % If optional aux field exists BUT is in some way invalid it raises error < 0
+                    err = -6;
+                else
+                    err = 1;
+                end
+                
             end
+            
+            obj.SetError(err); 
         end
 
         
@@ -111,10 +134,14 @@ classdef AuxClass < matlab.mixin.Copyable
                 H5F.close(fid);
             end     
             
+            if obj.debuglevel.Get() == obj.debuglevel.SimulateBadData()
+                obj.SimulateBadData();
+            end
+            
             hdf5write_safe(fileobj, [location, '/name'], obj.name);
-            hdf5write_safe(fileobj, [location, '/dataTimeSeries'], obj.dataTimeSeries);
-            hdf5write_safe(fileobj, [location, '/time'], obj.time);
-            hdf5write_safe(fileobj, [location, '/timeOffset'], obj.timeOffset);
+            hdf5write_safe(fileobj, [location, '/dataTimeSeries'], obj.dataTimeSeries, 'array');
+            hdf5write_safe(fileobj, [location, '/time'], obj.time, 'array');
+            hdf5write_safe(fileobj, [location, '/timeOffset'], obj.timeOffset, 'array');
         end
         
         
@@ -189,6 +216,59 @@ classdef AuxClass < matlab.mixin.Copyable
             nbytes = sizeof(obj.name) + sizeof(obj.dataTimeSeries) + sizeof(obj.time) + sizeof(obj.timeOffset);
         end
         
+        
+        % ----------------------------------------------------------------------------------
+        function b = IsEmpty(obj)
+            b = true;
+            if isempty(obj)
+                return
+            end
+            if isempty(obj.name)
+                return
+            end
+            if isempty(obj.dataTimeSeries)
+                return
+            end
+            if isempty(obj.time)
+                return
+            end
+            if length(obj.dataTimeSeries) ~= length(obj.time)
+                return
+            end
+            b = false;
+        end
+        
+        
+        % ----------------------------------------------------------------------------------
+        function err = ErrorCheck(obj)
+            err = 0;
+            if isempty(obj.name)
+                err = -1;
+                return
+            end
+            if isempty(obj.dataTimeSeries)
+                err = -2;
+                return
+            end
+            if isempty(obj.time)
+                err = -3;
+                return
+            end
+            if length(obj.dataTimeSeries) ~= length(obj.time)
+                err = -4;
+                return
+            end
+            if ~ischar(obj.name)
+                err = -5;
+                return
+            end
+        end
+        
+        
+        % ----------------------------------------------------------------------------------
+        function SimulateBadData(obj)
+            obj.dataTimeSeries(end,:) = [];
+        end
         
     end
     

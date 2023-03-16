@@ -1,6 +1,6 @@
-classdef MeasListClass < matlab.mixin.Copyable
+classdef MeasListClass < FileLoadSaveClass
     
-    % SNIRF-spec class properties
+    % Properties implementing the MeasList fields from the SNIRF spec
     properties
         sourceIndex
         detectorIndex
@@ -13,13 +13,7 @@ classdef MeasListClass < matlab.mixin.Copyable
         moduleIndex
     end
     
-    % Non-SNIRF class properties
-    properties (Access = private)
-        filename
-        fileformat
-    end
-    
-    
+       
     methods
 
         function obj = MeasListClass(varargin)
@@ -61,9 +55,9 @@ classdef MeasListClass < matlab.mixin.Copyable
             if nargin==1 && isa(varargin{1}, 'MeasListClass')
                 obj                  = varargin{1}.copy();                    % shallow copy ok because MeasListClass has no handle properties 
             elseif nargin==1 
-                obj.sourceIndex      = varargin{1}(1);
-                obj.detectorIndex    = varargin{1}(2);
-                obj.wavelengthIndex  = varargin{1}(4);
+                obj.sourceIndex      = varargin{1}(:,1);
+                obj.detectorIndex    = varargin{1}(:,2);
+                obj.wavelengthIndex  = varargin{1}(:,4);
                 obj.dataType         = dataTypeValues.Raw.CW.Amplitude;
             elseif nargin==3
                 obj.sourceIndex      = varargin{1};
@@ -83,7 +77,7 @@ classdef MeasListClass < matlab.mixin.Copyable
             end
             
             % Set base class properties not part of the SNIRF format
-            obj.fileformat = 'hdf5';
+            obj.SetFileFormat('hdf5');
 
         end
         
@@ -106,10 +100,10 @@ classdef MeasListClass < matlab.mixin.Copyable
             
             % Error checking            
             if ~isempty(fileobj) && ischar(fileobj)
-                obj.filename = fileobj;
+                obj.SetFilename(fileobj);
             elseif isempty(fileobj)
-                fileobj = obj.filename;
-            end 
+                fileobj = obj.GetFilename();
+            end
             if isempty(fileobj)
                err = -1;
                return;
@@ -124,6 +118,7 @@ classdef MeasListClass < matlab.mixin.Copyable
                 obj.detectorIndex   = HDF5_DatasetLoad(gid, 'detectorIndex');
                 obj.wavelengthIndex = HDF5_DatasetLoad(gid, 'wavelengthIndex');
                 obj.dataType        = HDF5_DatasetLoad(gid, 'dataType');
+                obj.dataTypeIndex   = HDF5_DatasetLoad(gid, 'dataTypeIndex');
                 obj.dataTypeLabel   = HDF5_DatasetLoad(gid, 'dataTypeLabel', obj.dataTypeLabel);
                 obj.detectorIndex   = HDF5_DatasetLoad(gid, 'detectorIndex');
                 obj.sourcePower     = HDF5_DatasetLoad(gid, 'sourcePower');
@@ -135,7 +130,18 @@ classdef MeasListClass < matlab.mixin.Copyable
                 err = -1;
                 return
             end
+            
+            if obj.IsEmpty()
+                err = -1;
+            end
+            if obj.sourceIndex<1
+                err = -1;
+            end
+            if obj.detectorIndex<1
+                err = -1;
+            end
 
+            obj.SetError(err);
         end
 
         
@@ -159,15 +165,15 @@ classdef MeasListClass < matlab.mixin.Copyable
                 H5F.close(fid);
             end
             
-            hdf5write_safe(fileobj, [location, '/sourceIndex'], obj.sourceIndex);
-            hdf5write_safe(fileobj, [location, '/detectorIndex'], obj.detectorIndex);
-            hdf5write_safe(fileobj, [location, '/wavelengthIndex'], obj.wavelengthIndex);
-            hdf5write_safe(fileobj, [location, '/dataType'], obj.dataType);
+            hdf5write_safe(fileobj, [location, '/sourceIndex'], uint64(obj.sourceIndex));
+            hdf5write_safe(fileobj, [location, '/detectorIndex'], uint64(obj.detectorIndex));
+            hdf5write_safe(fileobj, [location, '/wavelengthIndex'], uint64(obj.wavelengthIndex));
+            hdf5write_safe(fileobj, [location, '/dataType'], uint64(obj.dataType));
             hdf5write_safe(fileobj, [location, '/dataTypeLabel'], obj.dataTypeLabel);
-            hdf5write_safe(fileobj, [location, '/dataTypeIndex'], obj.dataTypeIndex);
+            hdf5write_safe(fileobj, [location, '/dataTypeIndex'], uint64(obj.dataTypeIndex));
             hdf5write_safe(fileobj, [location, '/sourcePower'], obj.sourcePower);
             hdf5write_safe(fileobj, [location, '/detectorGain'], obj.detectorGain);
-            hdf5write_safe(fileobj, [location, '/moduleIndex'], obj.moduleIndex);
+            hdf5write_safe(fileobj, [location, '/moduleIndex'], uint64(obj.moduleIndex));
         end
 
                 
@@ -236,10 +242,12 @@ classdef MeasListClass < matlab.mixin.Copyable
         % -------------------------------------------------------
         function b = IsEmpty(obj)
             b = false;
-            if obj.sourceIndex==0 && obj.detectorIndex==0
+            if isempty(obj.sourceIndex) && isempty(obj.detectorIndex)
                 b = true;
+                return
             end
         end
+
         
         % -------------------------------------------------------
         function B = eq(obj, obj2)

@@ -1,4 +1,4 @@
-classdef SnirfClass < matlab.mixin.Copyable
+classdef SnirfClass < AcqDataClass & FileLoadSaveClass
     
     properties
         formatVersion
@@ -16,9 +16,6 @@ classdef SnirfClass < matlab.mixin.Copyable
         nirsdatanum
         nirs_tb
         stim0
-        filename        
-        fileformat
-        dataStorageScheme
     end
     
     methods
@@ -72,11 +69,13 @@ classdef SnirfClass < matlab.mixin.Copyable
             %           measurementList: [1x8 MeasListClass]
             %
             
+            obj = obj@AcqDataClass(varargin);
+            
             % Initialize properties from SNIRF spec
             obj.Initialize()
             
             % Set class properties NOT part of the SNIRF format
-            obj.fileformat = 'hdf5';
+            obj.SetFileFormat('hdf5');
             obj.location = '/nirs';
             obj.nirsdatanum = 1;
             
@@ -89,6 +88,7 @@ classdef SnirfClass < matlab.mixin.Copyable
             % obj = SnirfClass(filename, dataStorageScheme);
             % obj = SnirfClass(dotnirs);
             % obj = SnirfClass(dotnirs, numdatabllocks);
+            % obj = SnirfClass(SD);
             % obj = SnirfClass(data, stim);
             % obj = SnirfClass(data, stim, probe);
             % obj = SnirfClass(data, stim, probe, aux);
@@ -107,7 +107,7 @@ classdef SnirfClass < matlab.mixin.Copyable
                 % obj = SnirfClass(filename, dataStorageScheme);
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 if ischar(varargin{1})
-                    obj.filename = varargin{1};
+                    obj.SetFilename(varargin{1});
                     if nargin>1
                         % obj = SnirfClass(filename, nirsdatanum);
                         if isnumeric(varargin{2})
@@ -120,22 +120,22 @@ classdef SnirfClass < matlab.mixin.Copyable
                             
                             % obj = SnirfClass(filename, dataStorageScheme);
                         elseif ischar(varargin{2})
-                            obj.dataStorageScheme = varargin{2};
+                            obj.SetDataStorageScheme(varargin{2});
                             
                         end
                     end
                     
                     % Load Snirf file here ONLY if data storage scheme is 'memory'
-                    if strcmpi(obj.dataStorageScheme, 'memory')
+                    if strcmpi(obj.GetDataStorageScheme, 'memory')
                         obj.Load(varargin{1});
                     end
                     
                     
-                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                    % obj = SnirfClass(dotnirs);
-                    % obj = SnirfClass(dotnirs, numdatabllocks);
-                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                elseif isstruct(varargin{1}) || isa(varargin{1}, 'NirsClass')
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % obj = SnirfClass(dotnirs);
+                % obj = SnirfClass(dotnirs, numdatabllocks);
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                elseif NirsClass(varargin{1}).IsValid()
                     
                     % obj = SnirfClass(dotnirs);
                     tfactors = 1;    % Debug simulation parameter
@@ -144,32 +144,51 @@ classdef SnirfClass < matlab.mixin.Copyable
                     if nargin==2
                         tfactors = varargin{2};
                     end
-                    dotnirs = varargin{1};
+                    dotnirs = NirsClass(varargin{1});
                     obj.GenSimulatedTimeBases(dotnirs, tfactors);
-                    for ii=1:length(tfactors)
+                    
+                    % Required fields
+                    for ii = 1:length(tfactors)
                         obj.data(ii) = DataClass(obj.nirs_tb(ii).d, obj.nirs_tb(ii).t(:), obj.nirs_tb(ii).SD.MeasList);
                     end
+                    obj.probe       = ProbeClass(dotnirs.SD);                    
+                    obj.metaDataTags.SetLengthUnit(dotnirs.SD.SpatialUnit);
                     
-                    for ii=1:size(dotnirs.s,2)
-                        if isfield(dotnirs, 'CondNames')
-                            obj.stim(ii) = StimClass(dotnirs.s(:,ii), dotnirs.t(:), dotnirs.CondNames{ii});
-                        else
-                            obj.stim(ii) = StimClass(dotnirs.s(:,ii), dotnirs.t(:), num2str(ii));
+                    % Optional fields
+                    if isproperty(dotnirs,'s')
+                        for ii = 1:size(dotnirs.s,2)
+                            if isproperty(dotnirs, 'CondNames')
+                                obj.stim(ii) = StimClass(dotnirs.s(:,ii), dotnirs.t(:), dotnirs.CondNames{ii});
+                            else
+                                obj.stim(ii) = StimClass(dotnirs.s(:,ii), dotnirs.t(:), num2str(ii));
+                            end
                         end
                     end
-                    obj.probe      = ProbeClass(dotnirs.SD);
-                    for ii=1:size(dotnirs.aux,2)
-                        obj.aux(ii) = AuxClass(dotnirs.aux(:,ii), dotnirs.t(:), sprintf('aux%d',ii));
+                    if isproperty(dotnirs,'aux')
+                        for ii = 1:size(dotnirs.aux,2)
+                            obj.aux(ii) = AuxClass(dotnirs.aux(:,ii), dotnirs.t(:), sprintf('aux%d',ii));
+                        end
                     end
                     
-                    % Add metadatatags
-                    obj.metaDataTags   = MetaDataTagsClass();
+                    % Add required field metadatatags that has no .nirs
+                    % equivalent 
+                    obj.metaDataTags   = MetaDataTagsClass('', dotnirs.SD.SpatialUnit);
                     
-                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                    % obj = SnirfClass(data, stim);
-                    % obj = SnirfClass(data, stim, probe);
-                    % obj = SnirfClass(data, stim, probe, aux);
-                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % obj = SnirfClass(SD);
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                elseif NirsClass(varargin{1}).IsProbeValid()
+                    
+                    n = NirsClass(varargin{1});
+                    obj.probe = ProbeClass(n.SD);
+                    obj.data = DataClass(n.SD);                    
+                    obj.metaDataTags   = MetaDataTagsClass('', n.SD.SpatialUnit);
+                                        
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % obj = SnirfClass(data, stim);
+                % obj = SnirfClass(data, stim, probe);
+                % obj = SnirfClass(data, stim, probe, aux);
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 elseif isa(varargin{1}, 'DataClass')
                     
                     % obj = SnirfClass(data, stim);
@@ -192,12 +211,12 @@ classdef SnirfClass < matlab.mixin.Copyable
                     
                 end
                 
-                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                % Between 5 and 6 arguments covers the following syntax variants
-                %
-                % obj = SnirfClass(d, t, SD, aux, s);
-                % obj = SnirfClass(d, t, SD, aux, s, CondNames);
-                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % Between 5 and 6 arguments covers the following syntax variants
+            %
+            % obj = SnirfClass(d, t, SD, aux, s);
+            % obj = SnirfClass(d, t, SD, aux, s, CondNames);
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             elseif nargin>4
                 
                 % obj = SnirfClass(d, t, SD, aux, s);
@@ -214,7 +233,7 @@ classdef SnirfClass < matlab.mixin.Copyable
                 end
                 
                 obj.data(1) = DataClass(d, t(:), SD.MeasList);
-                for ii=1:size(s,2)
+                for ii = 1:size(s,2)
                     if nargin==5
                         condition = num2str(ii);
                     else
@@ -223,7 +242,7 @@ classdef SnirfClass < matlab.mixin.Copyable
                     obj.stim(ii) = StimClass(s(:,ii), t(:), condition);
                 end
                 obj.probe      = ProbeClass(SD);
-                for ii=1:size(aux,2)
+                for ii = 1:size(aux,2)
                     obj.aux(ii) = AuxClass(aux, t(:), sprintf('aux%d',ii));
                 end
                 
@@ -238,23 +257,39 @@ classdef SnirfClass < matlab.mixin.Copyable
         
         % -------------------------------------------------------
         function Initialize(obj)
-            obj.formatVersion      = '1.0';
-            obj.metaDataTags      = MetaDataTagsClass().empty();
-            obj.data              = DataClass().empty();
-            obj.stim              = StimClass().empty();
-            obj.probe             = ProbeClass().empty();
-            obj.aux               = AuxClass().empty();
+            Initialize@AcqDataClass(obj)
             
-            obj.stim0             = StimClass().empty();
-            obj.dataStorageScheme = 'memory';
+            obj.formatVersion = '1.0';
+            obj.metaDataTags   = MetaDataTagsClass().empty();
+            obj.data           = DataClass().empty();
+            obj.stim           = StimClass().empty();
+            obj.probe          = ProbeClass().empty();
+            obj.aux            = AuxClass().empty();
+            
+            % Initialize non-SNIRF variables
+            obj.stim0          = StimClass().empty();            
+            obj.errmsgs = {
+                'MATLAB could not load the file.'
+                '''formatVersion'' is invalid.'
+                '''metaDataTags'' field is invalid.'
+                '''data'' field is invalid.'
+                '''stim'' field has corrupt data. Some or all stims could not be loaded'
+                '''probe'' field is invalid.'
+                '''aux'' field is invalid and could not be loaded'
+                'WARNING: ''data'' field corrupt and unusable'
+                };
         end
         
+               
         
         % -------------------------------------------------------
         function err = Copy(obj, obj2)
             err=0;
             if ~isa(obj2, 'SnirfClass')
                 err=1;
+                return;
+            end
+            if obj.Mismatch(obj2)
                 return;
             end
             obj.formatVersion = obj2.formatVersion;
@@ -269,9 +304,10 @@ classdef SnirfClass < matlab.mixin.Copyable
             catch
             end
             
-            if ~isempty(obj2.filename)
-                obj.filename = obj2.filename;
+            if ~isempty(obj2.GetFilename()) && isempty(obj.GetFilename())
+                obj.SetFilename(obj2.GetFilename());
             end
+            obj.SetDataStorageScheme(obj2.GetDataStorageScheme());
         end
         
         
@@ -283,22 +319,30 @@ classdef SnirfClass < matlab.mixin.Copyable
             end
             
             % Load mutable data from Snirf file here ONLY if data storage scheme is 'files'
-            if strcmpi(obj.dataStorageScheme, 'files')
-                obj.LoadStim(obj.filename);
+            if strcmpi(obj.GetDataStorageScheme(), 'files')
+                obj.LoadStim(obj.GetFilename());
             end
             
             % Generate new instance of SnirfClass
             objnew = SnirfClass();
             
-            objnew.filename = obj.filename;
+            objnew.SetFilename(obj.GetFilename);
             
             % Copy mutable properties to new object instance;
             objnew.stim = CopyHandles(obj.stim);
-            
-            if strcmp(options, 'extended')
-                t = obj.GetTimeCombined();
-                objnew.data = DataClass([],t,[]);
+            objnew.SortStims();
+            objnew.SetDataStorageScheme(obj.GetDataStorageScheme());            
+        end
+        
+        
+        
+        % -------------------------------------------------------
+        function ReloadStim(obj, obj2)            
+            if strcmpi(obj2.GetDataStorageScheme(), 'files')
+                obj2.LoadStim(obj2.GetFilename());
             end
+            obj.stim = CopyHandles(obj2.stim);
+            obj.SortStims();
         end
         
         
@@ -345,7 +389,8 @@ classdef SnirfClass < matlab.mixin.Copyable
             formatVersionFile = str2double(formatVersionFile);
             formatVersionCurr = str2double(obj.formatVersion);
             if formatVersionFile < formatVersionCurr
-                fprintf('Warning: Current SNIRF version is %0.1f. Cannot load older version (%0.1f) file. Backward compatibility not yet implemented ...\n', formatVersionCurr, formatVersionFile)
+                obj.logger.Write(sprintf('Warning: Current SNIRF version is %0.1f. Cannot load older version (%0.1f) file. Backward compatibility not yet implemented ...\n', ...
+                    formatVersionCurr, formatVersionFile));
                 err = -2;
                 return
             end
@@ -365,6 +410,17 @@ classdef SnirfClass < matlab.mixin.Copyable
         
         
         % -------------------------------------------------------
+        function err = LoadTime(obj)
+            err = 0;
+            if isempty(obj.data)
+                obj.data = DataClass();
+                err = obj.data.LoadTime(obj.GetFilename(), [obj.location, '/data1']);
+            end
+        end
+        
+        
+        
+        % -------------------------------------------------------
         function err = LoadData(obj, fileobj)
             err = 0;
             ii=1;
@@ -372,39 +428,64 @@ classdef SnirfClass < matlab.mixin.Copyable
                 if ii > length(obj.data)
                     obj.data(ii) = DataClass;
                 end
-                if obj.data(ii).LoadHdf5(fileobj, [obj.location, '/data', num2str(ii)]) < 0
+                
+                err = obj.data(ii).LoadHdf5(fileobj, [obj.location, '/data', num2str(ii)]);
+                if err < 0
                     obj.data(ii).delete();
                     obj.data(ii) = [];
-                    if ii==1
-                        err = -1;
+                    if err == -1
+                        err = 0;
                     end
                     break;
+                elseif err > 0
+                    break
                 end
                 ii=ii+1;
             end
+            
+            % This is a required field. If it's empty means the whole snirf object is bad
+            if isempty(obj.data)
+                err = -1;
+            end
         end
+        
         
         
         % -------------------------------------------------------
         function err = LoadStim(obj, fileobj)
             err = 0;
             
+            if obj.LoadStimOverride(obj.GetFilename())                
+                return
+            end
+            
+            obj.stim  = StimClass().empty();
+            
             ii=1;
             while 1
                 if ii > length(obj.stim)
                     obj.stim(ii) = StimClass;
                 end
-                if obj.stim(ii).LoadHdf5(fileobj, [obj.location, '/stim', num2str(ii)]) < 0
+                err = obj.stim(ii).LoadHdf5(fileobj, [obj.location, '/stim', num2str(ii)]);
+                if err ~= 0
                     obj.stim(ii).delete();
                     obj.stim(ii) = [];
-                    if ii==1
-                        err = -1;
-                    end
                     break;
+                else
+                    for kk = 1:ii-1
+                        if strcmp(obj.stim(kk).name, obj.stim(ii).name)
+                            obj.stim(ii).delete();
+                            obj.stim(ii) = [];
+                            err = err-6;
+                            break
+                        end
+                    end
+                    if err ~= 0
+                        break;
+                    end
                 end
                 ii=ii+1;
             end
-            obj.SortStims();
             
             % Load original, unedited stims, if they exist
             ii=1;
@@ -412,7 +493,7 @@ classdef SnirfClass < matlab.mixin.Copyable
                 if ii > length(obj.stim0)
                     obj.stim0(ii) = StimClass;
                 end
-                if obj.stim0(ii).LoadHdf5(fileobj, [obj.location, '/stim0', num2str(ii)]) < 0
+                if obj.stim0(ii).LoadHdf5(fileobj, [obj.location, '/stim0', num2str(ii)]) ~= 0
                     obj.stim0(ii).delete();
                     obj.stim0(ii) = [];
                     break;
@@ -426,8 +507,20 @@ classdef SnirfClass < matlab.mixin.Copyable
         
         % -------------------------------------------------------
         function err = LoadProbe(obj, fileobj, ~)
+            % metaDataTags is a prerequisite for load probe, so check to make sure its already been loaded
+            if isempty(obj.metaDataTags)
+                obj.LoadMetaDataTags(fileobj);
+            end
+                
+            % get lenth unit through class method
+            LengthUnit = obj.metaDataTags.Get('LengthUnit');
             obj.probe = ProbeClass();
-            err = obj.probe.LoadHdf5(fileobj, [obj.location, '/probe']);
+            err = obj.probe.LoadHdf5(fileobj, [obj.location, '/probe'], LengthUnit);
+            
+            % This is a required field. If it's empty means the whole snirf object is bad
+            if isempty(obj.probe)
+                err = -1;
+            end
         end
         
         
@@ -440,12 +533,10 @@ classdef SnirfClass < matlab.mixin.Copyable
                 if ii > length(obj.aux)
                     obj.aux(ii) = AuxClass;
                 end
-                if obj.aux(ii).LoadHdf5(fileobj, [obj.location, '/aux', num2str(ii)]) < 0
+                err = obj.aux(ii).LoadHdf5(fileobj, [obj.location, '/aux', num2str(ii)]);
+                if err ~= 0
                     obj.aux(ii).delete();
                     obj.aux(ii) = [];
-                    if ii==1
-                        err = -1;
-                    end
                     break;
                 end
                 ii=ii+1;
@@ -465,9 +556,9 @@ classdef SnirfClass < matlab.mixin.Copyable
             
             % Error checking
             if ~isempty(fileobj) && ischar(fileobj)
-                obj.filename = fileobj;
+                obj.SetFilename(fileobj);
             elseif isempty(fileobj)
-                fileobj = obj.filename;
+                fileobj = obj.GetFilename();
             end
             if isempty(fileobj)
                 err = -1;
@@ -476,6 +567,8 @@ classdef SnirfClass < matlab.mixin.Copyable
             
             % Don't reload if not empty
             if ~obj.IsEmpty()
+                obj.LoadStim(fileobj);
+                err = obj.GetError();     % preserve error state if exiting early
                 return;
             end
             
@@ -487,43 +580,60 @@ classdef SnirfClass < matlab.mixin.Copyable
                 % Open group
                 [obj.gid, obj.fid] = HDF5_GroupOpen(fileobj, '/');
                 
-                if obj.SetLocation() < 0
+                
+                if obj.SetLocation() < 0 && err == 0
                     err = -1;
-                    return
                 end
+                
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % NOTE: Optional fields have positive error codes if they are
+                % missing, but negative error codes if they're not missing but 
+                % invalid
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 
                 %%%% Load formatVersion
-                if obj.LoadFormatVersion() < 0
+                if obj.LoadFormatVersion() < 0 && err >= 0
                     err = -2;
                 end
-                
+
                 %%%% Load metaDataTags
-                if obj.LoadMetaDataTags(obj.fid) < 0
-                    err = -3;
+                if obj.LoadMetaDataTags(obj.fid) < 0 && err >= 0
+                    % Here a positive return value means that invalid data meta tags 
+                    % should NOT be a show stopper if we can help it, if the reste of the data 
+                    % is valid. So just let user know they're invalid with a warning.
+                    err = 3;
                 end
-                
+
                 %%%% Load data
-                if obj.LoadData(obj.fid) < 0
+                errtmp = obj.LoadData(obj.fid);
+                if errtmp < 0 && err >= 0
                     err = -4;
+                elseif errtmp == 5 && err >= 0
+                	err = 8;
+                elseif errtmp > 0 && err >= 0
+                    err = 4;
                 end
-                
+
                 %%%% Load stim
-                if obj.LoadStim(obj.fid)
-                    err = -5;
+                if obj.LoadStim(obj.fid) < 0 && err >= 0
+                    % Optional field: even if invalid we still want to be
+                    % able to work with the rest of the data. Only log
+                    % warning
+                    err = 5;
                 end
-                
+
                 %%%% Load probe
-                if obj.LoadProbe(obj.fid)
+                if obj.LoadProbe(obj.fid) < 0 && err >= 0
                     err = -6;
                 end
-                
-                %%%% Load aux. This is an optional field, therefore error must 
-                %%%% be less then -1 (-1 means aux is not in SNIRF file) to be 
-                %%%% error for whole SNIRF file
-                if obj.LoadAux(obj.fid)<-1
-                    err = -7;
+
+                %%%% Load aux. This is an optional field
+                if obj.LoadAux(obj.fid) < 0 && err >= 0
+                    % Optional field: even if invalid we still want to be
+                    % able to work with the rest of the data. Only log
+                    % warning
+                    err = 7;
                 end
-                
                 
                 % Close group
                 HDF5_GroupClose(fileobj, obj.gid, obj.fid);
@@ -534,7 +644,7 @@ classdef SnirfClass < matlab.mixin.Copyable
                 
             end
             
-            if obj.fid>0
+            if obj.fid > 0
                 H5F.close(obj.fid);
             end
             
@@ -542,15 +652,10 @@ classdef SnirfClass < matlab.mixin.Copyable
         
         
         % -------------------------------------------------------
-        function err = Load(obj, fileobj)
-            err = LoadHdf5(obj, fileobj);
-        end
-        
-        
-        
-        % -------------------------------------------------------
         function SaveMetaDataTags(obj, fileobj)
-            obj.metaDataTags.SaveHdf5(fileobj, [obj.location, '/metaDataTags']);
+            if ~isempty(obj.metaDataTags)
+                obj.metaDataTags.SaveHdf5(fileobj, [obj.location, '/metaDataTags']);
+            end
         end
         
         
@@ -565,12 +670,12 @@ classdef SnirfClass < matlab.mixin.Copyable
         
         % -------------------------------------------------------
         function SaveStim(obj, fileobj)
-            for ii=1:length(obj.stim)
+            for ii = 1:length(obj.stim)
                 obj.stim(ii).SaveHdf5(fileobj, [obj.location, '/stim', num2str(ii)]);
             end
             if isempty(obj.stim0)
                 obj.stim0 = obj.stim.copy();
-                for ii=1:length(obj.stim0)
+                for ii = 1:length(obj.stim0)
                     obj.stim0(ii).SaveHdf5(fileobj, [obj.location, '/stim0', num2str(ii)]);
                 end
             end
@@ -579,13 +684,15 @@ classdef SnirfClass < matlab.mixin.Copyable
         
         % -------------------------------------------------------
         function SaveProbe(obj, fileobj)
-            obj.probe.SaveHdf5(fileobj, [obj.location, '/probe']);
+            if ~isempty(obj.probe)
+                obj.probe.SaveHdf5(fileobj, [obj.location, '/probe']);
+            end
         end
         
         
         % -------------------------------------------------------
         function SaveAux(obj, fileobj)
-            for ii=1:length(obj.aux)
+            for ii = 1:length(obj.aux)
                 obj.aux(ii).SaveHdf5(fileobj, [obj.location, '/aux', num2str(ii)]);
             end
         end
@@ -630,20 +737,13 @@ classdef SnirfClass < matlab.mixin.Copyable
         end
         
         
-        % -------------------------------------------------------
-        function Save(obj, fileobj)
-            SaveHdf5(obj, fileobj);
-        end
-
         
-                
         % -------------------------------------------------------
         function [stimFromFile, changes] = UpdateStim(obj, fileobj)
             flags = zeros(length(obj.stim), 1);
             
             % Load stim from file and update it
-            snirfFile = SnirfClass();
-            snirfFile.LoadStim(fileobj);
+            snirfFile = SnirfClass(fileobj);
             
             % Update stims from file with edited stims
             for ii = 1:length(obj.stim)
@@ -659,15 +759,16 @@ classdef SnirfClass < matlab.mixin.Copyable
                 if ~flags(ii)
                     % We have new stimulus condition added
                     if ~obj.stim(ii).IsEmpty()
-                        snirfFile.stim(jj+1) = StimClass(obj.stim(ii));
+                        snirfFile.stim(end+1) = StimClass(obj.stim(ii));
+                        flags(ii) = 1;
                     end
                 end
             end
             
             % If stims were edited then update snirf file with new stims
             changes = sum(flags);
-            if changes
-                snirfFile.SaveStim(fileobj);
+            if changes > 0
+                snirfFile.Save();
             end
             stimFromFile = snirfFile.stim;
         end
@@ -676,47 +777,20 @@ classdef SnirfClass < matlab.mixin.Copyable
         
         % -------------------------------------------------------
         function CopyStim(obj, obj2)
+            obj.stim = StimClass.empty();
             for ii = 1:length(obj2.stim)
-                if ii > length(obj.stim)
-                    obj.stim(ii) = StimClass(obj2.stim(ii));
-                else
-                    obj.stim(ii).Copy(obj2.stim(ii));
-                end
+                obj.stim(ii) = StimClass(obj2.stim(ii));
             end
         end        
         
         
         % -------------------------------------------------------
-        function changes = StimChangesMade(obj)
-            
-            flags = zeros(length(obj.stim), 1);
-            
+        function changes = StimChangesMade(obj)                        
             % Load stims from file
             snirf = SnirfClass();
-            snirf.LoadStim(obj.filename);
-            stimFromFile = snirf.stim;
-            
-            % Update stims from file with edited stims
-            for ii = 1:length(obj.stim)
-                for jj = 1:length(stimFromFile)
-                    if strcmp(obj.stim(ii).GetName(), stimFromFile(jj).GetName())
-                        if obj.stim(ii) ~= stimFromFile(jj)
-                            flags(ii) = 1;
-                        else
-                            flags(ii) = -1;
-                        end
-                        break;
-                    end
-                end
-                if flags(ii)==0
-                    % We have new stimulus condition added
-                    if ~obj.stim(ii).IsEmpty()
-                        flags(ii) = 1;
-                    end
-                end
-            end
-            flags(flags ~= 1) = 0;
-            changes = sum(flags)>0;
+            snirf.SetFilename(obj.GetFilename())
+            snirf.LoadStim(obj.GetFilename());
+            changes = ~obj.EqualStim(snirf);
         end
         
         
@@ -741,9 +815,9 @@ classdef SnirfClass < matlab.mixin.Copyable
             
             % Error checking
             if ~isempty(fileobj) && ischar(fileobj)
-                obj.filename = fileobj;
+                obj.SetFilename(fileobj);
             elseif isempty(fileobj)
-                fileobj = obj.filename;
+                fileobj = obj.GetFilename();
             end
             if isempty(fileobj)
                 err = -1;
@@ -763,17 +837,58 @@ classdef SnirfClass < matlab.mixin.Copyable
             if ~strcmp(obj.formatVersion, obj2.formatVersion)
                 return;
             end
+            if ~obj.EqualData(obj2)
+                return;
+            end
+            if ~obj.EqualStim(obj2)
+                return;
+            end
+            if obj.probe ~= obj2.probe
+                return;
+            end
+            if ~obj.EqualAux(obj2)
+                return;
+            end
+            B = true;
+        end
+        
+        
+        
+        % --------------------------------------------------------------------
+        function b = EqualMetaDataTags(obj, obj2)
+            b = false;
+            if length(obj.metaDataTags) ~= length(obj2.metaDataTags)
+                return;
+            end
+            for ii = 1:length(obj.metaDataTags)
+                if obj.metaDataTags(ii) ~= obj2.metaDataTags(ii)
+                    return;
+                end
+            end
+            b = true;
+        end
+        
+        
+        
+        % --------------------------------------------------------------------
+        function b = EqualData(obj, obj2)
+            b = false;
             if length(obj.data) ~= length(obj2.data)
                 return;
             end
             for ii = 1:length(obj.data)
-                if ~(obj.data(ii) == obj2.data(ii))
+                if obj.data(ii) ~= obj2.data(ii)
                     return;
                 end
             end
-            if length(obj.stim)~=length(obj2.stim)
-                return;
-            end
+            b = true;
+        end
+        
+        
+        
+        % --------------------------------------------------------------------
+        function b = EqualStim(obj, obj2)
+            b = false;
             for ii = 1:length(obj.stim)
                 flag = false;
                 for jj = 1:length(obj2.stim)
@@ -783,30 +898,65 @@ classdef SnirfClass < matlab.mixin.Copyable
                     end
                 end
                 if flag==false
-                    return;
+                    % If obj condition was NOT found in obj2 BUT it is empty (no data), then we don't 
+                    % count that as a unequal criteria, that is, obj and obj2 are still considered equal
+                    if ~obj.stim(ii).IsEmpty()
+                        return;
+                    end
                 end
             end
-            if ~(obj.probe == obj2.probe)
-                return;
-            end
-            if length(obj.aux) ~= length(obj2.aux)
-                return;
-            end
-            for ii=1:length(obj.aux)
-                if ~(obj.aux(ii) == obj2.aux(ii))
-                    return;
+            for ii = 1:length(obj2.stim)
+                flag = false;
+                for jj = 1:length(obj.stim)
+                    if obj2.stim(ii) == obj.stim(jj)
+                        flag = true;
+                        break;
+                    end
+                end
+                if flag==false
+                    % If obj2 condition was NOT found in obj BUT it is empty (no data), then we don't 
+                    % count that as a unequal criteria, that is, obj and obj2 are still considered equal
+                    if ~obj2.stim(ii).IsEmpty()
+                        return;
+                    end
                 end
             end
-            if length(obj.metaDataTags) ~= length(obj2.metaDataTags)
-                return;
-            end
-            for ii = 1:length(obj.metaDataTags)
-                if ~(obj.metaDataTags(ii) == obj2.metaDataTags(ii))
-                    return;
-                end
-            end
-            B = true;
+            b = true;
         end
+        
+        
+        
+        % --------------------------------------------------------------------
+        function b = EqualAux(obj, obj2)
+            b = false;
+            for ii = 1:length(obj.aux)
+                flag = false;
+                for jj = 1:length(obj2.aux)
+                    if obj.aux(ii) == obj2.aux(jj)
+                        flag = true;
+                        break;
+                    end
+                end
+                if flag==false
+                    return;
+                end
+            end
+            for ii = 1:length(obj2.aux)
+                flag = false;
+                for jj = 1:length(obj.aux)
+                    if obj2.aux(ii) == obj.aux(jj)
+                        flag = true;
+                        break;
+                    end
+                end
+                if flag==false
+                    return;
+                end
+            end
+            b = true;
+        end
+        
+        
     end
     
     
@@ -882,6 +1032,24 @@ classdef SnirfClass < matlab.mixin.Copyable
             val = obj.metaDataTags.Get();
         end
         
+        % ---------------------------------------------------------
+        function val = GetLengthUnit(obj)
+            val = [];
+            if isempty(obj)
+                return;
+            end
+            if isempty(obj.metaDataTags)
+                return;
+            end
+            val = obj.metaDataTags.Get('LengthUnit');
+        end
+        
+        
+        % ---------------------------------------------------------
+        function bbox = GetSdgBbox(obj)
+            bbox = obj.probe.GetSdgBbox();
+        end                
+        
     end
     
     
@@ -904,8 +1072,35 @@ classdef SnirfClass < matlab.mixin.Copyable
         
         
         % ---------------------------------------------------------
-        function datamat = GetDataTimeSeries(obj, options, iBlk)
-            datamat = [];
+        function ml = GetMeasurementList(obj, matrixMode, iBlk)
+            ml = [];
+            if ~exist('matrixMode','var')
+                matrixMode = '';
+            end
+            if ~exist('iBlk','var') || isempty(iBlk)
+                iBlk = 1;
+            end
+            freememory = false;
+            if isempty(obj.data)
+                obj.LoadData(obj.GetFilename());
+                freememory = true;
+            end
+            if iBlk>length(obj.data)
+                return;
+            end
+            ml = obj.data(iBlk).GetMeasurementList(matrixMode);
+            if freememory 
+                obj.FreeMemory(obj.GetFilename());
+            end
+        end
+        
+        
+        
+        % ---------------------------------------------------------
+        function [d, t, ml] = GetDataTimeSeries(obj, options, iBlk)
+            d = [];
+            t = [];
+            ml = [];
             if ~exist('options','var')
                 options = '';
             end
@@ -915,20 +1110,42 @@ classdef SnirfClass < matlab.mixin.Copyable
             if iBlk>length(obj.data)
                 return;
             end
-            datamat = obj.data(iBlk).GetDataTimeSeries(options);
+            [d, t, ml] = obj.data(iBlk).GetDataTimeSeries(options);
         end
+        
         
         
         % ---------------------------------------------------------
-        function datamat = GetAuxDataMatrix(obj)
+        function [datamat, p, Nmin] = GetAuxDataMatrix(obj, obj2)            
             datamat = [];
+            p = 0;
+            Nmin = 0;
+            
             if isempty(obj.aux)
                 return;
             end
-            for ii=1:length(obj.aux)
-                datamat(:,ii) = obj.aux(ii).GetDataTimeSeries();
+            if ~exist('obj2','var')
+                obj2 = obj.data(1);            
+            end
+            
+            datamat = zeros(size(obj2.dataTimeSeries,1), length(obj.aux));
+            
+            % Get all aux channels to be on the same time base with obj2 which by default is the data
+            for ii = 1:length(obj.aux)
+                if length(obj2.GetTime()) < length(obj.aux(ii).GetTime())   % dessimate
+                    p = length(obj2.GetTime());
+                    q = length(obj.aux(ii).GetTime());
+                elseif length(obj2.GetTime()) > length(obj.aux(ii).GetTime())  % interpolate
+                    p = length(obj.aux(ii).GetTime());
+                    q = length(obj2.GetTime());
+                else
+                    p = length(obj2.GetTime());
+                    q = length(obj.aux(ii).GetTime());
+                end
+                datamat(:,ii) = resample(obj.aux(ii).GetDataTimeSeries(), p, q);
             end
         end
+        
         
         
         % ---------------------------------------------------------
@@ -945,6 +1162,19 @@ classdef SnirfClass < matlab.mixin.Copyable
             aux = struct('names',{{}}, 'data', obj.aux);
             aux.names = obj.GetAuxNames();
             aux.data = obj.GetAuxDataMatrix();
+        end
+        
+        
+        % ---------------------------------------------------------
+        function t = GetAuxiliaryTime(obj)
+            t = [];
+            if isempty(obj.aux)
+                return;
+            end
+            if obj.aux(1).IsEmpty()
+                return;
+            end
+            t = obj.aux(1).GetTime();
         end
         
         
@@ -981,7 +1211,7 @@ classdef SnirfClass < matlab.mixin.Copyable
                     if ~obj.stim(ii).Exists(t(tidxs(jj)))
                         obj.stim(ii).AddStims(t(tidxs(jj)));
                     else
-                        obj.stim(ii).EditValue(t(tidxs(jj)), s(tidxs(jj),ii));
+                        obj.stim(ii).EditState(t(tidxs(jj)), s(tidxs(jj),ii));
                     end
                 end
             end
@@ -990,14 +1220,37 @@ classdef SnirfClass < matlab.mixin.Copyable
         
         % ---------------------------------------------------------
         function s = GetStims(obj, t)
+            % Returns a .nirs style stim signal. Stim state marks are
+            % interpolated onto the time series t from their respective
+            % onset times.
+            s = zeros(length(t), length(obj.stim));
+            for i=1:length(obj.stim)
+                states = obj.stim(i).GetStates();
+                if ~isempty(states)
+                    [~, k] = nearest_point(t, states(:, 1));
+                    if ~isempty(k)
+                        s(k,i) = states(:, 2);
+                    end
+                end
+            end
+        end
+        
+        
+        % ---------------------------------------------------------
+        function s = GetStimAmps(obj, t)
+            % Returns a .nirs style stim signal. Stim amplitudes are
+            % interpolated onto the time series t from their respective
+            % onset times.
             s = zeros(length(t), length(obj.stim));
             for ii=1:length(obj.stim)
-                [ts, v] = obj.stim(ii).GetStim();
-                [~, k] = nearest_point(t, ts);
-                if isempty(k)
-                    continue;
+                data = obj.stim.GetData();
+                if ~isempty(data)
+                    [~, k] = nearest_point(t, data(:, 1));
+                    if isempty(k)
+                        continue;
+                    end
+                    s(k,ii) = data(:, 3);
                 end
-                s(k,ii) = v;
             end
         end
         
@@ -1007,7 +1260,11 @@ classdef SnirfClass < matlab.mixin.Copyable
             if nargin==1
                 return;
             end
-            CondNamesLocal = unique({obj.stim.name});
+            
+            % Bug fix: unique with no arguments changes the order by
+            % sorting. Here order should be preserved or else we have problems. 
+            % Add the 'stable' argument to preseerve order. JD, Nov 1, 2022
+            CondNamesLocal = unique({obj.stim.name}, 'stable');
             stimnew = StimClass().empty;
             for ii=1:length(CondNames)
                 k = find(strcmp(CondNamesLocal, CondNames{ii}));
@@ -1030,9 +1287,15 @@ classdef SnirfClass < matlab.mixin.Copyable
         end
         
         
+        % ---------------------------------------------------------
+        function probe = GetProbe(obj)
+            obj.LoadProbe(obj.GetFilename());
+            probe = obj.probe;
+        end
+        
         
         % ---------------------------------------------------------
-        function SD = GetSDG(obj)
+        function SD = GetSDG(obj,option)
             SD = [];
             if isempty(obj)
                 return;
@@ -1041,20 +1304,33 @@ classdef SnirfClass < matlab.mixin.Copyable
                 return;
             end
             SD.Lambda = obj.probe.GetWls();
-            SD.SrcPos = obj.probe.GetSrcPos();
-            SD.DetPos = obj.probe.GetDetPos();
+            if exist('option','var')
+                SD.SrcPos = obj.probe.GetSrcPos(option);
+                SD.DetPos = obj.probe.GetDetPos(option);
+            else
+                SD.SrcPos = obj.probe.GetSrcPos();
+                SD.DetPos = obj.probe.GetDetPos();
+            end
         end
         
         
         % ---------------------------------------------------------
-        function srcpos = GetSrcPos(obj)
-            srcpos = obj.probe.GetSrcPos();
+        function srcpos = GetSrcPos(obj,option)
+            if exist('option','var')
+                srcpos = obj.probe.GetSrcPos(option);
+            else
+                srcpos = obj.probe.GetSrcPos();
+            end
         end
         
         
         % ---------------------------------------------------------
-        function detpos = GetDetPos(obj)
-            detpos = obj.probe.GetDetPos();
+        function detpos = GetDetPos(obj,option)
+            if exist('option','var')
+                detpos = obj.probe.GetDetPos(option);
+            else
+                detpos = obj.probe.GetDetPos();
+            end
         end
         
         
@@ -1105,6 +1381,15 @@ classdef SnirfClass < matlab.mixin.Copyable
             
         end
         
+        
+        % ---------------------------------------------------------
+        function unit = GetSpatialUnit(obj)
+            unit = obj.metaDataTags.Get('LengthUnits');
+        end
+        
+        
+        
+        
     end
     
     
@@ -1140,7 +1425,7 @@ classdef SnirfClass < matlab.mixin.Copyable
         
         
         % ----------------------------------------------------------------------------------
-        function SD = Get_SD(obj, iBlk)
+        function SD = Get_SD(obj, iBlk, option)
             SD = [];
             if isempty(obj.probe)
                 return;
@@ -1152,8 +1437,13 @@ classdef SnirfClass < matlab.mixin.Copyable
                 return;
             end
             SD.Lambda   = obj.probe.GetWls();
-            SD.SrcPos   = obj.probe.GetSrcPos();
-            SD.DetPos   = obj.probe.GetDetPos();
+            if exist('option','var')
+                SD.SrcPos   = obj.probe.GetSrcPos(option);
+                SD.DetPos   = obj.probe.GetDetPos(option);
+            else
+                SD.SrcPos   = obj.probe.GetSrcPos();
+                SD.DetPos   = obj.probe.GetDetPos();
+            end
             SD.MeasList = obj.data(iBlk).GetMeasList();
             SD.MeasListAct = ones(size(SD.MeasList,1),1);
         end
@@ -1190,23 +1480,24 @@ classdef SnirfClass < matlab.mixin.Copyable
     methods
         
         % ----------------------------------------------------------------------------------
-        function AddStims(obj, tPts, condition)
+        function AddStims(obj, tPts, condition, duration, amp, more)
             % Try to find existing condition to which to add stims.
             for ii=1:length(obj.stim)
                 if strcmp(condition, obj.stim(ii).GetName())
-                    obj.stim(ii).AddStims(tPts);
+                    obj.stim(ii).AddStims(tPts, duration, amp, more);
                     return;
                 end
             end
             
             % Otherwise we have a new condition to which to add the stims.
-            obj.stim(end+1) = StimClass(tPts, condition);
+            obj.stim(end+1) = StimClass(condition);
+            obj.stim(end).AddStims(tPts, duration, amp, more);
             obj.SortStims();
         end
         
         
         % ----------------------------------------------------------------------------------
-        function DeleteStims(obj, tPts, condition)
+        function DeleteStims(obj, tPts, ~)
             % Find all stims for any conditions which match the time points.
             for ii=1:length(obj.stim)
                 obj.stim(ii).DeleteStims(tPts);
@@ -1215,13 +1506,38 @@ classdef SnirfClass < matlab.mixin.Copyable
         
         
         % ----------------------------------------------------------------------------------
-        function ToggleStims(obj, tPts, condition)
+        function ToggleStims(obj, tPts, ~)
             % Find all stims for any conditions which match the time points.
             for ii=1:length(obj.stim)
                 obj.stim(ii).ToggleStims(tPts);
             end
         end
         
+        
+        % ----------------------------------------------------------------------------------
+        function AddStimColumn(obj, name, initValue)
+            for i=1:length(obj.stim)
+                obj.stim(i).AddStimColumn(name, initValue);
+            end
+        end
+
+        
+        % ----------------------------------------------------------------------------------
+        function DeleteStimColumn(obj, idx)
+            for i=1:length(obj.stim)
+                obj.stim(i).DeleteStimColumn(idx);
+            end
+        end
+        
+        % ----------------------------------------------------------------------------------
+        function RenameStimColumn(obj, oldname, newname)
+            if ~exist('oldname', 'var') || ~exist('newname', 'var')
+                return;
+            end
+            for i=1:length(obj.stim)
+                obj.stim(i).RenameStimColumn(oldname, newname);
+            end
+        end
         
         % ----------------------------------------------------------------------------------
         function MoveStims(obj, tPts, condition)
@@ -1234,57 +1550,43 @@ classdef SnirfClass < matlab.mixin.Copyable
             
             % Find the destination condition to move stims (among the time pts in tPts)
             % to
-            j = [];
+            idx_dst = [];
             for ii=1:length(obj.stim)
                 if strcmp(condition, obj.stim(ii).GetName())
-                    j=ii;
+                    idx_dst=ii;
                     break;
                 end
             end
             
             % If no destination condition found among existing conditions,
             % then create a new condition to move stims to
-            if isempty(j)
-                j = length(obj.stim)+1;
+            if isempty(idx_dst)
+                idx_dst = length(obj.stim)+1;
                 
                 % Otherwise we have a new condition to which to add the stims.
-                obj.stim(j) = StimClass([], condition);
+                obj.stim(idx_dst) = StimClass([], condition);
                 obj.SortStims();
                 
                 % Recalculate j after sort
                 for ii=1:length(obj.stim)
                     if strcmp(condition, obj.stim(ii).GetName())
-                        j=ii;
+                        idx_dst=ii;
                         break;
                     end
                 end
             end
             
-            % Find all stims for any conditions which match the time points.
-            for ii=1:length(tPts)
-                for kk=1:length(obj.stim)
-                    d = obj.stim(kk).GetData();
-                    if isempty(d)
-                        continue;
-                    end
-                    k = find(d(:,1)==tPts(ii));
-                    if ~isempty(k)
-                        if kk==j
-                            continue;
-                        end
-                        
-                        % If stim at time point tPts(ii) exists in stim
-                        % condition kk, then move stim from obj.stim(kk) to
-                        % obj.stim(j)
-                        obj.stim(j).AddStims(tPts(ii), d(k(1),2), d(k(1),3));
-                        
-                        % After moving stim from obj.stim(kk) to
-                        % obj.stim(j), delete it from obj.stim(kk)
-                        d(k(1),:)=[];
-                        obj.stim(kk).SetData(d);
-                        
-                        % Move on to next time point
-                        break;
+            for i=1:length(obj.stim)
+                data = obj.stim(i).GetData();
+                for j=1:size(data, 1)
+                    onset = data(j, 1);
+                    if onset > min(tPts) & onset < max(tPts)
+                        % Delete the stim from its condition and add it to selected dst
+                        duration = data(j, 2);
+                        amplitude = data(j, 3);
+                        more = data(j, 4:end);
+                        obj.stim(i).DeleteStims(onset);
+                        obj.stim(idx_dst).AddStims(onset, duration, amplitude, more);
                     end
                 end
             end
@@ -1308,8 +1610,20 @@ classdef SnirfClass < matlab.mixin.Copyable
         
         
         % ----------------------------------------------------------------------------------
-        function SetStimDuration(obj, icond, duration)
-            obj.stim(icond).SetDuration(duration);
+        function val = GetStimData(obj, icond)
+            val = obj.stim(icond).GetData();
+        end
+        
+        
+        % ----------------------------------------------------------------------------------
+        function val = GetStimDataLabels(obj, icond)
+            val = obj.stim(icond).GetDataLabels();
+        end
+        
+        
+        % ----------------------------------------------------------------------------------
+        function SetStimDuration(obj, icond, duration, tpts)
+            obj.stim(icond).SetDuration(duration, tpts);
         end
         
         
@@ -1324,19 +1638,19 @@ classdef SnirfClass < matlab.mixin.Copyable
         
         
         % ----------------------------------------------------------------------------------
-        function SetStimValues(obj, icond, vals)
-            obj.stim(icond).SetValues(vals);
+        function SetStimAmplitudes(obj, icond, amps, tpts)
+            obj.stim(icond).SetAmplitudes(amps, tpts);
         end
         
         
         
         % ----------------------------------------------------------------------------------
-        function vals = GetStimValues(obj, icond)
+        function vals = GetStimAmplitudes(obj, icond)
             if icond>length(obj.stim)
                 vals = [];
                 return;
             end
-            vals = obj.stim(icond).GetValues();
+            vals = obj.stim(icond).GetAmplitudes();
         end
         
         
@@ -1447,7 +1761,7 @@ classdef SnirfClass < matlab.mixin.Copyable
             % Load probe and extract .nirs-style SD structure
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             fprintf('    Probe (.nirs-style display):\n');
-            SD = obj.GetSDG();
+            SD = obj.GetSDG('2D');
             pretty_print_struct(SD, 8, 1);
             fprintf('\n');
             
