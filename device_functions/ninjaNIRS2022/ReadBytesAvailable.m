@@ -116,7 +116,8 @@ for ki=1:size(SD.measList,1)
     try
         organizedData(:,ki)=B(:,indices(ki,2),indices(ki,1));        
         if subtractDark
-            darkState=B(:,indices(ki,2),indices(ki,1)+1);
+%            darkState=B(:,indices(ki,2),indices(ki,1)+1);
+            darkState=B(:,indices(ki,2),indices(ki,3));
             %subtracts the adjacent state (after the current). Assumes
             %there is a dark state between each active state
             organizedData(:,ki)=organizedData(:,ki)-darkState;

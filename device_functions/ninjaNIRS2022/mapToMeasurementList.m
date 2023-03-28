@@ -15,14 +15,30 @@ N_STATES=foo(1);
 
 %cropped ID lists to the valid states
 sourceIDs=stateMap(1:N_STATES,1:8);
-wavelengthIDs=stateMap(1:N_STATES,9:10); 
+%wavelengthIDs=stateMap(1:N_STATES,9:10); 
 %sourceBoardIds=stateMap(1:N_STATES,11:16); 
+
 
 %% LOOP MEASUREMENT BY MEASUREMENT TO FIND IN STATES
 estados=nan(1,length(measList));
+estados2=nan(1,length(measList));
 for ki=1:size(measList,1)
     meas=measList(ki,:);
-    srcID=meas(1);
+    
+    srcID0 = meas(1);
+    srcID = mod(srcID0-1,8)+1;
+    srcModule = ceil((srcID0-0.1)/8);
+
+    wavelengthIDs = stateMap(1:N_STATES,[9:10]+(srcModule-1)*2); % I think this works with spatial multiplex
+                      % What I wrote below is likely not right. I think all
+                      % is ok.
+                      % this assumes only 1 module selected per state
+                      % We should allow selection of more than one source
+                      % module. BUT, ok to force same wavelength if more
+                      % than one source module selected. Then we could have
+                      % each module a different row in this two column
+                      % vector and then we take the max along the rows 
+                                                                 
     detID=meas(2);
     lambdaID=meas(4);
     %there will be the assumption that wavelengths are sorted from short to
@@ -40,10 +56,11 @@ for ki=1:size(measList,1)
         %if some sources are never turned on but are required by the
         %measurement list, those states will be marked as nan
         estados(ki)=find(wavelengthIDs(:,lambdaID)&sourceIDs(:,srcID));
+        estados2(ki) = ceil(estados(ki)/3)*3;
     end
 end
 % estados now contains a list of which measurement list corresponds with
 % what state. Combined with the detector list on the measurement list, this
 % can be converted to a map
-mappedIndices=[estados',measList(:,2)];
+mappedIndices=[estados',measList(:,2),estados2'];
 
