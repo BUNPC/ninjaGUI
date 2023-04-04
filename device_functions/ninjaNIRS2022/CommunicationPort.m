@@ -18,7 +18,6 @@ switch command
             stateMap(1,[1 9]) = 1; % select LED
             stateMap(1,19:21) = [0 1 0]; % power level mid            
             stateMap(3:end,27) = 1; % mark sequence end
-            stat=initStat(stateMap);
             %Create serial port object
             s=serialport(app.deviceInformation.commPort,app.communicationParameters.BaudRate,...
                 'Parity',app.communicationParameters.Parity,...
@@ -27,10 +26,14 @@ switch command
                 'FlowControl',app.communicationParameters.FlowControl,...
                 'ByteOrder',app.communicationParameters.ByteOrder,...
                 "Timeout",app.communicationParameters.TimeOut);
+            app.sp= s;
+%             s.NumBytesAvailable
+            stat=initStat(app,stateMap);
+
             disp('Serial communication established!')
             uploadToRAM(s, stat.rama, 'a', false);
             uploadToRAM(s, stat.ramb, 'b', false);
-            stat = powerOn(s,stat);
+            stat = powerOn(stat);
             stat = ResetCounters(s,stat);
             app.sp=s;
             app.deviceInformation.stat=stat;

@@ -5,7 +5,18 @@
 % It also does not create the serial port since that is going to be done
 % elsewhere
 
-function stat = initStat(stateMap)
+function stat = initStat(app,stateMap)
+%%
+% s=serialport(app.deviceInformation.commPort,app.communicationParameters.BaudRate,...
+%                 'Parity',app.communicationParameters.Parity,...
+%                 'DataBits',app.communicationParameters.DataBits,...
+%                 'StopBits',app.communicationParameters.StopBits,...
+%                 'FlowControl',app.communicationParameters.FlowControl,...
+%                 'ByteOrder',app.communicationParameters.ByteOrder,...
+%                 "Timeout",app.communicationParameters.TimeOut);
+% app.sp = s;
+stat.s = app.sp;
+
 %%
 stat.vn22clk_en = false;
 stat.vn3p4_en = false;

@@ -29,7 +29,7 @@ switch command
         ramA(ki:end,27)=1;
 
         % create temp stat variable
-        stat=initStat(stateMap);
+        stat=initStat(app,stateMap);
 
         %upload to RAM
         uploadToRAM(app.sp, rama, 'a', false);

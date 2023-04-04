@@ -34,7 +34,6 @@ function [dataoutput,packlen,remainderbytes,datac,statusdata,maxvout,avgvout]=Re
 % optodes are saturared (field 'optodeSaturationThreshold' from the config
 % file)
 
-
 if isfield(app.deviceInformation,'subtractDark')
     subtractDark=app.deviceInformation.subtractDark;
 else
@@ -59,7 +58,6 @@ fID=app.fstreamID;  %file streamer for debug mode; this can be used to stream th
 % called multiple times to read just one byte, which I think makes
 % acquisition more efficient
 ba=s.NumBytesAvailable;
-
 rb=30000; %minimum number of bytes to read per operation
 
 if ba>rb
@@ -77,7 +75,7 @@ else
     remainderbytes=prevrbytes;
     return;
 end
-
+disp('inside ReadBytesAvailable')
 raw=[prevrbytes;raw];
 rawN=size(raw,1);
 

@@ -17,11 +17,19 @@ sample_counter_length=1;
 N_DET_PER_BOARD = 8;
 N_BYTES_PER_DET = 3;
 
-N_DETECTORS=N_DET_PER_BOARD*N_DETECTOR_BOARDS;
+% N_DETECTORS=N_DET_PER_BOARD*N_DETECTOR_BOARDS;
+% 
+% offsetBoard=N_DET_PER_BOARD*N_BYTES_PER_DET+length(detector_header_indicator)+sample_counter_length+1;
+% payloadSize=N_DETECTOR_BOARDS*offsetBoard;
+% offset=length(header_indicator)+state_number_length; %offset for first payload byte
+% packageLength=offset+payloadSize;  
+
+N_DETECTORS=N_DET_PER_BOARD*N_DETECTOR_BOARDS+3;
 
 offsetBoard=N_DET_PER_BOARD*N_BYTES_PER_DET+length(detector_header_indicator)+sample_counter_length+1;
-payloadSize=N_DETECTOR_BOARDS*offsetBoard;
-offset=length(header_indicator)+state_number_length; %offset for first payload byte
+offsetCh = 18;
+payloadSize=N_DETECTOR_BOARDS*offsetBoard+offsetCh;
+offset=length(header_indicator)+state_number_length+8; %offset for first payload byte
 packageLength=offset+payloadSize;  
 
 %% find detector header indicators
@@ -51,7 +59,7 @@ end
 %accuracy; otherwise there will be misidentified packages
 
 %% identify number of states in data read
-estados=1+raw(indicator+length(header_indicator)+1);
+estados=1+raw(indicator+length(header_indicator));
 states=unique(estados);
 
 %use the states to figure out if there is a packet that shouldn't be a

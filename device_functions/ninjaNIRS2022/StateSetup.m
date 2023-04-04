@@ -55,7 +55,7 @@ nStates=foo(1);
 fs=1000/nStates;
 %initialize both RAMs
 
-stat=initStat(stateMap);
+stat=initStat(app,stateMap);
 
 %% Add the state map to the GUI variables for latter use
 
@@ -76,7 +76,7 @@ app.deviceInformation.subtractDark = 1;
 uploadToRAM(app.sp, stat.rama, 'a', false);
 uploadToRAM(app.sp, stat.ramb, 'b', false);
 
-stat = powerOn(app.sp,stat);
+stat = powerOn(stat);
 
 app.deviceInformation.stat=stat;
 
