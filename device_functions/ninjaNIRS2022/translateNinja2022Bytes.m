@@ -1,4 +1,4 @@
-function [data,unusedBytes,darkLevelAvg]=translateNinja2022Bytes(inputBytes,stateMap,N_DETECTOR_BOARDS)
+function [data,unusedBytes,darkLevelAvg]=translateNinja2022Bytes(inputBytes,stateMap,N_DETECTOR_BOARDS,acc_active,aux_active)
 % data is the translated data output. It has 3 dimensions: 1 is time
 % (samples) 2 is detectors; the third dimension is the state number, which
 % could be a proxy for detector number if the state acquisition sequence is
@@ -24,13 +24,22 @@ N_BYTES_PER_DET = 3;
 % offset=length(header_indicator)+state_number_length; %offset for first payload byte
 % packageLength=offset+payloadSize;  
 
-N_DETECTORS=N_DET_PER_BOARD*N_DETECTOR_BOARDS+3;
+N_DETECTORS=N_DET_PER_BOARD*N_DETECTOR_BOARDS;
 
 offsetBoard=N_DET_PER_BOARD*N_BYTES_PER_DET+length(detector_header_indicator)+sample_counter_length+1;
-offsetCh = 18;
-payloadSize=N_DETECTOR_BOARDS*offsetBoard+offsetCh;
-offset=length(header_indicator)+state_number_length+8; %offset for first payload byte
-packageLength=offset+payloadSize;  
+if acc_active
+    acc_bytes = 18;
+else
+    acc_bytes = 0;
+end
+if aux_active
+    aux_bytes = 8;
+else
+    aux_bytes = 0;
+end
+payloadSize=N_DETECTOR_BOARDS*offsetBoard;
+offset=length(header_indicator)+state_number_length+aux_bytes; %offset for first payload byte
+packageLength=offset+payloadSize+acc_bytes;  
 
 %% find detector header indicators
 endByte=0;
@@ -120,7 +129,7 @@ end
 %should be done when we have the whole bytestream. For a partial
 %bytestream, we should instead read from the statemap
 %number of states
-estados=1+raw(indicator+length(header_indicator)+1);
+estados=1+raw(indicator+length(header_indicator));
 foo=find(stateMap(:,27)==1);
 N_STATES=foo(1);
 states=1:N_STATES;

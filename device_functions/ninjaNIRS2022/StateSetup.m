@@ -76,7 +76,7 @@ app.deviceInformation.subtractDark = 1;
 uploadToRAM(app.sp, stat.rama, 'a', false);
 uploadToRAM(app.sp, stat.ramb, 'b', false);
 
-stat = powerOn(stat);
+stat = powerOn(app.sp,stat);
 
 app.deviceInformation.stat=stat;
 

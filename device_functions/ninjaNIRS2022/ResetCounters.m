@@ -6,5 +6,5 @@ stat.rst_pca = true;
 stat.rst_pcb = true;
 stat.rst_clkdiv = true;
 stat.rst_detb = true;
-stat = updateStatReg(stat);
+stat = updateStatReg(s,stat);
 end

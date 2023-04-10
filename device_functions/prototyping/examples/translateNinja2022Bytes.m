@@ -1,4 +1,4 @@
-function [data,unusedBytes,darkLevelAvg]=translateNinja2022Bytes(inputBytes,stateMap,N_DETECTOR_BOARDS)
+function [data,unusedBytes,darkLevelAvg,TGAdata]=translateNinja2022Bytes(inputBytes,stateMap,N_DETECTOR_BOARDS)
 % data is the translated data output. It has 3 dimensions: 1 is time
 % (samples) 2 is detectors; the third dimension is the state number, which
 % could be a proxy for detector number if the state acquisition sequence is
@@ -12,7 +12,9 @@ header_indicator=254; %byte indicating the header
 detector_header_indicator=[253,252]; %bytes indicating the detector header
 state_number_length=2;
 sample_counter_length=1;
-
+acc_header_detector = [249, 248];
+aux_header_detector = 250;
+aux_bytes_count = 5;
 %these two might remain constants forever
 N_DET_PER_BOARD = 8;
 N_BYTES_PER_DET = 3;
@@ -21,8 +23,9 @@ N_DETECTORS=N_DET_PER_BOARD*N_DETECTOR_BOARDS;
 
 offsetBoard=N_DET_PER_BOARD*N_BYTES_PER_DET+length(detector_header_indicator)+sample_counter_length+1;
 payloadSize=N_DETECTOR_BOARDS*offsetBoard;
-offset=length(header_indicator)+state_number_length; %offset for first payload byte
-packageLength=offset+payloadSize;  
+auxloadSize = length(aux_header_detector)+aux_bytes_count+sample_counter_length+1;
+offset=length(header_indicator)+state_number_length+auxloadSize; %offset for first payload byte
+packageLength=offset+payloadSize+18;  
 
 %% find detector header indicators
 endByte=0;
@@ -51,7 +54,7 @@ end
 %accuracy; otherwise there will be misidentified packages
 
 %% identify number of states in data read
-estados=1+raw(indicator+length(header_indicator)+1);
+estados=1+raw(indicator+length(header_indicator));
 states=unique(estados);
 
 %use the states to figure out if there is a packet that shouldn't be a
@@ -104,15 +107,24 @@ for ki=1:N_DETECTOR_BOARDS
 
     %negative value correction
     A = (A > 2^23-1).*2^24 - A;
-    B(:,(1:N_DET_PER_BOARD)+(ki-1)*N_DET_PER_BOARD)=A;
+    B(:,(1:N_DET_PER_BOARD)+(ki-1)*N_DET_PER_BOARD)=A./230/((2^15)-1);
 end
+
+%% translate Temparature, Gyroscope and Accelarometer data
+TGAdata = [];
+% indicator_matrix = indicator+offset+N_DETECTOR_BOARDS*(N_DET_PER_BOARD*N_BYTES_PER_DET+length(detector_header_indicator)+sample_counter_length+1)+sample_counter_length+2;
+% TGAdata = raw(indicator_matrix+(0:2:13))+256.*raw(indicator_matrix+(1:2:13));
+% TGAdata = TGAdata - (TGAdata > 2^15-1).*2^16;
+% TGAdata(:,1) = TGAdata(:,1)/256+25;
+% TGAdata(:,2:4) = TGAdata(:,2:4)*250./(2^15-1);
+% TGAdata(:,5:7) = TGAdata(:,5:7)*4./(2^15-1);
 
 %% identify number of states
 %estados=1+raw(indicator+length(header_indicator)+1); %this is how it
 %should be done when we have the whole bytestream. For a partial
 %bytestream, we should instead read from the statemap
 %number of states
-estados=1+raw(indicator+length(header_indicator)+1);
+estados=1+raw(indicator+length(header_indicator));
 foo=find(stateMap(:,27)==1);
 N_STATES=foo(1);
 states=1:N_STATES;

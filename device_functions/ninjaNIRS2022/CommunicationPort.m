@@ -9,7 +9,7 @@ function [port,errors] = CommunicationPort(app,command)
 
 switch command
     case 'open'
-        try
+%         try
             %dummy state map, a new one will be chosen after the SD file; I
             %am just doing this because I am not sure if the device will
             %break if I power it on or if I connect to it without writing a
@@ -33,16 +33,15 @@ switch command
             disp('Serial communication established!')
             uploadToRAM(s, stat.rama, 'a', false);
             uploadToRAM(s, stat.ramb, 'b', false);
-            stat = powerOn(stat);
+            stat = powerOn(s,stat);
             stat = ResetCounters(s,stat);
-            app.sp=s;
             app.deviceInformation.stat=stat;
-            app.deviceInformation.nDetBoards=ceil(app.deviceInformation.nDets/8); %In case we do not find an automatic way to assign this, it can be based on the number of detectors connected to the system, assuming no empty detector boards
+            app.deviceInformation.nDetBoards = stat.n_detb_active;
             errors=0;            
-        catch ME
-            disp(ME.message)           
-            errors=1;            
-        end
+%         catch ME
+%             disp(ME.message)           
+%             errors=1;            
+%         end
         port=app.sp;
     case 'close'
         delete(app.sp);%close serial communication

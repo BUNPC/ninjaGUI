@@ -75,12 +75,11 @@ else
     remainderbytes=prevrbytes;
     return;
 end
-disp('inside ReadBytesAvailable')
 raw=[prevrbytes;raw];
 rawN=size(raw,1);
 
 %% translate data to a numeric array
-[B,unusedBytes,avgDet]=translateNinja2022Bytes(raw,app.deviceInformation.stateMap,app.deviceInformation.nDetBoards);
+[B,unusedBytes,avgDet]=translateNinja2022Bytes(raw,app.deviceInformation.stateMap,app.deviceInformation.nDetBoards,app.deviceInformation.acc_active,app.deviceInformation.aux_active);
 
 %circshift to the left in the third dimension since packets marked as 1
 %actually store the last state, packets marked as 2 are state 1 etc

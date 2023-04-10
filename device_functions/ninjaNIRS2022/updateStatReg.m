@@ -4,9 +4,9 @@
 % Bernhard Zimmermann - bzim@bu.edu
 % Boston University Neurophotonics Center
 
-function stat = updateStatReg(stat, skipreadback)
+function stat = updateStatReg(sp, stat, skipreadback)
 
-if nargin < 2
+if nargin < 3
     skipreadback = true;
 end
 
@@ -25,4 +25,4 @@ stat.sreg(5) = stat.rst_pca;
 stat.sreg(2) = stat.rst_detb;
 stat.sreg(1) = stat.run;
 
-uploadToStatReg(stat.s, stat.sreg, skipreadback);
+uploadToStatReg(sp, stat.sreg, skipreadback);

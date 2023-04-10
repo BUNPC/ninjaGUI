@@ -15,7 +15,7 @@ function stat = initStat(app,stateMap)
 %                 'ByteOrder',app.communicationParameters.ByteOrder,...
 %                 "Timeout",app.communicationParameters.TimeOut);
 % app.sp = s;
-stat.s = app.sp;
+% stat.s = app.sp;
 
 %%
 stat.vn22clk_en = false;
@@ -42,12 +42,12 @@ stat.run = false;
 
 stat.sreg = zeros(1,32);
 
-stat = powerOn(stat);
+stat = powerOn(app.sp,stat);
 
 
 %% Determine active detectors and IMU
 stat.aux_active = true;
-stat = updateActiveDet(stat);
+stat = updateActiveDet(app.sp,stat);
 
 %% RAM A
 
@@ -137,11 +137,15 @@ if stat.acc_active
     stat.gyrofs = 250;
 end
 
+%% copy accelarometer and auxillary status into app
+app.deviceInformation.acc_active = stat.acc_active;
+app.deviceInformation.aux_active = stat.aux_active;
+
 %% upload RAMs 
 
-uploadToRAM(stat.s, stat.rama, 'a', false);
-uploadToRAM(stat.s, stat.ramb, 'b', false);
-stat = flushNN22(stat);
+uploadToRAM(app.sp, stat.rama, 'a', false);
+uploadToRAM(app.sp, stat.ramb, 'b', false);
+stat = flushNN22(app.sp,stat);
 
 
 
