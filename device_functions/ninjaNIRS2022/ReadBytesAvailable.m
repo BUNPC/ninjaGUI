@@ -1,4 +1,4 @@
-function [dataoutput,packlen,remainderbytes,datac,statusdata,maxvout,avgvout]=ReadBytesAvailable(app)
+function [dataoutput,packlen,remainderbytes,datac,statusdata,maxvout,avgvout,TGAdata]=ReadBytesAvailable(app)
 % Used to read the data sent from the instrument and translate it to a a
 % matlab array. The only input is app, which is the structure containing
 % the GUI variables. The specific implementation of this function will use
@@ -79,7 +79,7 @@ raw=[prevrbytes;raw];
 rawN=size(raw,1);
 
 %% translate data to a numeric array
-[B,unusedBytes,avgDet]=translateNinja2022Bytes(raw,app.deviceInformation.stateMap,app.deviceInformation.nDetBoards,app.deviceInformation.acc_active,app.deviceInformation.aux_active);
+[B,unusedBytes,avgDet, TGAdata]=translateNinja2022Bytes(raw,app.deviceInformation.stateMap,app.deviceInformation.nDetBoards,app.deviceInformation.acc_active,app.deviceInformation.aux_active);
 
 %circshift to the left in the third dimension since packets marked as 1
 %actually store the last state, packets marked as 2 are state 1 etc

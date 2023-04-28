@@ -1,4 +1,4 @@
-function [data,unusedBytes,darkLevelAvg]=translateNinja2022Bytes(inputBytes,stateMap,N_DETECTOR_BOARDS,acc_active,aux_active)
+function [data,unusedBytes,darkLevelAvg, TGAdata]=translateNinja2022Bytes(inputBytes,stateMap,N_DETECTOR_BOARDS,acc_active,aux_active)
 % data is the translated data output. It has 3 dimensions: 1 is time
 % (samples) 2 is detectors; the third dimension is the state number, which
 % could be a proxy for detector number if the state acquisition sequence is
@@ -124,6 +124,16 @@ for ki=1:N_DETECTOR_BOARDS
     B(:,(1:N_DET_PER_BOARD)+(ki-1)*N_DET_PER_BOARD)=A;
 end
 
+%% translate Temparature, Gyroscope and Accelarometer data
+TGAdata = [];
+if acc_active
+    indicator_matrix = indicator+offset+N_DETECTOR_BOARDS*(N_DET_PER_BOARD*N_BYTES_PER_DET+length(detector_header_indicator)+sample_counter_length+1)+sample_counter_length+2;
+    TGAdata = raw(indicator_matrix+(0:2:13))+256.*raw(indicator_matrix+(1:2:13));
+    TGAdata = TGAdata - (TGAdata > 2^15-1).*2^16;
+    TGAdata(:,1) = TGAdata(:,1)/256+25;
+    TGAdata(:,2:4) = TGAdata(:,2:4)*250./(2^15-1);
+    TGAdata(:,5:7) = TGAdata(:,5:7)*4./(2^15-1);
+end
 %% identify number of states
 %estados=1+raw(indicator+length(header_indicator)+1); %this is how it
 %should be done when we have the whole bytestream. For a partial
