@@ -1,4 +1,4 @@
-function [data,unusedBytes,darkLevelAvg, TGAdata]=translateNinja2022Bytes(inputBytes,stateMap,N_DETECTOR_BOARDS,acc_active,aux_active)
+function [data,unusedBytes,darkLevelAvg]=translateNinja2022Bytes(inputBytes,stateMap,N_DETECTOR_BOARDS,acc_active,aux_active)
 % data is the translated data output. It has 3 dimensions: 1 is time
 % (samples) 2 is detectors; the third dimension is the state number, which
 % could be a proxy for detector number if the state acquisition sequence is

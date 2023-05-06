@@ -25,7 +25,8 @@ offsetBoard=N_DET_PER_BOARD*N_BYTES_PER_DET+length(detector_header_indicator)+sa
 payloadSize=N_DETECTOR_BOARDS*offsetBoard;
 auxloadSize = length(aux_header_detector)+aux_bytes_count+sample_counter_length+1;
 offset=length(header_indicator)+state_number_length+auxloadSize; %offset for first payload byte
-packageLength=offset+payloadSize+18;  
+packageLength=offset+payloadSize+18; 
+offset_aux = length(header_indicator)+state_number_length+length(aux_header_detector);
 
 %% find detector header indicators
 endByte=0;
@@ -112,13 +113,21 @@ end
 
 %% translate Temparature, Gyroscope and Accelarometer data
 TGAdata = [];
-% indicator_matrix = indicator+offset+N_DETECTOR_BOARDS*(N_DET_PER_BOARD*N_BYTES_PER_DET+length(detector_header_indicator)+sample_counter_length+1)+sample_counter_length+2;
-% TGAdata = raw(indicator_matrix+(0:2:13))+256.*raw(indicator_matrix+(1:2:13));
-% TGAdata = TGAdata - (TGAdata > 2^15-1).*2^16;
-% TGAdata(:,1) = TGAdata(:,1)/256+25;
-% TGAdata(:,2:4) = TGAdata(:,2:4)*250./(2^15-1);
-% TGAdata(:,5:7) = TGAdata(:,5:7)*4./(2^15-1);
-
+indicator_matrix = indicator+offset+N_DETECTOR_BOARDS*(N_DET_PER_BOARD*N_BYTES_PER_DET+length(detector_header_indicator)+sample_counter_length+1)+sample_counter_length+2;
+TGAdata = raw(indicator_matrix+(0:2:13))+256.*raw(indicator_matrix+(1:2:13));
+TGAdata = TGAdata - (TGAdata > 2^15-1).*2^16;
+TGAdata(:,1) = TGAdata(:,1)/256+25;
+TGAdata(:,2:4) = TGAdata(:,2:4)*250./(2^15-1);
+TGAdata(:,5:7) = TGAdata(:,5:7)*4./(2^15-1);
+%% Aux data
+% this aux data is not complater yet, bytes to value is not correct at the
+% moment
+Auxdata = [];
+indicator_matrix = indicator+offset_aux;
+Auxdata_bytes = raw(indicator_matrix+(0:aux_bytes_count-1));
+Auxdata = Auxdata_bytes(:,1)+256*Auxdata_bytes(:,2)+256^2*Auxdata_bytes(:,3)+256^3*Auxdata_bytes(:,4)+256^4*Auxdata_bytes(:,5);
+Auxdata = (Auxdata > 2^23-1).*2^24 - Auxdata;
+Auxdata =Auxdata./((2^15)-1);
 %% identify number of states
 %estados=1+raw(indicator+length(header_indicator)+1); %this is how it
 %should be done when we have the whole bytestream. For a partial

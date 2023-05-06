@@ -1,6 +1,6 @@
 %% read file
 %fName='darkState.bin';
-fName = 'ninjaNIRS2022_2023-04-06-18-24-38.bin';
+fName = 'ninjaNIRS2022_2023-05-05-19-59-32.bin';
 fID=fopen(fName);
 inputBytes=fread(fID,'uint8');
 fclose(fID);
