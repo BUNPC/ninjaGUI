@@ -44,7 +44,7 @@ stateMap = convertSDtoStateMap(SD);
 
 
 %% translate with GUI function
-[data,unusedBytes,darkLevelAvg,TGAdata]=translateNinja2022Bytes(inputBytes,stateMap,7);
+[data,unusedBytes,darkLevelAvg,TGAdata]=translateNinja2022Bytes_test(inputBytes,stateMap,7);
 data=circshift(data,-1,3);
 %% variable data contains the translated information ordered as time by detectors by states
 
