@@ -19,14 +19,14 @@ if ~stat.v5p1b01_en || ~stat.v5p1b23_en
     disp("Warning: Detectors not powered, cannot determine active detectors accurately");
 end
 
-N_DET_SLOTS = 16;
+N_DET_SLOTS = 24;
 
 stat.detb_active = zeros(1,N_DET_SLOTS);
 stat.acc_active = false;
 
 % bring instrument into a known state
 stat.rst_pca = false;
-stat.rst_detb = false;
+stat.rst_detb(:) = false;
 clk_div_old = stat.clk_div;
 stat.clk_div = 250;
 stat.run = false;

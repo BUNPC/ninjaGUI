@@ -54,7 +54,7 @@ write(s, buf, 'uint8');
 % read D back from RAM
 if ~skipreadback
     errcnt = 0;
-    pause(0.01);
+    pause(0.1);
     s.flush();
     for ii = 1:1024
         cmdbytes(2) = offset + bitshift(ii-1, -8); % read command

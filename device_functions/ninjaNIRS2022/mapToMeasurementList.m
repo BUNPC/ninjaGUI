@@ -14,7 +14,7 @@ foo=find(stateMap(:,27)==1);
 N_STATES=foo(1);
 
 %cropped ID lists to the valid states
-sourceIDs=stateMap(1:N_STATES,1:8);
+sourceIDs=stateMap(1:N_STATES,1:3);
 %wavelengthIDs=stateMap(1:N_STATES,9:10); 
 %sourceBoardIds=stateMap(1:N_STATES,11:16); 
 
@@ -29,7 +29,7 @@ for ki=1:size(measList,1)
     srcID = mod(srcID0-1,8)+1;
     srcModule = ceil((srcID0-0.1)/8);
 
-    wavelengthIDs = stateMap(1:N_STATES,[9:10]+(srcModule-1)*2); % I think this works with spatial multiplex
+    wavelengthIDs = stateMap(1:N_STATES,[5:6]+(srcModule-1)*2); % I think this works with spatial multiplex
                       % What I wrote below is likely not right. I think all
                       % is ok.
                       % this assumes only 1 module selected per state
@@ -55,7 +55,8 @@ for ki=1:size(measList,1)
     try
         %if some sources are never turned on but are required by the
         %measurement list, those states will be marked as nan
-        estados(ki)=find(wavelengthIDs(:,lambdaID)&sourceIDs(:,srcID));
+        Lia = ismember(sourceIDs,bitget( mod(srcID-1,8), 1:3 ),'rows');
+        estados(ki)=find(wavelengthIDs(:,lambdaID)&Lia);
         estados2(ki) = ceil(estados(ki)/3)*3;
     end
 end

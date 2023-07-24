@@ -35,7 +35,7 @@ stat.clk_div = 15;
 % reset program counter a
 stat.rst_pca = true;
 % reset rp2040 on all detector boards (held in reset while true)
-stat.rst_detb = true;
+stat.rst_detb = ones(1,4);
 
 % clk_div will not advance if false -> also a and b not advancing
 stat.run = false;
@@ -52,7 +52,7 @@ stat = updateActiveDet(app.sp,stat);
 %% RAM A
 
 stat.rama = stateMap; 
-
+stat.nstatusstates = 0;
 %% RAM B
 
 stat.ramb = zeros(1024,32);
@@ -64,11 +64,11 @@ t_state_b = stat.clk_div*8/96e6;
 % duration of each RAM A state
 t_state_a = t_state_b * stat.n_state_b;
 % duration of end cycle pulse period
-t_end_cyc = 10e-6;
+t_end_cyc = 12e-6;
 % holdoff between different selected detector board uart transmissions
 t_bsel_holdoff = 1e-6;
 % minimum duration of each board select period
-% (32byted*10bits/6000000baud = 53.4e-6 s)
+% (32bytes*10bits/6000000baud = 53.4e-6 s)
 t_bsel_min = 55e-6;
 % time to hold off sampling after state switch to let analog signal settle
 % at 350 us the signal should be approx 101% of final value
@@ -109,8 +109,8 @@ end
 % data transmission management
 % number of B states allocated to each UART data source (det boards + IMU)
 ni_bsel = floor(( stat.n_state_b - round(t_end_cyc/t_state_b) - 2 - ...
-    (stat.n_detb_active+1+stat.acc_active)*ceil(t_bsel_holdoff/t_state_b) ) ...
-    / (stat.n_detb_active+stat.acc_active));
+    (stat.n_detb_active+1+1)*ceil(t_bsel_holdoff/t_state_b) ) ...
+    / (stat.n_detb_active+1));
 if ni_bsel*t_state_b < t_bsel_min
     disp("Warning: t_bsel too short.")
 end
@@ -119,7 +119,7 @@ stat.ramb(si-2,8) = 1; % transmit program counter A
 if stat.aux_active
     stat.ramb(si-1,7) = 1; % transmit aux data
 end
-for ii = find([stat.detb_active, stat.acc_active])
+for ii = find([stat.detb_active, 1])
     % set source selector bits (UART Rx Mux)
     stat.ramb(si:(si+ni_bsel-1), 1:5) = repmat(bitget(ii-1, 1:5 ,'uint8'),ni_bsel,1);
     % set flow enable bit (DetB Rx En)

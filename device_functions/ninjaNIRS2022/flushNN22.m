@@ -18,14 +18,17 @@ pause(0.1);
 % Reset program counters 
 sp.flush();
 stat.rst_pca = true;
-stat.rst_detb = true;
+stat.rst_detb = ones(1,4);
 stat = updateStatReg(sp,stat);
 
 pause(0.1);
 stat.rst_pca = false;
-stat.rst_detb = false;
-stat = updateStatReg(sp,stat, false);
-pause(0.6);
+for ii = 1:4
+    stat.rst_detb(ii) = 0;
+    stat = updateStatReg(sp,stat);
+    pause(0.5);
+end
+pause(0.5);
 
 % Redundant: also run a bit without sampling
 % (flush data out of tx buffers in all microcontrollers)

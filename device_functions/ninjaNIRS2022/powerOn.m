@@ -22,11 +22,18 @@ stat = updateStatReg(sp,stat);
 stat.vn22_en = true;
 stat = updateStatReg(sp,stat);
 stat.v5p1src_en = true;
-stat = updateStatReg(sp,stat);
+
+% releasing the reset on the detector cards
+% detector cards will in turn power on the detector optodes
+
+for ii = 1:4
+    stat.rst_detb(ii) = 0;
+    stat = updateStatReg(sp,stat);
+    pause(0.5);
+end
 
 % this section does not need a delay
 stat.rst_pca = false;
-stat.rst_detb = false;
 stat.run = false;
 stat = updateStatReg(sp,stat);
 
