@@ -1,4 +1,4 @@
-function mappedIndices=mapToMeasurementList(stateMap,measList)
+function mappedIndices=mapToMeasurementList(stateMap,measList,srcPowerLowHigh)
 %% Function to map the state map (detector and sources) to standard measurement list
 % the standard measurement list is a list of four element arrays, each one
 % indicates, the source, the detector and the wavelength associated which
@@ -7,6 +7,11 @@ function mappedIndices=mapToMeasurementList(stateMap,measList)
 % B matrix to their correct channel position
 % RIGHT NOW MAPPED INDICES IS NOT WHAT IT IS SUPPOSED TO BE, I AM NOT SURE
 % HOW TO DO THE INDEXING AND THE ARRAYS BEING 3D COMPLICATES THINGS
+
+
+if ~exist('srcPowerLowHigh')
+    srcPowerLowHigh = [];
+end
 
 %% identify which state is associated with which source
 
@@ -56,8 +61,13 @@ for ki=1:size(measList,1)
         %if some sources are never turned on but are required by the
         %measurement list, those states will be marked as nan
         Lia = ismember(sourceIDs,bitget( mod(srcID-1,8), 1:3 ),'rows');
-        estados(ki)=find(wavelengthIDs(:,lambdaID)&Lia);
-        estados2(ki) = ceil(estados(ki)/3)*3;
+        lst = find(wavelengthIDs(:,lambdaID)&Lia);
+        if length(lst)==1
+            estados(ki)=lst;
+        else
+            estados(ki) = lst( srcPowerLowHigh(srcID,detID,lambdaID) );
+        end
+        estados2(ki) = ceil(estados(ki)/2)*2;
     end
 end
 % estados now contains a list of which measurement list corresponds with

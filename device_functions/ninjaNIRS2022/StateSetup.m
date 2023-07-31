@@ -52,7 +52,7 @@ end
 foo=find(stateMap(:,27)==1);
 
 nStates=foo(1);
-fs=1000/nStates;
+fs=app.deviceInformation.stat.state_fs/nStates;
 %initialize both RAMs
 
 stat=initStat(app,stateMap);

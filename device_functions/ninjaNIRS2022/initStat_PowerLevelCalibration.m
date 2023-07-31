@@ -5,7 +5,7 @@
 % It also does not create the serial port since that is going to be done
 % elsewhere
 
-function stat = initStat(app,stateMap)
+function stat = initStat_PowerLevelCalibration(app,stateMap)
 %%
 % s=serialport(app.deviceInformation.commPort,app.communicationParameters.BaudRate,...
 %                 'Parity',app.communicationParameters.Parity,...
@@ -42,12 +42,12 @@ stat.run = false;
 
 stat.sreg = zeros(1,32);
 
-stat = powerOn(app.sp,stat);
+%stat = powerOn(app.sp,stat);
 
 
 %% Determine active detectors and IMU
 stat.aux_active = true;
-stat = updateActiveDet(app.sp,stat);
+%stat = updateActiveDet(app.sp,stat);
 
 %% RAM A
 
@@ -64,7 +64,7 @@ t_state_b = stat.clk_div*8/96e6;
 % duration of each RAM A state
 t_state_a = t_state_b * stat.n_state_b;
 % freq of the acquistion
-stat.state_fs = 1/t_state_a;
+stat.fs = 1/t_state_a;
 % duration of end cycle pulse period
 t_end_cyc = 12e-6;
 % holdoff between different selected detector board uart transmissions
@@ -102,11 +102,7 @@ for ii = 1:ni_smp_on
 end
 % number of samples collected during each A state
 % (first sample will be discarded by detector board)
-stat.n_smp = length(si:ni_smp:se) -1;
-
-% Adjust thresholds based on number of samples
-norm_factor = stat.n_smp/237;
-app.deviceInformation.levelRepresentation.thresholds = app.deviceInformation.levelRepresentation.thresholds+20*log10(norm_factor); 
+stat.n_smp = length(si:ni_smp:se) -1; 
 
 if stat.n_smp > 255 % 256*16bit number could overflow 24 bit result 
     disp("Warning: nsamples large, overflow possible.")

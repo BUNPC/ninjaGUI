@@ -31,7 +31,7 @@ func.Acquisition=@(app,command)Acquisition(app,command); %function to start or s
 func.CommunicationPort=@(app,command)CommunicationPort(app,command); %this function is used to open, close the communication port and also to flush it
 func.SwitchLights=@(app,command)SwitchLights(app,command); %function to turn all the lights at the same time
 func.TurnSourceN=@(app,N,Level)TurnSourceN(app,N,Level); %this function is used to start each wavelength of each source independently
-
+func.LEDPowerCalibration=@(app)LEDPowerCalibration(app); % this function is used calibrate LED power
 device.functions=func;
 
 

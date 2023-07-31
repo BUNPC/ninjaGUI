@@ -76,8 +76,11 @@ states=unique(estados);
 statesToEliminate=[false;diff(states)~=1];
 if sum(statesToEliminate)>0
     %then there is a problem with the data
-    toEliminate=estados==states(statesToEliminate);
-    indicator(toEliminate)=[];
+    foo = states(statesToEliminate);
+    for iFoo = 1:length(foo)
+        toEliminate=estados==foo(iFoo);
+        indicator(toEliminate)=[];
+    end
     %do states again
     estados=1+raw(indicator+length(header_indicator)+1);
     states=unique(estados);
