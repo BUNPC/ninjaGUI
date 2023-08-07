@@ -104,10 +104,6 @@ end
 % (first sample will be discarded by detector board)
 stat.n_smp = length(si:ni_smp:se) -1;
 
-% Adjust thresholds based on number of samples
-norm_factor = stat.n_smp/237;
-app.deviceInformation.levelRepresentation.thresholds = app.deviceInformation.levelRepresentation.thresholds+20*log10(norm_factor); 
-
 if stat.n_smp > 255 % 256*16bit number could overflow 24 bit result 
     disp("Warning: nsamples large, overflow possible.")
 end
@@ -146,7 +142,6 @@ end
 %% copy accelarometer and auxillary status into app
 app.deviceInformation.acc_active = stat.acc_active;
 app.deviceInformation.aux_active = stat.aux_active;
-
 %% upload RAMs 
 
 uploadToRAM(app.sp, stat.rama, 'a', false);

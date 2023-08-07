@@ -1,4 +1,4 @@
-function [stateMap, stateIndices, optPowerLevel] = LEDPowerCalibration_dualLevels(SD,dataLEDPowerCalibration)
+function [stateMap, stateIndices, optPowerLevel, dSig] = LEDPowerCalibration_dualLevels(SD,dataLEDPowerCalibration,thresholds)
 %%
 % get list of channels with each group of spatially multiplexed sources for
 % each wavelength
@@ -29,8 +29,8 @@ end
 %
 numDetGood2  = zeros(8,7,7,2);
 
-threshHigh = 4e6;
-threshLow  = 4e4;
+threshHigh = 10^(thresholds(2)/20);
+threshLow  = 10^(thresholds(1)/20);
 
 for iWav = 1:2
     for iSrc = 1:8
@@ -39,7 +39,7 @@ for iWav = 1:2
                 
                 lst = lstSMS{iSrc}{iWav};
                 
-                lstGood = find( (dataLEDPowerCalibration(lst,1,iPow1)>threshLow & dataLEDPowerCalibration(lst,1,iPow1)<threshHigh) | (dataLEDPowerCalibration(lst,1,iPow2)>threshLow & dataLEDPowerCalibration(lst,1,iPow2)<threshHigh) ); 
+                lstGood = find( (dataLEDPowerCalibration(lst,iPow1)>threshLow & dataLEDPowerCalibration(lst,iPow1)<threshHigh) | (dataLEDPowerCalibration(lst,iPow2)>threshLow & dataLEDPowerCalibration(lst,iPow2)<threshHigh) ); 
                 numDetGood2(iSrc,iPow1,iPow2,iWav) = length(lstGood);                
                 
             end
@@ -52,6 +52,7 @@ for iWav = 1:2
     end
 end
 
+dSig = zeros(size(ml,1),1);
 
 for iML = 1:size(ml,1)
     iS = mod(ml(iML,1)-1,8)+1;
@@ -61,10 +62,12 @@ for iML = 1:size(ml,1)
     iPL1 = optPowerLevel(iS,1,iW);
     iPL2 = optPowerLevel(iS,2,iW);
     
-    if (dataLEDPowerCalibration(iML,1,iPL2)>threshLow & dataLEDPowerCalibration(iML,1,iPL2)<threshHigh) 
+    if (dataLEDPowerCalibration(iML,iPL2)>threshLow & dataLEDPowerCalibration(iML,iPL2)<threshHigh) 
         srcPowerLowHigh(iS,iD,iW) = 2;
+        dSig(iML) = dataLEDPowerCalibration(iML,iPL2);
     else
         srcPowerLowHigh(iS,iD,iW) = 1;
+        dSig(iML) = dataLEDPowerCalibration(iML,iPL1);
     end
     
 end

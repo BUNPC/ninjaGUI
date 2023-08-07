@@ -1,4 +1,4 @@
-function [dataoutput,packlen,remainderbytes,datac,statusdata,maxvout,avgvout]=ReadBytesAvailable(app)
+function [dataoutput,packlen,remainderbytes,datac,statusdata,maxvout,avgvout,dataDark,B]=ReadBytesAvailable(app)
 % Used to read the data sent from the instrument and translate it to a a
 % matlab array. The only input is app, which is the structure containing
 % the GUI variables. The specific implementation of this function will use
@@ -86,6 +86,9 @@ rawN=size(raw,1);
 
 B=circshift(B,-1,3);
 
+% normslize data to mskr values between o and 1
+B = B./(app.deviceInformation.stat.n_smp*(2^15-1));
+
 % Nstates=size(B,3);
 % fs=1e3/Nstates;
 
@@ -105,6 +108,7 @@ indices=app.deviceInformation.stateIndices; %this is calculated when the state i
 %state, second column detector
 
 organizedData=nan(size(B,1),size(SD.measList,1));
+dataDark=nan(size(B,1),size(SD.measList,1));
 % for loop is likely not the best way to do it
 
 nStates=size(B,3);
@@ -112,23 +116,25 @@ cumDark=0;
 for ki=1:size(SD.measList,1)    
     try
         organizedData(:,ki)=B(:,indices(ki,2),indices(ki,1));        
+        dataDark(:,ki)=B(:,indices(ki,2),indices(ki,3));
         if subtractDark
 %            darkState=B(:,indices(ki,2),indices(ki,1)+1);
-            darkState=B(:,indices(ki,2),indices(ki,3));
+%            darkState=B(:,indices(ki,2),indices(ki,3));
             %subtracts the adjacent state (after the current). Assumes
             %there is a dark state between each active state
-            organizedData(:,ki)=organizedData(:,ki)-darkState;
-            cumDark=cumDark+mean(darkState);
+            organizedData(:,ki)=organizedData(:,ki)-dataDark(:,ki);
+            cumDark=cumDark+mean(dataDark(:,ki));
         end
         
     end
 end
 
 %% truncate to positive
-organizedData(organizedData<1)=1;
+organizedData(organizedData<0)=1e-6;
 
 %% assign all outputs
 dataoutput=organizedData';
+dataDark = dataDark';
 packlen=sum(~isnan(dataoutput),2);  %number of samples in data package
 remainderbytes=unusedBytes;
 datac=[];

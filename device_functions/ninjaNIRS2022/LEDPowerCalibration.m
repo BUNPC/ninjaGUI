@@ -4,7 +4,7 @@ stateMap_old = app.deviceInformation.stateMap;
 
 hWait = waitbar(0,sprintf('Power Level 0'));
 
-for iPower = 1:7
+for iPower = 0:7
 
     waitbar(iPower/7,hWait,sprintf('Power Level %d',iPower));
 
@@ -66,7 +66,15 @@ for iPower = 1:7
     % call BytesAvailable function; this will save dark to bin
     % file, but will also return dark
 %    dataDark(:,iPower) = mean(app.deviceFunctions.ReadBytesAvailable(app),2,'omitnan');
-    dataLEDPowerCalibration(:,:,iPower) = app.deviceFunctions.ReadBytesAvailable(app);
+    [data,~,~,~,~,~,~,dataDarkTmp,B] = app.deviceFunctions.ReadBytesAvailable(app);
+    if iPower>0
+        dataLEDPowerCalibration(:,iPower) = squeeze(mean(data,2,'omitnan'));
+        Bpow(:,:,:,iPower) = B;
+    else
+        dataDark = mean(dataDarkTmp,2,'omitnan'); % really only need the lowest power level
+        B_Dark = B;
+        Bpow = zeros(size(B,1),size(B,2),size(B,3),7);
+    end
 end
 close(hWait)
 
@@ -96,6 +104,7 @@ else
 end
 
 % dual power cycling or not
+thresholds = app.deviceInformation.levelRepresentation.thresholds;
 if 0 % single power setting
 
     % STILL NEED TO UPDATE STATEMAP WITH OPTIMAL POWERS
@@ -110,11 +119,13 @@ else % dual power setting
 
     % need to create srcPowerLowHigh(nSrc,nDet,nWav)
 
-    [stateMap, stateIndices, optPowerLevel] = LEDPowerCalibration_dualLevels(app.nSD,dataLEDPowerCalibration);
+    [stateMap, stateIndices, optPowerLevel, dSig] = LEDPowerCalibration_dualLevels(app.nSD,dataLEDPowerCalibration,thresholds);
     app.deviceInformation.stateMap = stateMap;
     app.deviceInformation.stateIndices = stateIndices;
     app.deviceInformation.optPowerLevel = optPowerLevel;
-    save('dualPowerStateMapandIndices.mat','stateMap','stateIndices','optPowerLevel')
+    app.deviceInformation.dSig = dSig;
+    nSD = app.nSD;
+    save('dualPowerStateMapandIndices.mat','stateMap','stateIndices','optPowerLevel','nSD','Bpow')
     uploadToRAM(app.sp, stateMap, 'a', false);
 end
 
@@ -122,6 +133,10 @@ end
 foo=find(stateMap(:,27)==1);
 
 nStates=foo(1);
-fs=800/nStates;
+fs=app.deviceInformation.stat.state_fs / nStates; 
 app.deviceInformation.Rate=fs;
 app.editRate.Value=app.deviceInformation.Rate;
+
+%%
+% report
+reportSigDark( app.nSD, dSig, dataDark, B_Dark, thresholds );
