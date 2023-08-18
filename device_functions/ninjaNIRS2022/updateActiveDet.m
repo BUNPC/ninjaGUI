@@ -22,7 +22,7 @@ end
 N_DET_SLOTS = 24;
 
 stat.detb_active = zeros(1,N_DET_SLOTS);
-stat.acc_active = false;
+stat.acc_active = true;
 
 % bring instrument into a known state
 stat.rst_pca = false;
@@ -83,6 +83,8 @@ if length(buf)==N_BYTES_TO_READ_PER_ACCELEROMETER
     else
         disp("Received bad acc packet error.")
     end
+else
+    stat.acc_active = false;
 end
 
 warning('on');

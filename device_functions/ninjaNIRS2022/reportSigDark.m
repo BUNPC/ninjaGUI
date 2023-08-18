@@ -15,22 +15,17 @@ clf
 
 % PLOT SATURATED AND POOR SNR
     subplot(1,3,1)
-
-    % plot optodes
-    hp=plot(sPos(1,1),sPos(1,2),'r.');
+    cla
     hold on
-    for iS = 2:size(sPos,1)
-        hp=plot(sPos(iS,1),sPos(iS,2),'r.');
-    end
-    for iD = 1:size(dPos,1)
-        hp=plot(dPos(iD,1),dPos(iD,2),'b.');
-    end
+
 
     % plot saturated channels
     lst1 = find(ml(:,4)==1);
     lst2 = find(ml(:,4)==2);
     lsth = find( dSig(lst1)>threshHigh | dSig(lst2)>threshHigh );
     lstl = find( dSig(lst1)<threshLow | dSig(lst2)<threshLow );
+    lsthsub = find( (dSig(lst1)>threshHigh*0.8 & dSig(lst1)<=threshHigh) | (dSig(lst2)>threshHigh*0.8 & dSig(lst2)<=threshHigh) );
+    lsthsub = setdiff( lsthsub, lsth );
 
     lsth1 = find( dSig(lst1)>threshHigh );
     lstl1 = find( dSig(lst1)<threshLow );
@@ -38,11 +33,37 @@ clf
     lsth2 = find( dSig(lst2)>threshHigh );
     lstl2 = find( dSig(lst2)<threshLow );
 
-    for iML = 1:length(lsth)
-        hp = plot( [sPos(ml(lsth(iML),1),1) dPos(ml(lsth(iML),2),1)], [sPos(ml(lsth(iML),1),2) dPos(ml(lsth(iML),2),2)], 'r-');
+    lstTmp = lst1(lsth);
+    for iML = 1:length(lstTmp)
+        hp = plot( [sPos(ml(lstTmp(iML),1),1) dPos(ml(lstTmp(iML),2),1)], [sPos(ml(lstTmp(iML),1),2) dPos(ml(lstTmp(iML),2),2)], 'r-');
+        set(hp,'linewidth',2);
     end
+    cm = jet(80);
+    cm = cm([1:2:34 46:50],:);
+    lstTmp1 = lst1(lstl);
+    lstTmp2 = lst2(lstl);
     for iML = 1:length(lstl)
-        hp = plot( [sPos(ml(lstl(iML),1),1) dPos(ml(lstl(iML),2),1)], [sPos(ml(lstl(iML),1),2) dPos(ml(lstl(iML),2),2)], 'c-');
+        hp = plot( [sPos(ml(lstTmp1(iML),1),1) dPos(ml(lstTmp1(iML),2),1)], [sPos(ml(lstTmp1(iML),1),2) dPos(ml(lstTmp1(iML),2),2)], 'c-');
+        set(hp,'linewidth',2);
+        iCol = ceil((20*log10(max(min( min(dSig(lstTmp1(iML)),dSig(lstTmp2(iML))), 1e-2), 1e-4))+81)*size(cm,1)/41);
+        set(hp,'color',cm(iCol,:))
+    end
+    lstTmp = lst1(lsthsub);
+    for iML = 1:length(lstTmp)
+        hp = plot( [sPos(ml(lstTmp(iML),1),1) dPos(ml(lstTmp(iML),2),1)], [sPos(ml(lstTmp(iML),1),2) dPos(ml(lstTmp(iML),2),2)], '-');
+        set(hp,'color',[1 0.7 0]);
+        set(hp,'linewidth',2);
+    end
+
+    % plot optodes
+    hp=plot(sPos(1,1),sPos(1,2),'r.');
+    for iS = 2:size(sPos,1)
+        hp=plot(sPos(iS,1),sPos(iS,2),'r.');
+        set(hp,'markersize',12)
+    end
+    for iD = 1:size(dPos,1)
+        hp=plot(dPos(iD,1),dPos(iD,2),'b.');
+        set(hp,'markersize',12)
     end
 
     title( sprintf('#Sat=%d (%d|%d) #Poor=%d (%d|%d)', length(lsth), length(lsth1), length(lsth2), length(lstl),length(lstl1),length(lstl2) ) )

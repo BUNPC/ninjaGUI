@@ -21,7 +21,7 @@ for iS = 1:length(lstS)
 %        iState = iState + 1;
 %    end
 
-    iState = iState + 2; % two dark states
+    iState = iState + 2; %  dark state
 
     % EVEN wavelength
 %    for iPower = 1:7
@@ -31,7 +31,7 @@ for iS = 1:length(lstS)
 %        iState = iState + 1;
 %    end
 
-    iState = iState + 2; % two dark states
+    iState = iState + 2; %  dark state
 end
 
 stateMap((iState-1):end,27) = 1; % mark sequence end

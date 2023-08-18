@@ -4,6 +4,9 @@ stateMap_old = app.deviceInformation.stateMap;
 
 hWait = waitbar(0,sprintf('Power Level 0'));
 
+% backup normal fID
+standardfID=app.fstreamID;
+
 for iPower = 0:7
 
     waitbar(iPower/7,hWait,sprintf('Power Level %d',iPower));
@@ -47,9 +50,6 @@ for iPower = 0:7
     fnameDark=sprintf('LEDPowerCalibration_%02d.bin',iPower);
     fileID=fopen(fnameDark,'w');
 
-    % backup normal fID
-    standardfID=app.fstreamID;
-
     %switch it by dark fID
     app.fstreamID=fileID;
 
@@ -69,12 +69,16 @@ for iPower = 0:7
     [data,~,~,~,~,~,~,dataDarkTmp,B] = app.deviceFunctions.ReadBytesAvailable(app);
     if iPower>0
         dataLEDPowerCalibration(:,iPower) = squeeze(mean(data,2,'omitnan'));
-        Bpow(:,:,:,iPower) = B;
+        Bpow(:,:,iPower) = squeeze( mean(B,1,'omitnan') );
     else
         dataDark = mean(dataDarkTmp,2,'omitnan'); % really only need the lowest power level
         B_Dark = B;
-        Bpow = zeros(size(B,1),size(B,2),size(B,3),7);
+        Bpow = zeros(size(B,2),size(B,3),7);
     end
+
+    %close file
+    fclose(fileID);
+    
 end
 close(hWait)
 
@@ -89,9 +93,6 @@ disp('LED Power Calibration Data Acquisition Finished')
 %else
 %    app.deviceFunctions.StateSetup(app,[]);
 %end
-
-%close file
-fclose(fileID);
 
 % return fID to default
 app.fstreamID=standardfID;
@@ -119,13 +120,14 @@ else % dual power setting
 
     % need to create srcPowerLowHigh(nSrc,nDet,nWav)
 
-    [stateMap, stateIndices, optPowerLevel, dSig] = LEDPowerCalibration_dualLevels(app.nSD,dataLEDPowerCalibration,thresholds);
+    [stateMap, stateIndices, optPowerLevel, dSig, srcModuleGroups] = LEDPowerCalibration_dualLevels(app.nSD,dataLEDPowerCalibration,thresholds);
     app.deviceInformation.stateMap = stateMap;
     app.deviceInformation.stateIndices = stateIndices;
     app.deviceInformation.optPowerLevel = optPowerLevel;
     app.deviceInformation.dSig = dSig;
+    app.deviceInformation.srcModuleGroups = srcModuleGroups;
     nSD = app.nSD;
-    save('dualPowerStateMapandIndices.mat','stateMap','stateIndices','optPowerLevel','nSD','Bpow')
+    save('dualPowerStateMapandIndices.mat','stateMap','stateIndices','optPowerLevel','dSig','Bpow','nSD','thresholds')
     uploadToRAM(app.sp, stateMap, 'a', false);
 end
 

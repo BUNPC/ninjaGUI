@@ -31,7 +31,7 @@ for ki=1:size(measList,1)
     meas=measList(ki,:);
     
     srcID0 = meas(1);
-    srcID = mod(srcID0-1,8)+1;
+    srcID = srcID0; %mod(srcID0-1,8)+1;
     srcModule = ceil((srcID0-0.1)/8);
 
     wavelengthIDs = stateMap(1:N_STATES,[5:6]+(srcModule-1)*2); % I think this works with spatial multiplex
@@ -67,7 +67,8 @@ for ki=1:size(measList,1)
         else
             estados(ki) = lst( srcPowerLowHigh(srcID,detID,lambdaID) );
         end
-        estados2(ki) = ceil(estados(ki)/2)*2;
+        iDark = find( sum(stateMap(estados(ki)+1:N_STATES, 1:26),2)==0, 1 ) + estados(ki);
+        estados2(ki) = iDark;
     end
 end
 % estados now contains a list of which measurement list corresponds with
