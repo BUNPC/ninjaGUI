@@ -36,11 +36,18 @@ stat.clk_div = 15;
 stat.rst_pca = true;
 % reset rp2040 on all detector boards (held in reset while true)
 stat.rst_detb = ones(1,4);
+% reset external RAM used for data buffer
+stat.rst_ram = true;
 
 % clk_div will not advance if false -> also a and b not advancing
 stat.run = false;
 
 stat.sreg = zeros(1,32);
+
+stat = updateStatReg(app.sp, stat, true);
+% turn off reset to allow communication FPGA->FTDI->PC
+stat.rst_ram = false;
+stat = updateStatReg(app.sp, stat, false);
 
 stat = powerOn(app.sp,stat);
 

@@ -19,10 +19,12 @@ pause(0.1);
 sp.flush();
 stat.rst_pca = true;
 stat.rst_detb = ones(1,4);
+stat.rst_ram = true; % reset external ram
 stat = updateStatReg(sp,stat);
 
 pause(0.1);
 stat.rst_pca = false;
+stat.rst_ram = false;
 for ii = 1:4
     stat.rst_detb(ii) = 0;
     stat = updateStatReg(sp,stat);

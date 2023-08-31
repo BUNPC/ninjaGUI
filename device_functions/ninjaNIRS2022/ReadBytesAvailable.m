@@ -41,13 +41,17 @@ else
 end
 
 
-%% parse app variables
 
+%% parse app variables
 s=app.sp; %serial port
 dev=app.deviceInformation; %config file
 SD=app.nSD; %probe file
 prevrbytes=app.rbytes; %remainder bytes from the previous read operation
 fID=app.fstreamID;  %file streamer for debug mode; this can be used to stream the bytes directly to file as a backup
+
+B = 0;
+dataDark=nan(size(B,1),size(SD.measList,1));
+
 
 %% read serial buffer opperations.
 % It is setup so the read operation reads all bytes available in the serial

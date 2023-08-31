@@ -1,4 +1,9 @@
-function LEDPowerCalibration( app )
+function LEDPowerCalibration( app, hAxes )
+
+if ~exist('hAxes')
+    reportSigLevel( app, 1 );
+    return
+end
 
 stateMap_old = app.deviceInformation.stateMap;
 
@@ -141,4 +146,4 @@ app.editRate.Value=app.deviceInformation.Rate;
 
 %%
 % report
-reportSigDark( app.nSD, dSig, dataDark, B_Dark, thresholds );
+reportSigDark( app.nSD, dSig, dataDark, B_Dark, thresholds, hAxes );

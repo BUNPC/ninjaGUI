@@ -21,6 +21,7 @@ stat.sreg(19) = stat.v5p1rpi_off;
 stat.sreg(18) = stat.v5p1b23_en;
 stat.sreg(17) = stat.v5p1b01_en;
 stat.sreg(9:16) = bitget(stat.clk_div-1, 1:8, 'uint8');
+stat.sreg(7) = stat.rst_ram;
 stat.sreg(6) = stat.rst_pca;
 stat.sreg(2:5) = stat.rst_detb;
 stat.sreg(1) = stat.run;
