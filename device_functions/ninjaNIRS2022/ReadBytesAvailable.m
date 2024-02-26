@@ -62,7 +62,7 @@ dataDark=nan(size(B,1),size(SD.measList,1));
 % called multiple times to read just one byte, which I think makes
 % acquisition more efficient
 ba=s.NumBytesAvailable;
-rb=30000; %minimum number of bytes to read per operation
+rb=50000; %minimum number of bytes to read per operation. nStates*18*28
 
 if ba>rb
     raw = read(s,ba,'uint8')';
@@ -84,6 +84,18 @@ rawN=size(raw,1);
 
 %% translate data to a numeric array
 [B,unusedBytes,avgDet]=translateNinja2022Bytes(raw,app.deviceInformation.stateMap,app.deviceInformation.nDetBoards,app.deviceInformation.acc_active,app.deviceInformation.aux_active);
+%[B,unusedBytes,avgDet,~,~,~]=translateNinja2022Bytesv3_BZ20230817(raw,app.deviceInformation.stateMap,app.deviceInformation.nDetBoards,app.deviceInformation.acc_active,app.deviceInformation.aux_active);
+
+if isempty(B)
+    dataoutput=[];
+    maxvout=[];
+    avgvout=[];
+    packlen=0;
+    datac=[];
+    statusdata=[];
+    remainderbytes=unusedBytes;
+    return;
+end
 
 %circshift to the left in the third dimension since packets marked as 1
 %actually store the last state, packets marked as 2 are state 1 etc
@@ -140,6 +152,13 @@ organizedData(organizedData<0)=1e-6;
 dataoutput=organizedData';
 dataDark = dataDark';
 packlen=sum(~isnan(dataoutput),2);  %number of samples in data package
+%disp(sprintf('packlen size is %d x %d',size(packlen,1),size(packlen,2)))
+%disp(sprintf('number states 1 = %d\tnumber of states 2 = %d',length(find(packlen==1)),length(find(packlen==2))))
+if length(unique(packlen))>1
+    disp(sprintf('number states 1 = %d\tnumber of states 2 = %d',length(find(packlen==1)),length(find(packlen==2))))
+    disp(sprintf('First meas with 0 states is %d',find(packlen==0,1)))
+    unique(packlen)
+end
 remainderbytes=unusedBytes;
 datac=[];
 statusdata=[];

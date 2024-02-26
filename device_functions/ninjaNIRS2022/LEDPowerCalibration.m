@@ -4,17 +4,22 @@ if ~exist('hAxes')
     reportSigLevel( app, 1 );
     return
 end
+flagSpatialMultiplex = get(hAxes.cb,'value');
 
 stateMap_old = app.deviceInformation.stateMap;
 
-hWait = waitbar(0,sprintf('Power Level 0'));
+%hWait = waitbar(0,sprintf('Power Level 0'));
+set( hAxes.txa_pow,'value',sprintf('Reading Power Level 0 of 7...'));
 
 % backup normal fID
 standardfID=app.fstreamID;
 
+fname=char(datetime('now','Format','y-MM-dd-HH-mm-ss'));
+
 for iPower = 0:7
 
-    waitbar(iPower/7,hWait,sprintf('Power Level %d',iPower));
+%    waitbar(iPower/7,hWait,sprintf('Power Level %d',iPower));
+    set( hAxes.txa_pow,'value',sprintf('Reading Power Level %d of 7...',iPower));
 
     stateMap = createLEDPowerCalibrationStateMap( app.nSD, iPower );
 
@@ -52,7 +57,23 @@ for iPower = 0:7
     app.deviceInformation.subtractDark=0;
 
     % create and open file
-    fnameDark=sprintf('LEDPowerCalibration_%02d.bin',iPower);
+    foldname=char(datetime('now','Format','y-MM-dd'));
+    foldname2 = 'LEDPowerCalibration'
+    %create autosave directory
+    %                 if ~exist(['autosave',filesep,foldname],'dir')
+    %                     mkdir(['autosave',filesep,foldname])
+    %                 end
+    % Below if updated by SK to create saving folder with
+    % datestamp in probe dircetory instead of autoSave
+    % directory
+    if ~exist([foldname],'dir')
+        mkdir([foldname])
+    end
+    if ~exist([foldname '\' foldname2],'dir')
+        mkdir([foldname '\' foldname2])
+    end
+
+    fnameDark=sprintf('%s\\%s\\LEDPowerCalibration_%02d_%s.bin',foldname,foldname2,iPower,fname);
     fileID=fopen(fnameDark,'w');
 
     %switch it by dark fID
@@ -85,7 +106,8 @@ for iPower = 0:7
     fclose(fileID);
     
 end
-close(hWait)
+set( hAxes.txa_pow,'value',sprintf('Plotting Results...'));
+%close(hWait)
 
 disp('LED Power Calibration Data Acquisition Finished')
 
@@ -125,12 +147,13 @@ else % dual power setting
 
     % need to create srcPowerLowHigh(nSrc,nDet,nWav)
 
-    [stateMap, stateIndices, optPowerLevel, dSig, srcModuleGroups] = LEDPowerCalibration_dualLevels(app.nSD,dataLEDPowerCalibration,thresholds);
+    [stateMap, stateIndices, optPowerLevel, dSig, srcModuleGroups] = LEDPowerCalibration_dualLevels(app.nSD,dataLEDPowerCalibration,thresholds,flagSpatialMultiplex);
     app.deviceInformation.stateMap = stateMap;
     app.deviceInformation.stateIndices = stateIndices;
     app.deviceInformation.optPowerLevel = optPowerLevel;
     app.deviceInformation.dSig = dSig;
     app.deviceInformation.srcModuleGroups = srcModuleGroups;
+    app.deviceInformation.flagSpatialMultiplex = flagSpatialMultiplex;
     nSD = app.nSD;
     save('dualPowerStateMapandIndices.mat','stateMap','stateIndices','optPowerLevel','dSig','Bpow','nSD','thresholds')
     uploadToRAM(app.sp, stateMap, 'a', false);
@@ -147,3 +170,4 @@ app.editRate.Value=app.deviceInformation.Rate;
 %%
 % report
 reportSigDark( app.nSD, dSig, dataDark, B_Dark, thresholds, hAxes );
+set( hAxes.txa_pow,'value',sprintf(''));

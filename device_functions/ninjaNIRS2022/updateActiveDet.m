@@ -68,6 +68,7 @@ uploadToRAM(sp, genSingleSourceRAMB(isrc+1), 'b', false);
 stat.run = true;
 stat = updateStatReg(sp,stat);
 sp.Timeout = 0.1;
+pause(0.3)
 buf = read(sp, N_BYTES_TO_READ_PER_ACCELEROMETER, 'uint8');
 sp.Timeout = old_timeout;
 stat.run = false;

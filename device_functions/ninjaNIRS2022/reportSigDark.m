@@ -17,6 +17,8 @@ threshLow = 10^(thresholds(1) / 20);
 %    subplot(1,3,1)
     axes(hAxes.ax1)
     cla(hAxes.ax1)
+
+    if 0
     hold(hAxes.ax1,'on')
 
 
@@ -74,7 +76,7 @@ threshLow = 10^(thresholds(1) / 20);
 
     hold(hAxes.ax1,'off')
 
-
+    end
 
 
     

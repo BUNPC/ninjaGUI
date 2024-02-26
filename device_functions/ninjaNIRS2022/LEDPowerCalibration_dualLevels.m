@@ -1,11 +1,15 @@
-function [stateMap, stateIndices, optPowerLevel, dSig, srcModuleGroups] = LEDPowerCalibration_dualLevels(SD,dataLEDPowerCalibration,thresholds)
+function [stateMap, stateIndices, optPowerLevel, dSig, srcModuleGroups] = LEDPowerCalibration_dualLevels(SD,dataLEDPowerCalibration,thresholds,flagSpatialMultiplex)
 %%
 % get list of channels with each group of spatially multiplexed sources for
 % each wavelength
 ml = SD.MeasList;
 
 %srcModuleGroups = {[1 2 3 4 5 6 7]};
-srcModuleGroups = {[1 3 5],[2 4 6],[7]};
+if flagSpatialMultiplex==1
+    srcModuleGroups = {[1 3 5],[2 4 6],[7]};
+else
+    srcModuleGroups = {1,2,3,4,5,6,7};
+end
 
 for iSg = 1:length(srcModuleGroups)
     for iWav = 1:2
