@@ -85,7 +85,7 @@ if flagMakeGUI
     app.deviceInformation.handlesReportSigLevel.ax2 = ax2;
     app.deviceInformation.handlesReportSigLevel.ax3 = ax3;
     app.deviceInformation.handlesReportSigLevel.cb = cb;
-    app.deviceInformation.handlesReportSigLevel.cb = acc_stat;
+    app.deviceInformation.handlesReportSigLevel.acc_stat = acc_stat;
 else
     bg = app.deviceInformation.handlesReportSigLevel.bg;
     txa_pow = app.deviceInformation.handlesReportSigLevel.txa_pow;
@@ -197,13 +197,20 @@ cm = cm([1:2:34 46:50],:);
 lst1 = find(ml(:,4)==1);
 lst2 = find(ml(:,4)==2);
 
-
+pauseDuration = 0.3;
+if size(ml,1)<1000
+    pauseDuration = 1;
+end
 
 while get(tb1,'value') || get(tb2,'value')
 
     % get data
-    pause(0.3)
-    [data,~,~,~,~,~,~,dataDarkTmp,B] = app.deviceFunctions.ReadBytesAvailable(app);
+    pause(pauseDuration)
+    data = [];
+    while isempty(data)
+        [data,~,~,~,~,~,~,dataDarkTmp,B] = app.deviceFunctions.ReadBytesAvailable(app);
+        pause(0.2)
+    end
     dSig = squeeze(mean(data,2,'omitnan'));
 
 %     dSig = zeros(size(ml,1),1);
@@ -250,7 +257,7 @@ while get(tb1,'value') || get(tb2,'value')
 
     [~,orderPoorSrcs] = sort(nPoorSrcs,'descend');
     str = '';
-    for ii = 1:10
+    for ii = 1:min(10,length(orderPoorSrcs))
         if nPoorSrcs(orderPoorSrcs(ii))>0
             str = sprintf('%sSrc %d (%d)\n',str,orderPoorSrcs(ii),nPoorSrcs(orderPoorSrcs(ii)));
         end
@@ -258,7 +265,7 @@ while get(tb1,'value') || get(tb2,'value')
     set(txa,'value',str);
     [~,orderPoorDets] = sort(nPoorDets,'descend');
     str = '';
-    for ii = 1:10
+    for ii = 1:min(10,length(orderPoorDets))
         if nPoorDets(orderPoorDets(ii))>0
             str = sprintf('%sDet %d (%d)\n',str,orderPoorDets(ii),nPoorDets(orderPoorDets(ii)));
         end
@@ -302,7 +309,7 @@ while get(tb1,'value') || get(tb2,'value')
         hAxes.ax3 = ax3;
         hAxes.cb = cb;
         hAxes.txa_pow = txa_pow;
-        LEDPowerCalibration( app, hAxes )
+        LEDPowerCalibration( app, hAxes );
         drawnow
         set(tb1,'value',1)
 

@@ -58,7 +58,7 @@ for iPower = 0:7
 
     % create and open file
     foldname=char(datetime('now','Format','y-MM-dd'));
-    foldname2 = 'LEDPowerCalibration'
+    foldname2 = 'LEDPowerCalibration';
     %create autosave directory
     %                 if ~exist(['autosave',filesep,foldname],'dir')
     %                     mkdir(['autosave',filesep,foldname])
