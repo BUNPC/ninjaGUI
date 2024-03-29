@@ -66,10 +66,10 @@ for iPower = 0:7
     % Below if updated by SK to create saving folder with
     % datestamp in probe dircetory instead of autoSave
     % directory
-    if ~exist([foldname],'dir')
+    if ~exist(['.\' foldname],'dir')
         mkdir([foldname])
     end
-    if ~exist([foldname '\' foldname2],'dir')
+    if ~exist(['.\' foldname '\' foldname2],'dir')
         mkdir([foldname '\' foldname2])
     end
 
