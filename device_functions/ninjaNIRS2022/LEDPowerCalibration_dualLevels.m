@@ -1,4 +1,4 @@
-function [stateMap, stateIndices, optPowerLevel, dSig, srcModuleGroups] = LEDPowerCalibration_dualLevels(SD,dataLEDPowerCalibration,thresholds,flagSpatialMultiplex)
+function [stateMap, stateIndices, optPowerLevel, srcPowerLowHigh, dSig, srcModuleGroups] = LEDPowerCalibration_dualLevels(SD,dataLEDPowerCalibration,thresholds,flagSpatialMultiplex)
 %%
 % get list of channels with each group of spatially multiplexed sources for
 % each wavelength
@@ -56,8 +56,13 @@ for iSg = 1:length(srcModuleGroups)
             end
 
             [ir,ic] = find( squeeze(numDetGood2(iSrc,:,:,iWav)) == max(max(numDetGood2(iSrc,:,:,iWav))) );
-            optPowerLevel(iSrc,1,iWav,iSg) = ir(end);
-            optPowerLevel(iSrc,2,iWav,iSg) = ic(end);
+            if 1
+                optPowerLevel(iSrc,1,iWav,iSg) = ir(end);
+                optPowerLevel(iSrc,2,iWav,iSg) = ic(end);
+            else   % HACK TO HARD SET THE POWER LEVEL
+                optPowerLevel(iSrc,1,iWav,iSg) = 7;
+                optPowerLevel(iSrc,2,iWav,iSg) = 7;
+            end
 
         end
     end

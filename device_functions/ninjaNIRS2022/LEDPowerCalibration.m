@@ -147,7 +147,7 @@ else % dual power setting
 
     % need to create srcPowerLowHigh(nSrc,nDet,nWav)
 
-    [stateMap, stateIndices, optPowerLevel, dSig, srcModuleGroups] = LEDPowerCalibration_dualLevels(app.nSD,dataLEDPowerCalibration,thresholds,flagSpatialMultiplex);
+    [stateMap, stateIndices, optPowerLevel, srcPowerLowHigh, dSig, srcModuleGroups] = LEDPowerCalibration_dualLevels(app.nSD,dataLEDPowerCalibration,thresholds,flagSpatialMultiplex);
     app.deviceInformation.stateMap = stateMap;
     app.deviceInformation.stateIndices = stateIndices;
     app.deviceInformation.optPowerLevel = optPowerLevel;
@@ -155,7 +155,7 @@ else % dual power setting
     app.deviceInformation.srcModuleGroups = srcModuleGroups;
     app.deviceInformation.flagSpatialMultiplex = flagSpatialMultiplex;
     nSD = app.nSD;
-    save('dualPowerStateMapandIndices.mat','stateMap','stateIndices','optPowerLevel','dSig','Bpow','nSD','thresholds')
+    save('dualPowerStateMapandIndices.mat','stateMap','stateIndices','optPowerLevel','srcPowerLowHigh','dSig','Bpow','nSD','thresholds')
     uploadToRAM(app.sp, stateMap, 'a', false);
 end
 
