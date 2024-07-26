@@ -93,7 +93,7 @@ end
 
 if acc_active
     t_acc =  [1:size(Auxdata,1)]'/devInfo.state_fs;
-    temp_obj = AuxClass(TGAdata(:,1),t_acc,'temparature');
+    temp_obj = AuxClass(TGAdata(:,1),t_acc,'temperature');
     gyro_data = TGAdata(:,2:4)*devInfo.stat.gyrofs;
     gyro_obj = AuxClass(gyro_data,t_acc,'gyroscope');
     acc_data = TGAdata(:,5:7)*devInfo.stat.accfs;
