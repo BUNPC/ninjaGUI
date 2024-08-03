@@ -203,7 +203,7 @@ states=1:N_STATES;
 
 
 %% now sort the data
-lstMaster = [1:length(estados)];
+lstMaster = [1:length(estados)] + estados(1) - 1;
 lstGaps = find(diff(estados)~=1 & diff(estados)~=(1-N_STATES)); 
 if ~isempty(lstGaps) 
     disp( sprintf('lstGaps %d',length(lstGaps)) ) 
