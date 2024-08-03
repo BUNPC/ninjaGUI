@@ -1,4 +1,19 @@
 function [stateMap, stateIndices, optPowerLevel, srcPowerLowHigh, dSig, srcModuleGroups] = LEDPowerCalibration_dualLevels(SD,dataLEDPowerCalibration,thresholds,flagSpatialMultiplex)
+% stateMap (# states x 32 bits) - This is RAM A
+% stateIndices (# ml x 3) - Tell us which state to use for each
+%       measurement (1st column), the dark state to use for that
+%       measurement (3rd column), and which detector (2nd column)
+% optPowerLevel (# srcs x 2 power levels x 2 wavelengths x # source groups)
+%       - This is the power level used for each source in each source group
+% srcPowerLowHigh (# srcs x # dets x # wavelengths) - tells us the optimal
+%       power setting to choose for each source and detector pair, used to
+%       get stateIndices 
+% dSig (# ml x 1) - This is the "optima"l calibration signal for each
+%       measurement in the measurement list. By "optimal" we mean for the
+%       power levels choosen for that given measurement.
+% srcModuleGroups - A list of the sources in each module
+
+
 %%
 % get list of channels with each group of spatially multiplexed sources for
 % each wavelength
@@ -80,6 +95,8 @@ for iWav = 1:2
                     lst = [lst lstSMS{iSrc}{iWav}{iSg}];
                 end
 
+                % WHY IS THIS CONSIDERING POW2 WHEN IT DOESN'T SEEMED TO BE
+                % USED BELOW??? DAB Aug 2, 2024
                 lstGood = find( (dataLEDPowerCalibration(lst,iPow1)>threshLow & dataLEDPowerCalibration(lst,iPow1)<threshHigh) | (dataLEDPowerCalibration(lst,iPow2)>threshLow & dataLEDPowerCalibration(lst,iPow2)<threshHigh) );
                 numDetGood2(iSrc,iPow1,iPow2,iWav) = length(lstGood);
 
@@ -87,14 +104,15 @@ for iWav = 1:2
         end
 
         [ir,ic] = find( squeeze(numDetGood2(iSrc,:,:,iWav)) == max(max(numDetGood2(iSrc,:,:,iWav))) );
-        optPowerLevelLow(iSrc,iWav) = ir(end);
+        optPowerLevelLow(iSrc,iWav) = ir(end); % THIS IS ONLY USING POW1!!! DAB AUG 2, 2024
 
     end
 end
 
 
+% Determine which power level to use for a given measurement in the ML
+% This is recorded in srcPowerLowHigh(iS,iD,iW)
 dSig = zeros(size(ml,1),1);
-
 for iML = 1:size(ml,1)
     iS = mod(ml(iML,1)-1,8)+1;
     iD = ml(iML,2);
@@ -170,8 +188,8 @@ elseif 1 % spatial multiplex 3 groups of source modules; one dark state after al
         iState = iState + 1;
 
         for iSg = 1:length(srcModuleGroups)
-            optPowerLevel(iS,1,1,:) = optPowerLevelLow(iS,1);
-            optPowerLevel(iS,1,2,:) = optPowerLevelLow(iS,2);
+            optPowerLevel(iS,1,1,iSg) = optPowerLevelLow(iS,1);
+            optPowerLevel(iS,1,2,iSg) = optPowerLevelLow(iS,2);
         end
     end
     iState = iState + 1;
