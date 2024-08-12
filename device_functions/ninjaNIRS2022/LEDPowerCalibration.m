@@ -151,6 +151,7 @@ else % dual power setting
     app.deviceInformation.stateMap = stateMap;
     app.deviceInformation.stateIndices = stateIndices;
     app.deviceInformation.optPowerLevel = optPowerLevel;
+    app.deviceInformation.srcPowerLowHigh = srcPowerLowHigh;
     app.deviceInformation.dSig = dSig;
     app.deviceInformation.srcModuleGroups = srcModuleGroups;
     app.deviceInformation.flagSpatialMultiplex = flagSpatialMultiplex;
