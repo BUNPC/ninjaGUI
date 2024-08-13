@@ -27,7 +27,7 @@ for iML = 1:length(lst1)
     cmIdx = ceil( (max(min(log10(dataCrosstalk(lst1(iML))),0),-3)+3)/0.1 + eps );
 %    set(hl,'color', cm(cmIdx,:) )
     if cmIdx<2
-        set(hl,'linewidth',0.5)
+        set(hl,'linewidth',0.25)
         set(hl,'color','g')
     elseif cmIdx<11
         set(hl,'linewidth',2)

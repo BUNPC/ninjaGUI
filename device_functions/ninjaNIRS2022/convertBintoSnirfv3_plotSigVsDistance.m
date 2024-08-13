@@ -31,7 +31,7 @@ set(gca,'fontsize',16)
 set(gca,'xtick',[0 20 40 60 80 100])
 xlabel('Distance (mm)')
 ylabel('log_{10}( Signal )')
-title('Low Power ~ 0.7 mW')
+title('Low Power')
 
 xlim([0 100])
 ylim([-6 0])
@@ -54,7 +54,7 @@ hold off
 set(gca,'fontsize',16)
 set(gca,'xtick',[0 20 40 60 80 100])
 xlabel('Distance (mm)')
-title('High Power ~ 70 mW')
+title('High Power')
 
 xlim([0 100])
 ylim([-6 0])
