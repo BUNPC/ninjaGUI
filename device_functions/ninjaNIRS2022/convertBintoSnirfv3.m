@@ -1,5 +1,12 @@
-function snirf1 = convertBintoSnirfv3( fName, flagSave, flagPlot )
-
+function snirf1 = convertBintoSnirfv3( fName, flagSave, flagPlot, subLabel, sesLabel, taskLabel, runIndex )
+% BIDS file name structure
+%    sub-<label>[_ses-<label>]_task-<label>[_acq-<label>][_run-<index>]_nirs.snirf
+% If no labels are provided, then the snirf file will be saved with the
+% same fName.
+% If subLabel and taskLabel is provided, then the snirf file will be saved
+% with this BIDS compliant file name. If the optional labels sesLabel
+% and/or runIndex are provided, then they will be included in the BIDS file
+% name as well.
 
 if ~exist('flagSave')
     flagSave = 0;
@@ -8,6 +15,7 @@ end
 if ~exist('flagPlot')
     flagPlot = 0;
 end
+
 
 
 % load bin file
@@ -170,7 +178,37 @@ snirf1.aux = [snirf1.aux dataSDWP_w1low_obj dataSDWP_w1high_obj dataSDWP_w2low_o
 % SAVE
 
 if flagSave
+
+    % subLabel, sesLabel, taskLabel, runIndex )
+    % BIDS file name structure
+    %    sub-<label>[_ses-<label>]_task-<label>[_acq-<label>][_run-<index>]_nirs.snirf
+    if ~exist('subLabel')
+        subLabel = '';
+    end
+    if ~exist('sesLabel')
+        subLabel = '';
+    end
+    if ~exist('taskLabel')
+        subLabel = '';
+    end
+    if ~exist('runIndex')
+        subLabel = '';
+    end
+
     [folder, baseFileNameNoExt, extension] = fileparts(fName);
+    if ~isempty(subLabel) && ~isempty(taskLabel)
+        if isempty(sesLabel)
+            baseFileNameNoExt = sprintf('sub-%s_task-%s', subLabel, taskLabel );
+        else
+            baseFileNameNoExt = sprintf('sub-%s_ses-%s_task-%s', subLabel, sesLabel, taskLabel );
+        end
+        if ~isempty(runIndex)
+            baseFileNameNoExt = sprintf('%s_run-%s_nirs', baseFileNameNoExt, runIndex );
+        else
+            baseFileNameNoExt = sprintf('%s_nirs', baseFileNameNoExt );
+        end
+    end
+
     snirf1.Save([folder baseFileNameNoExt '.snirf'])
 %    snirf1.Save([folder filesep baseFileNameNoExt '.snirf'])
 end
