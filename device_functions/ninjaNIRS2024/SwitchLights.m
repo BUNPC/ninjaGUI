@@ -2,6 +2,11 @@ function errors = SwitchLights(app,command)
 %SwitchLights Used to either turn all the lights on or off at the same time
 %   command here is either "on" or "off"
 
+message('SwitchLights() is not utilized in NN24. LEDs not toggled on or off.')
+
+return
+
+
 LightsOn=[254 0 0 0 0 0 255*app.active 255 255 2+app.active]; %command to turn all lights on
 LightsOff=[254 0 0 0 0 0 255*app.active 0 0 2+app.active]; %command to turn all lights off
 
@@ -35,7 +40,7 @@ switch command
         uploadToRAM(app.sp, rama, 'a', false);
         uploadToRAM(app.sp, stat.ramb, 'b', false);
 
-        stat = powerOn(app.sp,stat);
+        stat = powerOn( stat);
         stat = ResetCounters(app.sp,stat);
 
         %start acquisition, to start source sequence

@@ -30,11 +30,11 @@ stat.rst_detb(:) = false;
 clk_div_old = stat.clk_div;
 stat.clk_div = 250;
 stat.run = false;
-stat = updateStatReg(sp,stat, true);
+stat = updateStatReg( stat, true);
 sp.flush();
 pause(0.2);
 sp.flush();
-stat = updateStatReg(sp,stat, false);
+stat = updateStatReg( stat, false);
 
 % turn off Matlab warning for no serial data
 warning('off','serialport:serialport:ReadWarning');
@@ -43,14 +43,14 @@ old_timeout = sp.Timeout;
 
 for isrc = 1:N_DET_SLOTS
     sp.flush();
-    uploadToRAM(sp, genSingleSourceRAMB(isrc), 'b', false);
+    uploadToRAM( stat, genSingleSourceRAMB(isrc), 'b', false);
     stat.run = true;
-    stat = updateStatReg(sp,stat, true);
+    stat = updateStatReg( stat, true);
     sp.Timeout = 0.1;
     buf = read(sp, N_BYTES_TO_READ_PER_DETB, 'uint8');
     sp.Timeout = old_timeout;
     stat.run = false;
-    stat = updateStatReg(sp,stat, true);
+    stat = updateStatReg( stat, true);
         
     if length(buf)==N_BYTES_TO_READ_PER_DETB
         if buf(1)==253 && buf(2)==252 %check packet header
@@ -64,15 +64,15 @@ end
 stat.n_detb_active = sum(stat.detb_active);
 
 sp.flush();
-uploadToRAM(sp, genSingleSourceRAMB(isrc+1), 'b', false);
+uploadToRAM( stat, genSingleSourceRAMB(isrc+1), 'b', false);
 stat.run = true;
-stat = updateStatReg(sp,stat);
+stat = updateStatReg( stat);
 sp.Timeout = 0.1;
 pause(0.3)
 buf = read(sp, N_BYTES_TO_READ_PER_ACCELEROMETER, 'uint8');
 sp.Timeout = old_timeout;
 stat.run = false;
-stat = updateStatReg(sp,stat);
+stat = updateStatReg( stat);
 
 if length(buf)==N_BYTES_TO_READ_PER_ACCELEROMETER
     if buf(1)==249 && buf(2)==248 %check packet header
@@ -93,7 +93,7 @@ sp.flush();
 pause(0.2);
 sp.flush();
 stat.clk_div = clk_div_old;
-stat = updateStatReg(sp,stat, false);
+stat = updateStatReg( stat, false);
 
 
 

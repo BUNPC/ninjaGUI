@@ -1,5 +1,7 @@
 function LEDPowerCalibration( app, hAxes )
 
+stat = app.deviceInformation.stat; % DOES THIS WORK HERE? I need stat.s for initStat()
+
 if ~exist('hAxes')
     reportSigLevel( app, 1 );
     return
@@ -45,7 +47,7 @@ for iPower = 0:7
     % save stat in the app variable
 
     %submit to device
-    uploadToRAM(app.sp, stateMap, 'a', false);
+    uploadToRAM( stat, stateMap, 'a', false);
 %    uploadToRAM(app.sp, stat.ramb, 'b', false);
 
     %stat = powerOn(app.sp,stat);
@@ -157,7 +159,7 @@ else % dual power setting
     app.deviceInformation.flagSpatialMultiplex = flagSpatialMultiplex;
     nSD = app.nSD;
     save('dualPowerStateMapandIndices.mat','stateMap','stateIndices','optPowerLevel','srcPowerLowHigh','dSig','Bpow','nSD','thresholds')
-    uploadToRAM(app.sp, stateMap, 'a', false);
+    uploadToRAM(stat, stateMap, 'a', false);
 end
 
 % update rate

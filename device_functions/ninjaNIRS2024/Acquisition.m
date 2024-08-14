@@ -15,7 +15,7 @@ try
         case 'stop'
             %% stop acquisition
             app.deviceInformation.stat.run = false;
-            app.deviceInformation.stat = updateStatReg(app.sp,app.deviceInformation.stat);
+            app.deviceInformation.stat = updateStatReg(app.deviceInformation.stat);
     end
 catch
     errors=1;

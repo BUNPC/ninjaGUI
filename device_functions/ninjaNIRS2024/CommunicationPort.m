@@ -28,12 +28,14 @@ switch command
                 "Timeout",app.communicationParameters.TimeOut);
             app.sp= s;
 %             s.NumBytesAvailable
-            stat=initStat(app,stateMap);
+            stat = struct();
+            stat.s = s;
+            stat = initStat(stat);
 
             disp('Serial communication established!')
-            uploadToRAM(s, stat.rama, 'a', false);
-            uploadToRAM(s, stat.ramb, 'b', false);
-            stat = powerOn(s,stat);
+            uploadToRAM( stat, stat.rama, 'a', false);
+            uploadToRAM( stat, stat.ramb, 'b', false);
+            stat = powerOn( stat);
             stat = ResetCounters(s,stat);
             app.deviceInformation.stat=stat;
             app.deviceInformation.nDetBoards = stat.n_detb_active;

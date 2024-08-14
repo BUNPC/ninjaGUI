@@ -13,6 +13,9 @@ function result = StateSetup(app,stateMap)
 %recommend that somehow the state map for a given experiment is stored in
 %the SD file for the experiment
 
+
+stat = app.deviceInformation.stat; % DOES THIS WORK HERE? I need stat.s for initStat()
+
 if isempty(stateMap)
 
     stateMap = convertSDtoStateMap( app.nSD ); 
@@ -55,7 +58,7 @@ nStates=foo(1);
 fs=app.deviceInformation.stat.state_fs/nStates;
 %initialize both RAMs
 
-stat=initStat(app,stateMap);
+stat=initStat(stat);
 
 %% Add the state map to the GUI variables for latter use
 
@@ -73,10 +76,10 @@ app.deviceInformation.subtractDark = 1;
 % save stat in the app variable
 
 %submit to device
-uploadToRAM(app.sp, stat.rama, 'a', false);
-uploadToRAM(app.sp, stat.ramb, 'b', false);
+uploadToRAM( stat, stat.rama, 'a', false);
+uploadToRAM( stat, stat.ramb, 'b', false);
 
-stat = powerOn(app.sp,stat);
+stat = powerOn( stat );
 
 app.deviceInformation.stat=stat;
 
