@@ -83,7 +83,7 @@ raw=[prevrbytes;raw];
 rawN=size(raw,1);
 
 %% translate data to a numeric array
-[B,unusedBytes,avgDet]=translateNinja2022Bytes(raw,app.deviceInformation.stateMap,app.deviceInformation.nDetBoards,app.deviceInformation.acc_active,app.deviceInformation.aux_active);
+[B,unusedBytes,avgDet]=translateNinja2022Bytes(raw,app.deviceInformation.srcram,app.deviceInformation.nDetBoards,app.deviceInformation.acc_active,app.deviceInformation.aux_active);
 %[B,unusedBytes,avgDet,~,~,~]=translateNinja2022Bytesv3_BZ20230817(raw,app.deviceInformation.stateMap,app.deviceInformation.nDetBoards,app.deviceInformation.acc_active,app.deviceInformation.aux_active);
 
 if isempty(B)

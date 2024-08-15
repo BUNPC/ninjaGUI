@@ -1,4 +1,4 @@
-function [data,unusedBytes,darkLevelAvg]=translateNinja2022Bytes(inputBytes,stateMap,N_DETECTOR_BOARDS,acc_active,aux_active)
+function [data,unusedBytes,darkLevelAvg]=translateNinja2022Bytes(inputBytes,srcram,N_DETECTOR_BOARDS,acc_active,aux_active)
 % data is the translated data output. It has 3 dimensions: 1 is time
 % (samples) 2 is detectors; the third dimension is the state number, which
 % could be a proxy for detector number if the state acquisition sequence is
@@ -143,7 +143,7 @@ end
 %bytestream, we should instead read from the statemap
 %number of states
 estados=1+raw(indicator+length(header_indicator));
-foo=find(stateMap(:,27)==1);
+foo=find(srcram(1,:,32)==1);
 N_STATES=foo(1);
 states=1:N_STATES;
 
@@ -166,7 +166,7 @@ for ki=1:N_STATES
 end
 
 %% identify dark states
-darkStateIdx=~any(stateMap(states,19:21),2);
+darkStateIdx=find(srcram(1,states,21)==1);
 % sort dark states by detector
 darkSamplesbyState=dataOrganizedByState(:,:,darkStateIdx);
 % summarize dark state intensity for each detector

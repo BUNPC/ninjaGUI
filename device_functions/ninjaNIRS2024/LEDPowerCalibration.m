@@ -8,8 +8,6 @@ if ~exist('hAxes')
 end
 flagSpatialMultiplex = get(hAxes.cb,'value');
 
-stateMap_old = app.deviceInformation.stateMap;
-
 %hWait = waitbar(0,sprintf('Power Level 0'));
 set( hAxes.txa_pow,'value',sprintf('Reading Power Level 0 of 7...'));
 
@@ -23,11 +21,11 @@ for iPower = 0:7
 %    waitbar(iPower/7,hWait,sprintf('Power Level %d',iPower));
     set( hAxes.txa_pow,'value',sprintf('Reading Power Level %d of 7...',iPower));
 
-    stateMap = createLEDPowerCalibrationStateMap( app.nSD, iPower );
+    srcram = createLEDPowerCalibrationSrcRAM( app.nSD, iPower );
 
-    app.deviceInformation.stateMap = stateMap ;
+    app.deviceInformation.srcram = srcram ;
 
-    foo=find(stateMap(:,27)==1);
+    foo=find(srcram(1,:,32)==1);
     nStates=foo(1);
     fs=800/nStates;
 
@@ -38,8 +36,7 @@ for iPower = 0:7
     %app.deviceInformation.Rate=fs;
     %app.editRate.Value=app.deviceInformation.Rate;
 
-    stateIndices_old = app.deviceInformation.stateIndices;
-    app.deviceInformation.stateIndices=mapToMeasurementList(app.deviceInformation.stateMap,app.nSD.measList);
+    app.deviceInformation.stateIndices=mapToMeasurementList(app.deviceInformation.srcram,app.nSD.measList);
 
     %app.deviceInformation.subtractDark = 1;
 
@@ -47,8 +44,16 @@ for iPower = 0:7
     % save stat in the app variable
 
     %submit to device
-    uploadToRAM( stat, stateMap, 'a', false);
+    rama = zeros(1024,32);
+    rama(nStates:end,9) = 1; % mark sequence end
+
+    uploadToRAM( stat, rama, 'a', false);
 %    uploadToRAM(app.sp, stat.ramb, 'b', false);
+    for isrcb = 1:7
+        if stat.srcb_active(isrcb)
+            uploadToRAM(stat, squeeze(srcram(isrcb,:,:)), 'src', false, isrcb);
+        end
+    end
 
     %stat = powerOn(app.sp,stat);
 
@@ -135,36 +140,43 @@ end
 
 % dual power cycling or not
 thresholds = app.deviceInformation.levelRepresentation.thresholds;
-if 0 % single power setting
 
-    % STILL NEED TO UPDATE STATEMAP WITH OPTIMAL POWERS
-    app.deviceInformation.stateMap = stateMap_old;
-    app.deviceInformation.stateIndices =stateIndices_old;
+% dual power setting
 
-else % dual power setting
+% Dual Power Cycling
+% optimize power levels and update stateMap and stateIndices
+app.deviceInformation.dataLEDPowerCalibration = dataLEDPowerCalibration;
 
-    % Dual Power Cycling
-    % optimize power levels and update stateMap and stateIndices
-    app.deviceInformation.dataLEDPowerCalibration = dataLEDPowerCalibration;
+% need to create srcPowerLowHigh(nSrc,nDet,nWav)
 
-    % need to create srcPowerLowHigh(nSrc,nDet,nWav)
+[srcram, stateIndices, optPowerLevel, srcPowerLowHigh, dSig, srcModuleGroups] = LEDPowerCalibration_dualLevels(app.nSD,dataLEDPowerCalibration,thresholds,flagSpatialMultiplex);
+app.deviceInformation.srcram = srcram;
+app.deviceInformation.stateIndices = stateIndices;
+app.deviceInformation.optPowerLevel = optPowerLevel;
+app.deviceInformation.srcPowerLowHigh = srcPowerLowHigh;
+app.deviceInformation.dSig = dSig;
+app.deviceInformation.srcModuleGroups = srcModuleGroups;
+app.deviceInformation.flagSpatialMultiplex = flagSpatialMultiplex;
+nSD = app.nSD;
+save('dualPowerStateMapandIndices.mat','srcram','stateIndices','optPowerLevel','srcPowerLowHigh','dSig','Bpow','nSD','thresholds')
 
-    [stateMap, stateIndices, optPowerLevel, srcPowerLowHigh, dSig, srcModuleGroups] = LEDPowerCalibration_dualLevels(app.nSD,dataLEDPowerCalibration,thresholds,flagSpatialMultiplex);
-    app.deviceInformation.stateMap = stateMap;
-    app.deviceInformation.stateIndices = stateIndices;
-    app.deviceInformation.optPowerLevel = optPowerLevel;
-    app.deviceInformation.srcPowerLowHigh = srcPowerLowHigh;
-    app.deviceInformation.dSig = dSig;
-    app.deviceInformation.srcModuleGroups = srcModuleGroups;
-    app.deviceInformation.flagSpatialMultiplex = flagSpatialMultiplex;
-    nSD = app.nSD;
-    save('dualPowerStateMapandIndices.mat','stateMap','stateIndices','optPowerLevel','srcPowerLowHigh','dSig','Bpow','nSD','thresholds')
-    uploadToRAM(stat, stateMap, 'a', false);
+foo=find(srcram(1,:,32)==1);
+nStates=foo(1);
+
+rama = zeros(1024,32);
+rama(nStates:end,9) = 1; % mark sequence end
+uploadToRAM(stat, rama, 'a', false);
+for isrcb = 1:7
+    if stat.srcb_active(isrcb)
+        uploadToRAM(stat, squeeze(srcram(isrcb,:,:)), 'src', false, isrcb);
+    end
 end
+stat.rama = rama;
+stat.srcram = srcram;
+
 
 % update rate
-foo=find(stateMap(:,27)==1);
-
+foo=find(srcram(1,:,32)==1);
 nStates=foo(1);
 fs=app.deviceInformation.stat.state_fs / nStates; 
 app.deviceInformation.Rate=fs;

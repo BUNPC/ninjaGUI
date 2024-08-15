@@ -5,7 +5,7 @@
 % Bernhard Zimmermann - bzim@bu.edu
 % Boston University Neurophotonics Center
 
-function stat = initStat(stat)
+function stat = initStat(stat, srcram)
 if nargin < 1
     stat = struct();
 end
@@ -64,16 +64,26 @@ stat.aux_active = true;
 stat = updateActiveBrds(stat);
 
 %% Source RAM
-stat.nstates = 1000;
-stat.srcram = zeros(7,1024,32);
+if ~exist('srcram')
+    stat.nstates = 1000;
+    stat.srcram = zeros(7,1024,32);
+    stat.srcram(:,:,21) = 1;
+    
+    %example: intensity ramp
+    for istate = 1:1000
+        stat.srcram(1,istate,1:16) = bitget((istate-1)*5, 1:16 ,'uint16'); % ramp power
+        %stat.srcram(1,istate,17:20) = bitget((istate-1),1:4,'uint16'); % cycle through leds
+        stat.srcram(1,istate,17:20) = bitget(0,1:4,'uint16'); % select led
+        stat.srcram( 1, istate, 21) = 0;
+    end
+    stat.srcram(1,stat.nstates:end,32) = 1; % end bit
+else
+    foo=find(srcram(1,:,32)==1);
+    nStates=foo(1);
+    stat.nstates = nStates;
 
-%example: intensity ramp
-for istate = 1:1000
-    stat.srcram(1,istate,1:16) = bitget((istate-1)*5, 1:16 ,'uint16'); % ramp power
-    %stat.srcram(1,istate,17:20) = bitget((istate-1),1:4,'uint16'); % cycle through leds
-    stat.srcram(1,istate,17:20) = bitget(0,1:4,'uint16'); % select led
+    stat.srcram = srcram;
 end
-stat.srcram(1,stat.nstates:end,32) = 1; % end bit
 
 %% RAM A
 stat.rama = zeros(1024,32);

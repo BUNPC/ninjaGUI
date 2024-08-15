@@ -10,14 +10,7 @@ function [port,errors] = CommunicationPort(app,command)
 switch command
     case 'open'
 %         try
-            %dummy state map, a new one will be chosen after the SD file; I
-            %am just doing this because I am not sure if the device will
-            %break if I power it on or if I connect to it without writing a
-            %ram first
-            stateMap = zeros(1024,32);
-            stateMap(1,[1 9]) = 1; % select LED
-            stateMap(1,19:21) = [0 1 0]; % power level mid            
-            stateMap(3:end,27) = 1; % mark sequence end
+
             %Create serial port object
             s=serialport(app.deviceInformation.commPort,app.communicationParameters.BaudRate,...
                 'Parity',app.communicationParameters.Parity,...

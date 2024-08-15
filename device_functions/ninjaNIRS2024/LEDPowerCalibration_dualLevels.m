@@ -1,4 +1,4 @@
-function [stateMap, stateIndices, optPowerLevel, srcPowerLowHigh, dSig, srcModuleGroups] = LEDPowerCalibration_dualLevels(SD,dataLEDPowerCalibration,thresholds,flagSpatialMultiplex)
+function [srcram, stateIndices, optPowerLevel, srcPowerLowHigh, dSig, srcModuleGroups] = LEDPowerCalibration_dualLevels(SD,dataLEDPowerCalibration,thresholds,flagSpatialMultiplex)
 % stateMap (# states x 32 bits) - This is RAM A
 % stateIndices (# ml x 3) - Tell us which state to use for each
 %       measurement (1st column), the dark state to use for that
@@ -144,76 +144,83 @@ end
 %%
 % create the statemap
 
-stateMap = zeros(1024,32);
+srcram = zeros(7,1024,32);
+srcram(:,:,21) = 1;
 
 lstS = unique(ml(:,1));
 
 nSrcModules = 7;
 iState = 1;
 
-if 0 % spatial multiplexing all source modules simultaneously
-    for iS = 1:8
-        stateMap( iState, [1:3] ) = bitget( iS-1, 1:3 ); % Src Row Select
-        stateMap( iState, 5:2:17 ) = 1; % Src Col Select. ODD wavelength
-        stateMap( iState, 19:21 ) = bitget( optPowerLevel(iS,1,1), 1:3 ); % low power level
+% spatial multiplex 3 groups of source modules; one dark state after all low power; one dark state after each high power source (after both wavelengths)
+% low power state
+for iS = 1:8
 
-        iState = iState + 2;
-        stateMap( iState, [1:3] ) = bitget( iS-1, 1:3 ); % Src Row Select
-        stateMap( iState, 6:2:18 ) = 1; % Src Col Select. EVEN wavelength
-        stateMap( iState, 19:21 ) = bitget( optPowerLevel(iS,1,2), 1:3 ); % low power level
-
-        iState = iState + 2;
-        stateMap( iState, [1:3] ) = bitget( iS-1, 1:3 ); % Src Row Select
-        stateMap( iState, 5:2:17 ) = 1; % Src Col Select. ODD wavelength
-        stateMap( iState, 19:21 ) = bitget( optPowerLevel(iS,2,1), 1:3 ); % high power level
-
-        iState = iState + 2;
-        stateMap( iState, [1:3] ) = bitget( iS-1, 1:3 ); % Src Row Select
-        stateMap( iState, 6:2:18 ) = 1; % Src Col Select. EVEN wavelength
-        stateMap( iState, 19:21 ) = bitget( optPowerLevel(iS,2,2), 1:3 ); % high power level
-
-        iState = iState + 2;
-    end
-
-elseif 1 % spatial multiplex 3 groups of source modules; one dark state after all low power; one dark state after each high power source (after both wavelengths) 
-    % low power state
-    for iS = 1:8
-        stateMap( iState, [1:3] ) = bitget( iS-1, 1:3 ); % Src Row Select
-        stateMap( iState, 5:2:17 ) = 1; % Src Col Select. ODD wavelength
-        stateMap( iState, 19:21 ) = bitget( optPowerLevelLow(iS,1), 1:3 ); % low power level
-        iState = iState + 1;
-        stateMap( iState, [1:3] ) = bitget( iS-1, 1:3 ); % Src Row Select
-        stateMap( iState, 6:2:18 ) = 1; % Src Col Select. EVEN wavelength
-        stateMap( iState, 19:21 ) = bitget( optPowerLevelLow(iS,2), 1:3 ); % low power level
-        iState = iState + 1;
-
-        for iSg = 1:length(srcModuleGroups)
-            optPowerLevel(iS,1,1,iSg) = optPowerLevelLow(iS,1);
-            optPowerLevel(iS,1,2,iSg) = optPowerLevelLow(iS,2);
-        end
+    for iSrcMod = 1:7 % FIXME - loop over number of source modules
+        srcram( iSrcMod, iState, 1:16 ) = bitget( 5000 * iPower/7, 1:16, 'uint16' ); % set the power
+        srcram( iSrcMod, iState, 17:20) = bitget( (iS-1)*2, 1:4, 'uint16' ); % select the source for wavelength 1
+        srcram( iSrcMod, iState, 21) = 0;
     end
     iState = iState + 1;
 
-    % high power state
-    for iSg = 1:length(srcModuleGroups)
-        for iS = 1:8
-            lstSMG = srcModuleGroups{iSg};
-            stateMap( iState, [1:3] ) = bitget( iS-1, 1:3 ); % Src Row Select
-            stateMap( iState, lstSMG*2+3 ) = 1; % Src Col Select. ODD wavelength
-            stateMap( iState, 19:21 ) = bitget( optPowerLevel(iS,2,1,iSg), 1:3 ); % high power level
-            iState = iState + 1;
-            stateMap( iState, [1:3] ) = bitget( iS-1, 1:3 ); % Src Row Select
-            stateMap( iState, lstSMG*2+4 ) = 1; % Src Col Select. EVEN wavelength
-            stateMap( iState, 19:21 ) = bitget( optPowerLevel(iS,2,2,iSg), 1:3 ); % high power level
-            iState = iState + 2;
-        end
+    for iSrcMod = 1:7 % FIXME - loop over number of source modules
+        srcram( iSrcMod, iState, 1:16 ) = bitget( 5000 * iPower/7, 1:16, 'uint16' ); % set the power
+        srcram( iSrcMod, iState, 17:20) = bitget( (iS-1)*2+1, 1:4, 'uint16' ); % select the source for wavelength 2
+        srcram( iSrcMod, iState, 21) = 0;
     end
+    iState = iState + 1; % +2 to have a dark state
 
+    % DELETE WHEN DONE MAKING CHANGES POWER LEVELS
+    %         stateMap( iState, [1:3] ) = bitget( iS-1, 1:3 ); % Src Row Select
+    %         stateMap( iState, 5:2:17 ) = 1; % Src Col Select. ODD wavelength
+    %         stateMap( iState, 19:21 ) = bitget( optPowerLevelLow(iS,1), 1:3 ); % low power level
+    %         iState = iState + 1;
+    %         stateMap( iState, [1:3] ) = bitget( iS-1, 1:3 ); % Src Row Select
+    %         stateMap( iState, 6:2:18 ) = 1; % Src Col Select. EVEN wavelength
+    %         stateMap( iState, 19:21 ) = bitget( optPowerLevelLow(iS,2), 1:3 ); % low power level
+    %         iState = iState + 1;
 
+    for iSg = 1:length(srcModuleGroups)
+        optPowerLevel(iS,1,1,iSg) = optPowerLevelLow(iS,1);
+        optPowerLevel(iS,1,2,iSg) = optPowerLevelLow(iS,2);
+    end
+end
+iState = iState + 1;
+
+% high power state
+for iSg = 1:length(srcModuleGroups)
+    for iS = 1:8
+        lstSMG = srcModuleGroups{iSg};
+
+        for iSrcMod = 1:length(lstSMG)
+            srcram( lstSMG(iSrcMod), iState, 1:16 ) = bitget( 5000 * iPower/7, 1:16, 'uint16' ); % set the power
+            srcram( lstSMG(iSrcMod), iState, 17:20) = bitget( (iS-1)*2, 1:4, 'uint16' ); % select the source for wavelength 1
+            srcram( lstSMG(iSrcMod), iState, 21) = 0;
+        end
+        iState = iState + 1;
+        for iSrcMod = 1:length(lstSMG)
+            srcram( lstSMG(iSrcMod), iState, 1:16 ) = bitget( 5000 * iPower/7, 1:16, 'uint16' ); % set the power
+            srcram( lstSMG(iSrcMod), iState, 17:20) = bitget( (iS-1)*2+1, 1:4, 'uint16' ); % select the source for wavelength 2
+            srcram( lstSMG(iSrcMod), iState, 21) = 0;
+        end
+        iState = iState + 2;
+
+        % DELETE WHEN DONE MAKING CHANGES POWER LEVELS
+        %             stateMap( iState, [1:3] ) = bitget( iS-1, 1:3 ); % Src Row Select
+        %             stateMap( iState, lstSMG*2+3 ) = 1; % Src Col Select. ODD wavelength
+        %             stateMap( iState, 19:21 ) = bitget( optPowerLevel(iS,2,1,iSg), 1:3 ); % high power level
+        %             iState = iState + 1;
+        %             stateMap( iState, [1:3] ) = bitget( iS-1, 1:3 ); % Src Row Select
+        %             stateMap( iState, lstSMG*2+4 ) = 1; % Src Col Select. EVEN wavelength
+        %             stateMap( iState, 19:21 ) = bitget( optPowerLevel(iS,2,2,iSg), 1:3 ); % high power level
+        %             iState = iState + 2;
+    end
 end
 
-stateMap((iState-1):end,27) = 1; % mark sequence end
 
-stateIndices = mapToMeasurementList( stateMap, ml, srcPowerLowHigh );
+
+srcram(:, (iState-1):end,32) = 1; % mark sequence end
+
+stateIndices = mapToMeasurementList( srcram, ml, srcPowerLowHigh );
 
 
