@@ -156,15 +156,17 @@ iState = 1;
 % low power state
 for iS = 1:8
 
+    iPower = optPowerLevelLow(iS,1);
     for iSrcMod = 1:7 % FIXME - loop over number of source modules
-        srcram( iSrcMod, iState, 1:16 ) = bitget( 5000 * iPower/7, 1:16, 'uint16' ); % set the power
+        srcram( iSrcMod, iState, 1:16 ) = bitget( round(5000 * iPower/7), 1:16, 'uint16' ); % set the power
         srcram( iSrcMod, iState, 17:20) = bitget( (iS-1)*2, 1:4, 'uint16' ); % select the source for wavelength 1
         srcram( iSrcMod, iState, 21) = 0;
     end
     iState = iState + 1;
 
+    iPower = optPowerLevelLow(iS,2);
     for iSrcMod = 1:7 % FIXME - loop over number of source modules
-        srcram( iSrcMod, iState, 1:16 ) = bitget( 5000 * iPower/7, 1:16, 'uint16' ); % set the power
+        srcram( iSrcMod, iState, 1:16 ) = bitget( round(5000 * iPower/7), 1:16, 'uint16' ); % set the power
         srcram( iSrcMod, iState, 17:20) = bitget( (iS-1)*2+1, 1:4, 'uint16' ); % select the source for wavelength 2
         srcram( iSrcMod, iState, 21) = 0;
     end

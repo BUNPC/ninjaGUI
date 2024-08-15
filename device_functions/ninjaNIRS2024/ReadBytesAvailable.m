@@ -83,7 +83,7 @@ raw=[prevrbytes;raw];
 rawN=size(raw,1);
 
 %% translate data to a numeric array
-[B,unusedBytes,avgDet]=translateNinja2022Bytes(raw,app.deviceInformation.srcram,app.deviceInformation.nDetBoards,app.deviceInformation.acc_active,app.deviceInformation.aux_active);
+[B,unusedBytes,avgDet]=translateNinja2022Bytes(raw,app.deviceInformation.srcram,app.deviceInformation.nDetBoards,app.deviceInformation.stat.acc_active,app.deviceInformation.stat.aux_active);
 %[B,unusedBytes,avgDet,~,~,~]=translateNinja2022Bytesv3_BZ20230817(raw,app.deviceInformation.stateMap,app.deviceInformation.nDetBoards,app.deviceInformation.acc_active,app.deviceInformation.aux_active);
 
 if isempty(B)
@@ -154,10 +154,12 @@ dataDark = dataDark';
 packlen=sum(~isnan(dataoutput),2);  %number of samples in data package
 %disp(sprintf('packlen size is %d x %d',size(packlen,1),size(packlen,2)))
 %disp(sprintf('number states 1 = %d\tnumber of states 2 = %d',length(find(packlen==1)),length(find(packlen==2))))
-if length(unique(packlen))>1
-    disp(sprintf('number states 1 = %d\tnumber of states 2 = %d',length(find(packlen==1)),length(find(packlen==2))))
-    disp(sprintf('First meas with 0 states is %d',find(packlen==0,1)))
-    unique(packlen)
+if 0 % DAB turned off this debug info 8/15/24
+    if length(unique(packlen))>1
+        disp(sprintf('number states 1 = %d\tnumber of states 2 = %d',length(find(packlen==1)),length(find(packlen==2))))
+        disp(sprintf('First meas with 0 states is %d',find(packlen==0,1)))
+        unique(packlen)
+    end
 end
 remainderbytes=unusedBytes;
 datac=[];

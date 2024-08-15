@@ -99,6 +99,8 @@ stat.n_state_b = 1000;
 t_state_b = stat.clk_div*8/96e6; 
 % duration of each RAM A state
 t_state_a = t_state_b * stat.n_state_b;
+% freq of the acquistion
+stat.state_fs = 1/t_state_a; % StateSetup expects this field
 % duration of end cycle pulse period
 t_end_cyc = 12e-6;
 % holdoff between different selected detector board uart transmissions
