@@ -44,7 +44,7 @@ app.editRate.Value=app.deviceInformation.Rate;
 
 app.deviceInformation.stateIndices = mapToMeasurementList(app.deviceInformation.srcram,app.nSD.measList);
 
-app.deviceInformation.subtractDark = 1;
+app.deviceInformation.subtractDark = 1; % hard coded hack for NN24 for now DAB 8/15/24
 
 %%
 % save stat in the app variable

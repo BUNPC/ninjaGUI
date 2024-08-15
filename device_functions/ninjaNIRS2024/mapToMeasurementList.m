@@ -29,7 +29,7 @@ for ki=1:size(measList,1)
     srcID = srcID0; %mod(srcID0-1,8)+1;
     srcModule = ceil((srcID0-0.1)/8);
 
-    sourceIDs = squeeze( srcram( srcModule, 1:N_STATES, 17:20) );
+    sourceIDs = squeeze( srcram( srcModule, 1:N_STATES, 17:21) );
 
                                                                  
     detID=meas(2);
@@ -39,11 +39,12 @@ for ki=1:size(measList,1)
         %if some sources are never turned on but are required by the
         %measurement list, those states will be marked as nan
         foo = mod(srcID-1,8)*2 + (lambdaID-1);
-        Lia = ismember(sourceIDs,bitget( foo, 1:4 ),'rows');
-        if length(Lia)==1
-            estados(ki)=Lia;
+        Lia = ismember(sourceIDs,bitget( foo, 1:5 ),'rows');
+        lst = find(Lia==1);
+        if length(lst)==1
+            estados(ki) = lst;
         else
-            estados(ki) = Lia( srcPowerLowHigh(srcID,detID,lambdaID) );
+            estados(ki) = lst( srcPowerLowHigh(srcID,detID,lambdaID) );
         end
         iDark = find( srcram(srcModule,(estados(ki)+1):N_STATES, 21)==1, 1 ) + estados(ki);
         estados2(ki) = iDark;

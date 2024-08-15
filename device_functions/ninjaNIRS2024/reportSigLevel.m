@@ -347,6 +347,7 @@ if app.SubtractdarkMenu.Checked
 else
     app.deviceInformation.subtractDark=0;
 end
+app.deviceInformation.subtractDark=1;
 
 
 %close(fig)
