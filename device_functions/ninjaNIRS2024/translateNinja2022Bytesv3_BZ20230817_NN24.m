@@ -1,4 +1,4 @@
-function [data,unusedBytes,darkLevelAvg, Auxdata,TGAdata,info]=translateNinja2022Bytesv3_BZ20230817(inputBytes,stateMap,N_DETECTOR_BOARDS,acc_active,aux_active)
+function [data,unusedBytes,darkLevelAvg, Auxdata,TGAdata,info]=translateNinja2022Bytesv3_BZ20230817_NN24(inputBytes,srcram,N_DETECTOR_BOARDS,acc_active,aux_active)
 % data is the translated data output. It has 3 dimensions: 1 is time
 % (samples) 2 is detectors; the third dimension is the state number, which
 % could be a proxy for detector number if the state acquisition sequence is
@@ -121,7 +121,7 @@ else
     % figure out if last frame is incomplete
     % this is needed for real-time parsing using our new approach to
     % filling dataOrganizedByState
-    N_STATES=find(stateMap(:,27)==1,1,'first');
+    N_STATES=find(srcram(1,:,32)==1,1,'first');
     lastFrameStart = find(estados==1,1,'last');
     lastFrameEnd = find(estados==N_STATES,1,'last');
     if isempty(lastFrameStart) | isempty(lastFrameEnd) 
@@ -197,7 +197,7 @@ Auxdata(:,2:3)= Auxdata(:,2:3).*3.3/( (stat_n_smp+1) * ((2^12)-1) );
 %number of states
 estados=1+raw(indicator+length(header_indicator)) + 256*(raw(indicator+1+length(header_indicator)));
 %estados=1+raw(indicator+length(header_indicator));
-foo=find(stateMap(:,27)==1);
+foo=find(srcram(1,:,32)==1);
 N_STATES=foo(1);
 states=1:N_STATES;
 
@@ -234,7 +234,7 @@ dataOrganizedByState = permute( dataOrganizedByState, [2 3 1]);
 
 
 %% identify dark states
-darkStateIdx=~any(stateMap(states,19:21),2);
+darkStateIdx=find(srcram(1,states,21)==1);
 % sort dark states by detector
 darkSamplesbyState=dataOrganizedByState(:,:,darkStateIdx);
 % summarize dark state intensity for each detector

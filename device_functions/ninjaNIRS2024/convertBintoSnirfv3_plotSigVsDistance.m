@@ -14,7 +14,7 @@ alpha = 0.4;
 
 subplot(1,2,1);
 
-foo = dataSDWP(:,:,1,1);
+foo = dataSDWP(1:nS,1:nD,1,1);
 boo = rhoSDS;
 scatter1 = scatter(boo(:),log10(max(foo(:),1e-8)),'MarkerFaceColor','b','MarkerEdgeColor','none');
 scatter1.MarkerFaceAlpha = alpha;
@@ -22,7 +22,7 @@ scatter1.MarkerEdgeAlpha = alpha;
 hold on
 
 
-foo = dataSDWP(:,:,2,1);
+foo = dataSDWP(1:nS,1:nD,2,1);
 scatter2 = scatter(boo(:),log10(max(foo(:),1e-8)),'MarkerFaceColor','r','MarkerEdgeColor','none');
 scatter2.MarkerFaceAlpha = alpha;
 scatter2.MarkerEdgeAlpha = alpha;
@@ -40,13 +40,13 @@ grid on
 
 subplot(1,2,2);
 
-foo = dataSDWP(:,:,1,2);
+foo = dataSDWP(1:nS,1:nD,1,2);
 scatter1 = scatter(boo(:),log10(max(foo(:),1e-8)),'MarkerFaceColor','b','MarkerEdgeColor','none');
 scatter1.MarkerFaceAlpha = alpha;
 scatter1.MarkerEdgeAlpha = alpha;
 hold on
 
-foo = dataSDWP(:,:,2,2);
+foo = dataSDWP(1:nS,1:nD,2,2);
 scatter2 = scatter(boo(:),log10(max(foo(:),1e-8)),'MarkerFaceColor','r','MarkerEdgeColor','none');
 scatter2.MarkerFaceAlpha = alpha;
 scatter2.MarkerEdgeAlpha = alpha;

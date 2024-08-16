@@ -35,20 +35,20 @@ for iPowerLevel = 1:7
 
     % translateBytes
 
-    stateMapCal = createLEDPowerCalibrationStateMap( SD, iPowerLevel );
+    srcramCal = createLEDPowerCalibrationSrcRAM( SD, iPowerLevel );
 
 
     subtractDark=1; % make it as 1 to subtract dark state
     % for LED power calibration we do not subtract it
 
-    foo=find(stateMapCal(:,27)==1);
+    foo=find(srcramCal(1,:,32)==1);
     nStates=foo(1);
     fs=stateMap.devInfo.state_fs/nStates;
     acc_active=stateMap.devInfo.acc_active;
     aux_active=stateMap.devInfo.aux_active;
     N_DETECTOR_BOARDS =stateMap.devInfo.N_DETECTOR_BOARDS;
     stat_n_smp = stateMap.devInfo.stat.n_smp;
-    [B, unusedBytes, avgDet, Auxdata, TGAdata, info] = translateNinja2022Bytesv3_BZ20230817(inputBytes,stateMapCal,N_DETECTOR_BOARDS,acc_active,aux_active);
+    [B, unusedBytes, avgDet, Auxdata, TGAdata, info] = translateNinja2022Bytesv3_BZ20230817_NN24(inputBytes,srcramCal,N_DETECTOR_BOARDS,acc_active,aux_active);
     B=circshift(B,-1,3);
 
     disp( sprintf('Power Level %d - Lost %d states amongst the %d that were recorded (%.1f%%)',iPowerLevel, length(info.lstGaps),length(info.estados),length(info.lstGaps)/(length(info.lstGaps)+length(info.estados)) ) )
@@ -59,13 +59,12 @@ for iPowerLevel = 1:7
     
     % get dataSDWP (#s,#d,#wl,#power levels)
     if iPowerLevel == 1
-        dataSDWP = zeros(56,144,2,7);
-        dataSDWPdark = zeros(56,144,2,7);
+        dataSDWP = zeros(size(B,3)/4,size(B,2),2,7);
+        dataSDWPdark = zeros(size(B,3)/4,size(B,2),2,7);
     end
-    BdarkOrg = B(:,:,2:2:224); % get the dark states in original sample rate for later
     B = squeeze(mean(B,1,'omitnan'))'; % mean temporal samples and transpose to get #states x #d
-    Bdark = B(2:2:224,:); % get the dark states
-    B = B(1:2:224,:); % strip the dark states
+    Bdark = B(2:2:end,:); % get the dark states
+    B = B(1:2:end,:); % strip the dark states
     dataSDWP(:,:,1,iPowerLevel) = B(1:2:end,:);
     dataSDWP(:,:,2,iPowerLevel) = B(2:2:end,:);
     dataSDWPdark(:,:,1,iPowerLevel) = Bdark(1:2:end,:);

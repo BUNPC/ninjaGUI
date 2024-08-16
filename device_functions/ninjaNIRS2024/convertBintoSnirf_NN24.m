@@ -1,4 +1,4 @@
-function snirf1 = convertBintoSnirfv3( fName, flagSave, flagPlot, subLabel, sesLabel, taskLabel, runIndex )
+function snirf1 = convertBintoSnirf_NN24( fName, flagSave, flagPlot, subLabel, sesLabel, taskLabel, runIndex )
 % BIDS file name structure
 %    sub-<label>[_ses-<label>]_task-<label>[_acq-<label>][_run-<index>]_nirs.snirf
 % If no labels are provided, then the snirf file will be saved with the
@@ -32,14 +32,14 @@ SD = stateMap.nSD;
 
 subtractDark=1; % make it as 1 to subtract dark state
 
-foo=find(stateMap.stateMap(:,27)==1);
+foo=find(stateMap.stateMap(1,:,32)==1);
 nStates=foo(1);
 fs=stateMap.devInfo.state_fs/nStates;
 acc_active=stateMap.devInfo.acc_active;
 aux_active=stateMap.devInfo.aux_active;
 N_DETECTOR_BOARDS = stateMap.devInfo.N_DETECTOR_BOARDS;
 stat_n_smp = stateMap.devInfo.stat.n_smp;
-[B, unusedBytes, avgDet, Auxdata, TGAdata, info] = translateNinja2022Bytesv3_BZ20230817(inputBytes,stateMap.stateMap,N_DETECTOR_BOARDS,acc_active,aux_active);
+[B, unusedBytes, avgDet, Auxdata, TGAdata, info] = translateNinja2022Bytesv3_BZ20230817_NN24(inputBytes,stateMap.stateMap,N_DETECTOR_BOARDS,acc_active,aux_active);
 B=circshift(B,-1,3);
 
 disp( sprintf('Lost %d states amongst the %d that were recorded (%.1f%%)',length(info.lstGaps),length(info.estados),length(info.lstGaps)/(length(info.lstGaps)+length(info.estados)) ) )
@@ -159,7 +159,7 @@ end
 
 
 % Add the calibration data to the AUX
-dataSDWP_LowHigh = convertBintoSnirfv3_LEDPowerCalibrationTools( fName, stateMap );
+dataSDWP_LowHigh = convertBintoSnirf_NN24_LEDPowerCalibrationTools( fName, stateMap );
 
 if flagPlot
     convertBintoSnirfv3_plotSigVsDistance( SD, dataSDWP_LowHigh)
