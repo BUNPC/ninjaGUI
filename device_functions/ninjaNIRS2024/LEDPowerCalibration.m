@@ -160,6 +160,15 @@ app.deviceInformation.flagSpatialMultiplex = flagSpatialMultiplex;
 nSD = app.nSD;
 save('dualPowerStateMapandIndices.mat','srcram','stateIndices','optPowerLevel','srcPowerLowHigh','dSig','Bpow','nSD','thresholds')
 
+% check if source multiplexing
+flagSpatialMultiplex = 0;
+for ii=1:length(srcModuleGroups)
+    if length(srcModuleGroups(ii))>1
+        flagSpatialMultiplex = 1;
+    end
+end
+set(hAxes.cb,'value',flagSpatialMultiplex);
+
 foo=find(srcram(1,:,32)==1);
 nStates=foo(1);
 

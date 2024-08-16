@@ -20,10 +20,11 @@ function [srcram, stateIndices, optPowerLevel, srcPowerLowHigh, dSig, srcModuleG
 ml = SD.MeasList;
 
 %srcModuleGroups = {[1 2 3 4 5 6 7]};
-if flagSpatialMultiplex==1
+if flagSpatialMultiplex==1 & SD.nSrcs==56
     srcModuleGroups = {[1 3 5],[2 4 6],[7]};
 else
     srcModuleGroups = {1,2,3,4,5,6,7};
+    srcModuleGroups = srcModuleGroups( 1:ceil((SD.nSrcs-0.1)/8) );
 end
 
 for iSg = 1:length(srcModuleGroups)
