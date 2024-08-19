@@ -170,9 +170,9 @@ dataSDWP_w1low_obj = AuxClass( dataSDWP_LowHigh(:,:,1,1), [1:stateMap.nSD.nSrcs]
 dataSDWP_w1high_obj = AuxClass( dataSDWP_LowHigh(:,:,1,2), [1:stateMap.nSD.nSrcs]','Calibration, Wavelength 1, High Power' );
 dataSDWP_w2low_obj = AuxClass( dataSDWP_LowHigh(:,:,2,1), [1:stateMap.nSD.nSrcs]','Calibration, Wavelength 2, Low Power' );
 dataSDWP_w2high_obj = AuxClass( dataSDWP_LowHigh(:,:,2,2), [1:stateMap.nSD.nSrcs]','Calibration, Wavelength 2, High Power' );
-powerLevelSetLowHigh_obj = AuxClass( powerLevelSetLowHigh, [1:size(ml,1)]', 'LED Power Level Low or High')
+powerLevelSetLowHigh_obj = AuxClass( powerLevelSetLowHigh, [1:size(ml,1)]', 'LED Power Level Low or High');
 
-snirf1.aux = [snirf1.aux dataSDWP_w1low_obj dataSDWP_w1high_obj dataSDWP_w2low_obj dataSDWP_w2high_obj powerLevelSetLowHigh_obj]
+snirf1.aux = [snirf1.aux dataSDWP_w1low_obj dataSDWP_w1high_obj dataSDWP_w2low_obj dataSDWP_w2high_obj powerLevelSetLowHigh_obj];
 
 
 % SAVE
