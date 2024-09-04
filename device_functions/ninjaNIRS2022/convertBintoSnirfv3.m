@@ -175,6 +175,11 @@ powerLevelSetLowHigh_obj = AuxClass( powerLevelSetLowHigh, [1:size(ml,1)]', 'LED
 snirf1.aux = [snirf1.aux dataSDWP_w1low_obj dataSDWP_w1high_obj dataSDWP_w2low_obj dataSDWP_w2high_obj powerLevelSetLowHigh_obj]
 
 
+% Add the state indices to the AUX
+stateIndices_obj = AuxClass( indices, [1:size(indices,1)]', 'State Indices' );
+snirf1.aux = [snirf1.aux stateIndices_obj];
+
+
 % SAVE
 
 if flagSave
