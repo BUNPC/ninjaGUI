@@ -156,8 +156,8 @@ if acc_active
     gyro_z_obj = AuxClass(gyro_data(:,3),t_acc,'GYRO_Z');
     acc_data = TGAdata(:,5:7)*devInfo.stat.accfs;
     acc_x_obj = AuxClass(acc_data(:,1),t_acc,'ACCEL_X');
-    acc_y_obj = AuxClass(acc_data(:,1),t_acc,'ACCEL_Y');
-    acc_z_obj = AuxClass(acc_data(:,1),t_acc,'ACCEL_Z');
+    acc_y_obj = AuxClass(acc_data(:,2),t_acc,'ACCEL_Y');
+    acc_z_obj = AuxClass(acc_data(:,3),t_acc,'ACCEL_Z');
     snirf1.aux = [snirf1.aux temp_obj gyro_x_obj gyro_y_obj gyro_z_obj acc_x_obj acc_y_obj acc_z_obj]; 
 end
 
