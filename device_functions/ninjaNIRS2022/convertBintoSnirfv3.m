@@ -151,10 +151,14 @@ if acc_active
     t_acc =  [1:size(Auxdata,1)]'/devInfo.state_fs;
     temp_obj = AuxClass(TGAdata(:,1),t_acc,'temperature');
     gyro_data = TGAdata(:,2:4)*devInfo.stat.gyrofs;
-    gyro_obj = AuxClass(gyro_data,t_acc,'gyroscope');
+    gyro_x_obj = AuxClass(gyro_data(:,1),t_acc,'GYRO_X');
+    gyro_y_obj = AuxClass(gyro_data(:,2),t_acc,'GYRO_Y');
+    gyro_z_obj = AuxClass(gyro_data(:,3),t_acc,'GYRO_Z');
     acc_data = TGAdata(:,5:7)*devInfo.stat.accfs;
-    acc_obj = AuxClass(acc_data,t_acc,'accelerometer');
-    snirf1.aux = [snirf1.aux temp_obj gyro_obj acc_obj]; 
+    acc_x_obj = AuxClass(acc_data(:,1),t_acc,'ACCEL_X');
+    acc_y_obj = AuxClass(acc_data(:,1),t_acc,'ACCEL_Y');
+    acc_z_obj = AuxClass(acc_data(:,1),t_acc,'ACCEL_Z');
+    snirf1.aux = [snirf1.aux temp_obj gyro_x_obj gyro_y_obj gyro_z_obj acc_x_obj acc_y_obj acc_z_obj]; 
 end
 
 
