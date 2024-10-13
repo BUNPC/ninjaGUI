@@ -13,6 +13,13 @@ function [srcram, stateIndices, optPowerLevel, srcPowerLowHigh, dSig, srcModuleG
 %       power levels choosen for that given measurement.
 % srcModuleGroups - A list of the sources in each module
 
+% get rhoSDS
+rhoSDS = zeros(size(SD.MeasList,1),1);
+for iML = 1:size(SD.MeasList,1)
+    iS = SD.MeasList(iML,1);
+    iD = SD.MeasList(iML,2);
+    rhoSDS(iML) = sum( (SD.SrcPos3D(iS,:) - SD.DetPos3D(iD,:)).^2 ).^0.5;
+end
 
 %%
 % get list of channels with each group of spatially multiplexed sources for
@@ -27,6 +34,12 @@ else
     srcModuleGroups = srcModuleGroups( 1:ceil((SD.nSrcs-0.1)/8) );
 end
 
+% Get the list of indices into the measlist for measurements for a given
+% LED in a srcModuleGroup.
+% This is used for finding the optimal combination of low and high power
+% settings.
+% It also considers the range of source detector separations if specified
+% by the user in the calibration GUI.
 for iSg = 1:length(srcModuleGroups)
     for iWav = 1:2
         for iSrc = 1:8
