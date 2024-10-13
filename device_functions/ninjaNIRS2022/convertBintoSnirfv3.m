@@ -170,18 +170,18 @@ if flagPlot
     convertBintoSnirfv3_crossTalk( stateMap, dataSDWP_LowHigh )
 end
 
-dataSDWP_w1low_obj = AuxClass( dataSDWP_LowHigh(:,:,1,1), [1:stateMap.nSD.nSrcs]','Calibration, Wavelength 1, Low Power' );
-dataSDWP_w1high_obj = AuxClass( dataSDWP_LowHigh(:,:,1,2), [1:stateMap.nSD.nSrcs]','Calibration, Wavelength 1, High Power' );
-dataSDWP_w2low_obj = AuxClass( dataSDWP_LowHigh(:,:,2,1), [1:stateMap.nSD.nSrcs]','Calibration, Wavelength 2, Low Power' );
-dataSDWP_w2high_obj = AuxClass( dataSDWP_LowHigh(:,:,2,2), [1:stateMap.nSD.nSrcs]','Calibration, Wavelength 2, High Power' );
-powerLevelSetLowHigh_obj = AuxClass( powerLevelSetLowHigh, [1:size(ml,1)]', 'LED Power Level Low or High')
+%dataSDWP_w1low_obj = AuxClass( dataSDWP_LowHigh(:,:,1,1), [1:stateMap.nSD.nSrcs]','Calibration, Wavelength 1, Low Power' );
+%dataSDWP_w1high_obj = AuxClass( dataSDWP_LowHigh(:,:,1,2), [1:stateMap.nSD.nSrcs]','Calibration, Wavelength 1, High Power' );
+%dataSDWP_w2low_obj = AuxClass( dataSDWP_LowHigh(:,:,2,1), [1:stateMap.nSD.nSrcs]','Calibration, Wavelength 2, Low Power' );
+%dataSDWP_w2high_obj = AuxClass( dataSDWP_LowHigh(:,:,2,2), [1:stateMap.nSD.nSrcs]','Calibration, Wavelength 2, High Power' );
+%powerLevelSetLowHigh_obj = AuxClass( powerLevelSetLowHigh, [1:size(ml,1)]', 'LED Power Level Low or High')
 
-snirf1.aux = [snirf1.aux dataSDWP_w1low_obj dataSDWP_w1high_obj dataSDWP_w2low_obj dataSDWP_w2high_obj powerLevelSetLowHigh_obj]
+%snirf1.aux = [snirf1.aux dataSDWP_w1low_obj dataSDWP_w1high_obj dataSDWP_w2low_obj dataSDWP_w2high_obj powerLevelSetLowHigh_obj]
 
 
 % Add the state indices to the AUX
-stateIndices_obj = AuxClass( indices, [1:size(indices,1)]', 'State Indices' );
-snirf1.aux = [snirf1.aux stateIndices_obj];
+%stateIndices_obj = AuxClass( indices, [1:size(indices,1)]', 'State Indices' );
+%snirf1.aux = [snirf1.aux stateIndices_obj];
 
 
 % SAVE
@@ -220,4 +220,13 @@ if flagSave
 
     snirf1.Save([folder baseFileNameNoExt '.snirf'])
 %    snirf1.Save([folder filesep baseFileNameNoExt '.snirf'])
+
+    % Save Sidecar File
+    if ~isempty(folder)
+        fileSide = [folder filesep baseFileNameNoExt '_sidecar.mat'];
+    else
+        fileSide = [baseFileNameNoExt '_NN22sidecar.mat'];
+    end
+    save(fileSide,'stateMap','info','dataSDWP_LowHigh','powerLevelSetLowHigh')
+
 end
