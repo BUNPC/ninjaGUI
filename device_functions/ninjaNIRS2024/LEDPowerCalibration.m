@@ -36,7 +36,7 @@ for iPower = 0:7
     %app.deviceInformation.Rate=fs;
     %app.editRate.Value=app.deviceInformation.Rate;
 
-    app.deviceInformation.stateIndices=mapToMeasurementList(app.deviceInformation.srcram,app.nSD.measList);
+    app.deviceInformation.stateIndices = mapToMeasurementList(app.deviceInformation.srcram,app.nSD.measList);
 
     %app.deviceInformation.subtractDark = 1;
 
@@ -148,8 +148,10 @@ thresholds = app.deviceInformation.levelRepresentation.thresholds;
 app.deviceInformation.dataLEDPowerCalibration = dataLEDPowerCalibration;
 
 % need to create srcPowerLowHigh(nSrc,nDet,nWav)
+SD = app.nSD;
+SD.sds_range = str2num( get(hAxes.sds,'value') );
 
-[srcram, stateIndices, optPowerLevel, srcPowerLowHigh, dSig, srcModuleGroups] = LEDPowerCalibration_dualLevels(app.nSD,dataLEDPowerCalibration,thresholds,flagSpatialMultiplex);
+[srcram, stateIndices, optPowerLevel, srcPowerLowHigh, dSig, srcModuleGroups] = LEDPowerCalibration_dualLevels(SD,dataLEDPowerCalibration,thresholds,flagSpatialMultiplex);
 app.deviceInformation.srcram = srcram;
 app.deviceInformation.stateIndices = stateIndices;
 app.deviceInformation.optPowerLevel = optPowerLevel;

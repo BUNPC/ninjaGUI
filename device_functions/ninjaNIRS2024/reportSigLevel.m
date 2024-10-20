@@ -29,12 +29,14 @@ if flagMakeGUI
     bgh = get(bg,'children');
     set(bg,'userdata','bg');
 
-    txa_pow = uitextarea(fig,'position',[680 665 190 50],'value','');
+    txa_pow = uitextarea(fig,'position',[680 665 190 40],'value','');
     set(txa_pow,'horizontalalignment','center','fontcolor','r','fontweight','bold')
     set(txa_pow,'userdata','txa_pow');
 
-    cb = uicheckbox(fig,'position',[680 725 190 20],'text','Spatial Multiplexing','value',1);
-    acc_stat = uitextarea(fig,'position',[680 755 190 40]);
+    txa_sds = uitextarea(fig,'position',[680 710 100 20],'value','SDS range','backgroundcolor',get(fig,'color'),'horizontalalignment','right');
+    sds = uieditfield(fig,'text','position',[790 710 80 20],'value','[0 35]');
+    cb = uicheckbox(fig,'position',[680 735 190 20],'text','Spatial Multiplexing','value',0);
+    acc_stat = uitextarea(fig,'position',[680 760 190 35]);
 
 %    str = sprintf('{''line 1'';''line 2'';''line 3''}');
 %    txa = eval( sprintf('uitextarea(fig,''position'',[500 300 180 350],''value'',%s);',str) );
@@ -80,6 +82,8 @@ if flagMakeGUI
     app.deviceInformation.handlesReportSigLevel.txa_pow = txa_pow;
     app.deviceInformation.handlesReportSigLevel.txa = txa;
     app.deviceInformation.handlesReportSigLevel.txa_det = txa_det;
+    app.deviceInformation.handlesReportSigLevel.txa_sds = txa_sds;
+    app.deviceInformation.handlesReportSigLevel.sds = sds;
     app.deviceInformation.handlesReportSigLevel.ax = ax;
     app.deviceInformation.handlesReportSigLevel.ax1 = ax1;
     app.deviceInformation.handlesReportSigLevel.ax2 = ax2;
@@ -97,6 +101,8 @@ else
     ax3 = app.deviceInformation.handlesReportSigLevel.ax3;
     cb = app.deviceInformation.handlesReportSigLevel.cb;
     acc_stat = app.deviceInformation.handlesReportSigLevel.acc_stat;
+    txa_sds = app.deviceInformation.handlesReportSigLevel.txa_sds;
+    sds = app.deviceInformation.handlesReportSigLevel.sds;
     
 %     h = get(fig, 'children');
 %     for ii=1:length(h)
@@ -140,6 +146,7 @@ if flagCalibratePowerLevel==1
     hAxes.ax3 = ax3;
     hAxes.cb = cb;
     hAxes.txa_pow = txa_pow;
+    hAxes.sds = sds;
     set(app.togglebuttonStartStop,'enable','off')
     LEDPowerCalibration( app, hAxes )
     drawnow
