@@ -8,6 +8,17 @@ if ~exist('hAxes')
 end
 flagSpatialMultiplex = get(hAxes.cb,'value');
 
+% Get measList and Add rhoSDS to 5th column
+measList = app.nSD.measList
+rhoSDS = zeros(size(measList,1),1);
+for iML = 1:size(measList,1)
+    iS = measList(iML,1);
+    iD = measList(iML,2);
+    rhoSDS(iML) = sum( (app.nSD.SrcPos3D(iS,:)-app.nSD.DetPos3D(iD,:)).^2 )^0.5;
+end
+measList(:,5) = rhoSDS;
+
+
 %hWait = waitbar(0,sprintf('Power Level 0'));
 set( hAxes.txa_pow,'value',sprintf('Reading Power Level 0 of 7...'));
 
@@ -36,7 +47,7 @@ for iPower = 0:7
     %app.deviceInformation.Rate=fs;
     %app.editRate.Value=app.deviceInformation.Rate;
 
-    app.deviceInformation.stateIndices = mapToMeasurementList(app.deviceInformation.srcram,app.nSD.measList);
+    app.deviceInformation.stateIndices = mapToMeasurementList(app.deviceInformation.srcram,measList);
 
     %app.deviceInformation.subtractDark = 1;
 

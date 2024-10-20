@@ -21,10 +21,14 @@ for iML = 1:size(SD.MeasList,1)
     rhoSDS(iML) = sum( (SD.SrcPos3D(iS,:) - SD.DetPos3D(iD,:)).^2 ).^0.5;
 end
 
+
 %%
 % get list of channels with each group of spatially multiplexed sources for
 % each wavelength
 ml = SD.MeasList;
+
+% rhoSDS to 5th column of measList
+ml(:,5) = rhoSDS;
 
 %srcModuleGroups = {[1 2 3 4 5 6 7]};
 if flagSpatialMultiplex==1 & SD.nSrcs==56
