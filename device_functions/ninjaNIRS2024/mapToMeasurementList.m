@@ -29,7 +29,7 @@ for ki=1:size(measList,1)
     srcID = srcID0; %mod(srcID0-1,8)+1;
     srcModule = ceil((srcID0-0.1)/8);
 
-    sourceIDs = squeeze( srcram( srcModule, 1:N_STATES, 17:21) );
+    sourceIDs = squeeze( srcram( srcModule, 1:N_STATES, [17:20 31]) ); % bit 31 is a hack from createLEDPowerCalibrationSrcRAM to help us identify src 0
 
                                                                  
     detID=meas(2);
