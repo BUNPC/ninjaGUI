@@ -9,7 +9,7 @@ end
 flagSpatialMultiplex = get(hAxes.cb,'value');
 
 % Get measList and Add rhoSDS to 5th column
-measList = app.nSD.measList
+measList = app.nSD.measList;
 rhoSDS = zeros(size(measList,1),1);
 for iML = 1:size(measList,1)
     iS = measList(iML,1);
@@ -206,5 +206,6 @@ app.editRate.Value=app.deviceInformation.Rate;
 
 %%
 % report
-reportSigDark( app.nSD, dSig, dataDark, B_Dark, thresholds, hAxes );
+reportSigDark( app.nSD, dataDark, B_Dark, hAxes );
+reportSigVsSDS( measList(:,1:4), rhoSDS, dSig, hAxes );
 set( hAxes.txa_pow,'value',sprintf(''));
