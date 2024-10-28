@@ -1,5 +1,5 @@
 
-function reportSigDark( SD, dSig, dDark, B_Dark, thresholds, hAxes )
+function reportSigDark( SD, dDark, B_Dark, hAxes )
 
 sPos = SD.SrcPos2D;
 dPos = SD.DetPos2D;
@@ -70,10 +70,10 @@ for ii=1:size(B,2)
 end
 ysum = ysum / n;
 
-%subplot(1,3,3)
 axes(hAxes.ax3)
 semilogy(hAxes.ax3,f,ysum)
 xlabel(hAxes.ax3,'Freq (Hz)')
+title(hAxes.ax3, sprintf('Power Spectrum of Dark Signal') )
 
 
 
