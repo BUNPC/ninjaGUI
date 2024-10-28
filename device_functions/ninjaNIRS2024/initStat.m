@@ -28,6 +28,7 @@ stat.v5p1src_en = false;
 stat.v5p1rpi_off = false;
 stat.v5p1b23_en = false;
 stat.v5p1b01_en = false;
+stat.rpi0_rec_en = false;
 
 % main clock divider
 % determines period of 'B' state
@@ -195,7 +196,8 @@ for isrcb = 1:7
 end
 stat = flushNN22(stat);
 
-
+stat.rpi0_rec_en = true;
+stat = updateStatReg(stat, false);
 
 
 
