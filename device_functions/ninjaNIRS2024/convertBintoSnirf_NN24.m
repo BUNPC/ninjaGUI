@@ -96,6 +96,7 @@ snirf1.metaDataTags.tags.TimeUnit = 's';
 % add sourcePower to the measurementList
 flagWarning = 0;
 powerLevelSetLowHigh = zeros(size(ml,1),1);
+powerLevelSetting =  zeros(size(ml,1),1);
 for iML = 1:size(ml,1)
     iS = ml(iML,1);
     iSrc = mod(iS-1,8)+1;
@@ -126,6 +127,7 @@ for iML = 1:size(ml,1)
     powerLevelSetLowHigh(iML) = iLowHigh;
     iPL = stateMap.devInfo.optPowerLevel(iSrc,iLowHigh,iW,iSg);
     snirf1.data.measurementList(iML).sourcePower = iPL;
+    powerLevelSetting(iML) = iPL;
 end
 if flagWarning==1
     warning( 'srcPowerLowHigh was not saved in the _stateMap.mat file. Assuming high and low LED power settings.' )
@@ -222,6 +224,9 @@ if flagSave
     else
         fileSide = [baseFileNameNoExt '_NN24sidecar.mat'];
     end
-    save(fileSide,'stateMap','info','dataSDWP_LowHigh','powerLevelSetLowHigh')
+
+    % stateMap.devInfo.optPowerLevel( Src #, PowerLevel (1-L, 2-H), wavelength, Src Grp )
+    save(fileSide,'stateMap','info','dataSDWP_LowHigh','powerLevelSetLowHigh','powerLevelSetting','stateMap')
+
 
 end
