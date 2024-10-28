@@ -13,6 +13,7 @@ end
 
 stat.sreg = zeros(1,32);
 
+stat.sreg(28) = stat.rpi0_rec_en;
 stat.sreg(27) = stat.v_src_boost;
 stat.sreg(26) = stat.vn22clk_en;
 stat.sreg(25) = stat.vn3p4_en;
