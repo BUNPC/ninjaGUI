@@ -58,7 +58,7 @@ if flagMakeGUI
     set(ax,'userdata','ax')
 
     ax1 = axes(fig,'units','pixels');
-    set(ax1,'Position',[10 20 280 270])
+    set(ax1,'Position',[30 40 260 240])
     set(ax1,'xtick',[])
     set(ax1,'ytick',[])
     axis(ax1,'image');
@@ -72,7 +72,7 @@ if flagMakeGUI
     set(ax2,'userdata','ax2')
 
     ax3 = axes(fig,'units','pixels');
-    set(ax3,'Position',[620 20 250 270])
+    set(ax3,'Position',[610 40 260 240])
     set(ax3,'xtick',[])
     set(ax3,'ytick',[])
     axis(ax3,'image');
