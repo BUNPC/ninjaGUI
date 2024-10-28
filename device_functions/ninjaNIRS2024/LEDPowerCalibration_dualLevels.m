@@ -74,6 +74,7 @@ threshHigh = 10^(thresholds(2)/20);
 threshLow  = 10^(thresholds(1)/20);
 
 for iSg = 1:length(srcModuleGroups)
+    numDetGood12  = zeros(8,7,7,2);
     numDetGood2  = zeros(8,7,7,2);
     for iWav = 1:2
         for iSrc = 1:8
@@ -82,16 +83,34 @@ for iSg = 1:length(srcModuleGroups)
 
                     lst = lstSMS{iSrc}{iWav}{iSg};
 
-                    lstGood = find( (dataLEDPowerCalibration(lst,iPow1)>threshLow & dataLEDPowerCalibration(lst,iPow1)<threshHigh) | (dataLEDPowerCalibration(lst,iPow2)>threshLow & dataLEDPowerCalibration(lst,iPow2)<threshHigh) );
-                    numDetGood2(iSrc,iPow1,iPow2,iWav) = length(lstGood);
+                    lstGood12 = find( (dataLEDPowerCalibration(lst,iPow1)>threshLow & dataLEDPowerCalibration(lst,iPow1)<threshHigh) | (dataLEDPowerCalibration(lst,iPow2)>threshLow & dataLEDPowerCalibration(lst,iPow2)<threshHigh) );
+                    numDetGood12(iSrc,iPow1,iPow2,iWav) = length(lstGood12);
+                    lstGood2 = find( (dataLEDPowerCalibration(lst,iPow2)>threshLow & dataLEDPowerCalibration(lst,iPow2)<threshHigh) );
+                    numDetGood2(iSrc,iPow1,iPow2,iWav) = length(lstGood2);
 
                 end
             end
 
-            [ir,ic] = find( squeeze(numDetGood2(iSrc,:,:,iWav)) == max(max(numDetGood2(iSrc,:,:,iWav))) );
+            % because I take the end, I am often ending up with the case that all 
+            % channels are saturated at the high power and so they take the
+            % low power. There are lower power combinations that have just
+            % as many good channels such that smoe channels would use the
+            % high power setting.
+            % i should change the algorithm to make sure I get some
+            % channels at high power. Hmm..  
+            [ir,ic] = find( squeeze(numDetGood12(iSrc,:,:,iWav)) == max(max(numDetGood12(iSrc,:,:,iWav))) );
+            [ir2,ic2] = find( squeeze(numDetGood12(iSrc,:,:,iWav)) == max(max(numDetGood12(iSrc,:,:,iWav))) & squeeze(numDetGood2(iSrc,:,:,iWav))>0);
             if 1
-                optPowerLevel(iSrc,1,iWav,iSg) = ir(end);
-                optPowerLevel(iSrc,2,iWav,iSg) = ic(end);
+                if 0
+                    % just take the end, but then maybe no channels use
+                    % high power
+                    optPowerLevel(iSrc,1,iWav,iSg) = ir(end); 
+                    optPowerLevel(iSrc,2,iWav,iSg) = ic(end);
+                else
+                    % require 1 or more channels to use the high power
+                    optPowerLevel(iSrc,1,iWav,iSg) = ir2(end); 
+                    optPowerLevel(iSrc,2,iWav,iSg) = ic2(end);
+                end
             else   % HACK TO HARD SET THE POWER LEVEL
                 optPowerLevel(iSrc,1,iWav,iSg) = 7;
                 optPowerLevel(iSrc,2,iWav,iSg) = 7;
@@ -102,28 +121,31 @@ for iSg = 1:length(srcModuleGroups)
 end
 
 %find low power level optimization for all source modules
-numDetGood2  = zeros(8,7,7,2);
-for iWav = 1:2
-    for iSrc = 1:8
-        for iPow1 = 1:6
-            for iPow2 = (iPow1+1):7
+% NOT NEEDED FOR NN24 AS EACH SOURCE GROUP CAN HAVE ITS OWN POWER
+if 0
+    numDetGood2  = zeros(8,7,7,2);
+    for iWav = 1:2
+        for iSrc = 1:8
+            for iPow1 = 1:6
+                for iPow2 = (iPow1+1):7
 
-                lst = [];
-                for iSg = 1:size(lstSMS,3)
-                    lst = [lst lstSMS{iSrc}{iWav}{iSg}];
+                    lst = [];
+                    for iSg = 1:size(lstSMS,3)
+                        lst = [lst lstSMS{iSrc}{iWav}{iSg}];
+                    end
+
+                    % WHY IS THIS CONSIDERING POW2 WHEN IT DOESN'T SEEMED TO BE
+                    % USED BELOW??? DAB Aug 2, 2024
+                    lstGood = find( (dataLEDPowerCalibration(lst,iPow1)>threshLow & dataLEDPowerCalibration(lst,iPow1)<threshHigh) | (dataLEDPowerCalibration(lst,iPow2)>threshLow & dataLEDPowerCalibration(lst,iPow2)<threshHigh) );
+                    numDetGood2(iSrc,iPow1,iPow2,iWav) = length(lstGood);
+
                 end
-
-                % WHY IS THIS CONSIDERING POW2 WHEN IT DOESN'T SEEMED TO BE
-                % USED BELOW??? DAB Aug 2, 2024
-                lstGood = find( (dataLEDPowerCalibration(lst,iPow1)>threshLow & dataLEDPowerCalibration(lst,iPow1)<threshHigh) | (dataLEDPowerCalibration(lst,iPow2)>threshLow & dataLEDPowerCalibration(lst,iPow2)<threshHigh) );
-                numDetGood2(iSrc,iPow1,iPow2,iWav) = length(lstGood);
-
             end
+
+            [ir,ic] = find( squeeze(numDetGood2(iSrc,:,:,iWav)) == max(max(numDetGood2(iSrc,:,:,iWav))) );
+            optPowerLevelLow(iSrc,iWav) = ir(end); % THIS IS ONLY USING POW1!!! DAB AUG 2, 2024
+
         end
-
-        [ir,ic] = find( squeeze(numDetGood2(iSrc,:,:,iWav)) == max(max(numDetGood2(iSrc,:,:,iWav))) );
-        optPowerLevelLow(iSrc,iWav) = ir(end); % THIS IS ONLY USING POW1!!! DAB AUG 2, 2024
-
     end
 end
 
@@ -164,6 +186,7 @@ end
 
 srcram = zeros(7,1024,32);
 srcram(:,:,21) = 1;
+srcram(:,:,31) = 1; % using this bit as a hack for identifying source 0 when we look at 5 bits in mapToMeasurementList()
 
 lstS = unique(ml(:,1));
 
@@ -173,39 +196,65 @@ maxPower = round(logspace(3,log10(2^16-1),7));
 
 % spatial multiplex 3 groups of source modules; one dark state after all low power; one dark state after each high power source (after both wavelengths)
 % low power state
-for iS = 1:8
+for iSg = 1:length(srcModuleGroups)
+    for iS = 1:8
+        lstSMG = srcModuleGroups{iSg};
 
-    iPower = optPowerLevelLow(iS,1);
-    for iSrcMod = 1:7 % FIXME - loop over number of source modules
-        srcram( iSrcMod, iState, 1:16 ) = bitget( maxPower(optPowerLevelLow(iS,1)), 1:16, 'uint16' ); % set the power
-        srcram( iSrcMod, iState, 17:20) = bitget( (iS-1)*2, 1:4, 'uint16' ); % select the source for wavelength 1
-        srcram( iSrcMod, iState, 21) = 0;
-    end
-    iState = iState + 1;
+        for iSrcMod = 1:length(lstSMG)
+            srcram( lstSMG(iSrcMod), iState, 1:16 ) = bitget( maxPower(optPowerLevel(iS,1,1,iSg)), 1:16, 'uint16' ); % set the power
+            srcram( lstSMG(iSrcMod), iState, 17:20) = bitget( (iS-1)*2, 1:4, 'uint16' ); % select the source for wavelength 1
+            srcram( lstSMG(iSrcMod), iState, 21) = 0;
+            srcram( lstSMG(iSrcMod), iState, 31) = 0;
+        end
+        iState = iState + 1;
+        for iSrcMod = 1:length(lstSMG)
+            srcram( lstSMG(iSrcMod), iState, 1:16 ) = bitget( maxPower(optPowerLevel(iS,1,2,iSg)), 1:16, 'uint16' ); % set the power
+            srcram( lstSMG(iSrcMod), iState, 17:20) = bitget( (iS-1)*2+1, 1:4, 'uint16' ); % select the source for wavelength 2
+            srcram( lstSMG(iSrcMod), iState, 21) = 0;
+            srcram( lstSMG(iSrcMod), iState, 31) = 0;
+        end
+        iState = iState + 2;
 
-    iPower = optPowerLevelLow(iS,2);
-    for iSrcMod = 1:7 % FIXME - loop over number of source modules
-        srcram( iSrcMod, iState, 1:16 ) = bitget( maxPower(optPowerLevelLow(iS,2)), 1:16, 'uint16' ); % set the power
-        srcram( iSrcMod, iState, 17:20) = bitget( (iS-1)*2+1, 1:4, 'uint16' ); % select the source for wavelength 2
-        srcram( iSrcMod, iState, 21) = 0;
-    end
-    iState = iState + 1; % +2 to have a dark state
-
-    % DELETE WHEN DONE MAKING CHANGES POWER LEVELS
-    %         stateMap( iState, [1:3] ) = bitget( iS-1, 1:3 ); % Src Row Select
-    %         stateMap( iState, 5:2:17 ) = 1; % Src Col Select. ODD wavelength
-    %         stateMap( iState, 19:21 ) = bitget( optPowerLevelLow(iS,1), 1:3 ); % low power level
-    %         iState = iState + 1;
-    %         stateMap( iState, [1:3] ) = bitget( iS-1, 1:3 ); % Src Row Select
-    %         stateMap( iState, 6:2:18 ) = 1; % Src Col Select. EVEN wavelength
-    %         stateMap( iState, 19:21 ) = bitget( optPowerLevelLow(iS,2), 1:3 ); % low power level
-    %         iState = iState + 1;
-
-    for iSg = 1:length(srcModuleGroups)
-        optPowerLevel(iS,1,1,iSg) = optPowerLevelLow(iS,1);
-        optPowerLevel(iS,1,2,iSg) = optPowerLevelLow(iS,2);
     end
 end
+
+% for iS = 1:8
+% 
+%     iPower = optPowerLevelLow(iS,1);
+%     for iSrcMod = 1:7 % FIXME - loop over number of source modules
+%         srcram( iSrcMod, iState, 1:16 ) = bitget( maxPower(optPowerLevelLow(iS,1)), 1:16, 'uint16' ); % set the power
+% %        srcram( iSrcMod, iState, 1:16 ) = bitget( 1e3, 1:16, 'uint16' ); % set the power
+%         srcram( iSrcMod, iState, 17:20) = bitget( (iS-1)*2, 1:4, 'uint16' ); % select the source for wavelength 1
+%         srcram( iSrcMod, iState, 21) = 0;
+%         srcram( iSrcMod, iState, 31) = 0;
+%     end
+%     iState = iState + 1;
+% 
+%     iPower = optPowerLevelLow(iS,2);
+%     for iSrcMod = 1:7 % FIXME - loop over number of source modules
+%         srcram( iSrcMod, iState, 1:16 ) = bitget( maxPower(optPowerLevelLow(iS,2)), 1:16, 'uint16' ); % set the power
+% %        srcram( iSrcMod, iState, 1:16 ) = bitget( 1e3, 1:16, 'uint16' ); % set the power
+%         srcram( iSrcMod, iState, 17:20) = bitget( (iS-1)*2+1, 1:4, 'uint16' ); % select the source for wavelength 2
+%         srcram( iSrcMod, iState, 21) = 0;
+%         srcram( iSrcMod, iState, 31) = 0;
+%     end
+%     iState = iState + 1; % +2 to have a dark state
+% 
+%     % DELETE WHEN DONE MAKING CHANGES POWER LEVELS
+%     %         stateMap( iState, [1:3] ) = bitget( iS-1, 1:3 ); % Src Row Select
+%     %         stateMap( iState, 5:2:17 ) = 1; % Src Col Select. ODD wavelength
+%     %         stateMap( iState, 19:21 ) = bitget( optPowerLevelLow(iS,1), 1:3 ); % low power level
+%     %         iState = iState + 1;
+%     %         stateMap( iState, [1:3] ) = bitget( iS-1, 1:3 ); % Src Row Select
+%     %         stateMap( iState, 6:2:18 ) = 1; % Src Col Select. EVEN wavelength
+%     %         stateMap( iState, 19:21 ) = bitget( optPowerLevelLow(iS,2), 1:3 ); % low power level
+%     %         iState = iState + 1;
+% 
+%     for iSg = 1:length(srcModuleGroups)
+%         optPowerLevel(iS,1,1,iSg) = optPowerLevelLow(iS,1);
+%         optPowerLevel(iS,1,2,iSg) = optPowerLevelLow(iS,2);
+%     end
+% end
 iState = iState + 1;
 
 % high power state
@@ -217,24 +266,17 @@ for iSg = 1:length(srcModuleGroups)
             srcram( lstSMG(iSrcMod), iState, 1:16 ) = bitget( maxPower(optPowerLevel(iS,2,1,iSg)), 1:16, 'uint16' ); % set the power
             srcram( lstSMG(iSrcMod), iState, 17:20) = bitget( (iS-1)*2, 1:4, 'uint16' ); % select the source for wavelength 1
             srcram( lstSMG(iSrcMod), iState, 21) = 0;
+            srcram( lstSMG(iSrcMod), iState, 31) = 0;
         end
         iState = iState + 1;
         for iSrcMod = 1:length(lstSMG)
             srcram( lstSMG(iSrcMod), iState, 1:16 ) = bitget( maxPower(optPowerLevel(iS,2,2,iSg)), 1:16, 'uint16' ); % set the power
             srcram( lstSMG(iSrcMod), iState, 17:20) = bitget( (iS-1)*2+1, 1:4, 'uint16' ); % select the source for wavelength 2
             srcram( lstSMG(iSrcMod), iState, 21) = 0;
+            srcram( lstSMG(iSrcMod), iState, 31) = 0;
         end
         iState = iState + 2;
 
-        % DELETE WHEN DONE MAKING CHANGES POWER LEVELS
-        %             stateMap( iState, [1:3] ) = bitget( iS-1, 1:3 ); % Src Row Select
-        %             stateMap( iState, lstSMG*2+3 ) = 1; % Src Col Select. ODD wavelength
-        %             stateMap( iState, 19:21 ) = bitget( optPowerLevel(iS,2,1,iSg), 1:3 ); % high power level
-        %             iState = iState + 1;
-        %             stateMap( iState, [1:3] ) = bitget( iS-1, 1:3 ); % Src Row Select
-        %             stateMap( iState, lstSMG*2+4 ) = 1; % Src Col Select. EVEN wavelength
-        %             stateMap( iState, 19:21 ) = bitget( optPowerLevel(iS,2,2,iSg), 1:3 ); % high power level
-        %             iState = iState + 2;
     end
 end
 
