@@ -12,6 +12,7 @@ iState = 1;
 
 srcram = zeros(7,1024,32);
 srcram(:,:,21) = 1;
+srcram(:,:,31) = 1; % using this bit as a hack for identifying source 0 when we look at 5 bits in mapToMeasurementList()
 
 for iS = 1:length(lstS)
 
@@ -21,12 +22,14 @@ for iS = 1:length(lstS)
     srcram( iSrcMod, iState, 1:16 ) = bitget( 3000, 1:16, 'uint16' ); % set the power
     srcram( iSrcMod, iState, 17:20) = bitget( iSrc*2, 1:4, 'uint16' ); % select the source for wavelength 1
     srcram( iSrcMod, iState, 21) = 0;
+    srcram( iSrcMod, iState, 31) = 0;
 
     iState = iState + 1;
 
     srcram( iSrcMod, iState, 1:16 ) = bitget( 3000, 1:16, 'uint16' ); % set the power
     srcram( iSrcMod, iState, 17:20) = bitget( iSrc*2+1, 1:4, 'uint16' ); % select the source for wavelength 2
     srcram( iSrcMod, iState, 21) = 0;
+    srcram( iSrcMod, iState, 31) = 0;
 
     iState = iState + 2; % +2 to have a dark state
 end
