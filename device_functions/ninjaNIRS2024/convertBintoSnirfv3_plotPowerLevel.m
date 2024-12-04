@@ -10,7 +10,7 @@ colormap(cm)
 figure(hf)
 set(gcf,'color',[1 1 1])
 
-subplot(1,2,iSubplot)
+subplot(2,3,iSubplot)
 for iS=1:nS
     plot(SD.SrcPos2D(iS,1),SD.SrcPos2D(iS,2),'r.','markersize',20);
     hold on

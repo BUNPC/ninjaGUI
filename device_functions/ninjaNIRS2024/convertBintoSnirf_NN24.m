@@ -168,7 +168,7 @@ end
 dataSDWP_LowHigh = convertBintoSnirf_NN24_LEDPowerCalibrationTools( fName, stateMap );
 
 if flagPlot
-    convertBintoSnirfv3_plotSigVsDistance( SD, dataSDWP_LowHigh)
+    convertBintoSnirfv3_plotSigVsDistance( SD, dataSDWP_LowHigh, powerLevelSetting)
     convertBintoSnirfv3_crossTalk( stateMap, dataSDWP_LowHigh )
 end
 

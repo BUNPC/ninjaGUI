@@ -1,4 +1,4 @@
-function convertBintoSnirfv3_plotSigVsDistance( SD, dataSDWP)
+function convertBintoSnirfv3_plotSigVsDistance( SD, dataSDWP, powerLevelSetting)
 
 nS = size(SD.SrcPos3D,1);
 nD = size(SD.DetPos3D,1);
@@ -20,10 +20,10 @@ if ~isempty(lstSSc)
 end
 
 
-figure
+hf = figure(1);
 alpha = 0.4;
 
-subplot(1,2,1);
+subplot(1,3,1);
 
 foo = dataSDWP(1:nS,1:nD,1,1);
 boo = rhoSDS;
@@ -43,13 +43,14 @@ set(gca,'xtick',[0 20 40 60 80 100])
 xlabel('Distance (mm)')
 ylabel('log_{10}( Signal )')
 title('Low Power')
+legend([num2str(SD.lambda(1)) ' nm'], [num2str(SD.lambda(2)) ' nm'])
 
 xlim([0 100])
 ylim([-6 0])
 grid on
 
 
-subplot(1,2,2);
+subplot(1,3,2);
 
 foo = dataSDWP(1:nS,1:nD,1,2);
 scatter1 = scatter(boo(:),log10(max(foo(:),1e-8)),'MarkerFaceColor','b','MarkerEdgeColor','none');
@@ -73,3 +74,12 @@ grid on
 
 
 set(gcf,'color',[1 1 1])
+
+
+% Plot the power level settings in circle plot
+ml = SD.MeasList;
+lst1 = find(ml(:,4)==1);
+convertBintoSnirfv3_plotPowerLevel( SD, powerLevelSetting, lst1, 3, sprintf('Power level - %d nm', SD.lambda(1)), hf )
+
+lst1 = find(ml(:,4)==2);
+convertBintoSnirfv3_plotPowerLevel( SD, powerLevelSetting, lst1, 6, sprintf('Power level - %d nm', SD.lambda(2)), hf )

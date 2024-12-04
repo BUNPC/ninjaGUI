@@ -1,5 +1,5 @@
 
-function convertBintoSnirfv3_crossTalk( stateMap, dataSDWP_LowHigh, powerLevelSetting )
+function convertBintoSnirfv3_crossTalk( stateMap, dataSDWP_LowHigh )
 
 
 % identify the first short separation detector
@@ -90,7 +90,6 @@ xlabel('Detector')
 
 
 
-
 % Plot the results in circle plot
 hf = figure(3);
 
@@ -107,13 +106,5 @@ lst1 = find(ml(:,4)==2);
 convertBintoSnirfv3_plotCrossTalk( stateMap.nSD, dataCrosstalk, lst1, 4, sprintf('High Power %d nm', stateMap.nSD.lambda(2)), hf )
 
 
-% Plot the results in circle plot
-hf = figure(4);
-
-lst1 = find(ml(:,4)==1);
-convertBintoSnirfv3_plotPowerLevel( stateMap.nSD, powerLevelSetting, lst1, 1, sprintf('Power level - %d nm', stateMap.nSD.lambda(1)), hf )
-
-lst1 = find(ml(:,4)==2);
-convertBintoSnirfv3_plotPowerLevel( stateMap.nSD, powerLevelSetting, lst1, 2, sprintf('Power level - %d nm', stateMap.nSD.lambda(2)), hf )
 
 
