@@ -226,7 +226,7 @@ if flagSave
     end
 
     % stateMap.devInfo.optPowerLevel( Src #, PowerLevel (1-L, 2-H), wavelength, Src Grp )
-    save(fileSide,'stateMap','info','dataSDWP_LowHigh','powerLevelSetLowHigh','powerLevelSetting','stateMap')
+    save(fileSide,'stateMap','info','dataSDWP_LowHigh','powerLevelSetLowHigh','powerLevelSetting')
 
 
 end
