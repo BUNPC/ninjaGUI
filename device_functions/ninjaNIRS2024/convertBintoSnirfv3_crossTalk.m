@@ -1,5 +1,20 @@
 
-function convertBintoSnirfv3_crossTalk( stateMap, dataSDWP_LowHigh )
+function convertBintoSnirfv3_crossTalk( stateMap, dataSDWP_LowHigh, powerLevelSetting )
+
+
+% identify the first short separation detector
+SD = stateMap.nSD;
+nS = size(SD.SrcPos3D,1);
+nD = size(SD.DetPos3D,1);
+rhoSDS = zeros(nS,nD);
+for iS=1:nS
+    posS = ones(nD,1) * SD.SrcPos3D(iS,:);
+    rhoSDS(iS,:) = (sum((posS - SD.DetPos3D).^2,2).^0.5)';
+end
+[lstSSr, lstSSc] = find(rhoSDS<12);
+if ~isempty(lstSSc)
+    SSd1 = min(lstSSc); % I assume 1 SS bundle for now
+end
 
 
 % CROSS TALK
@@ -9,10 +24,14 @@ srcModuleGroups = stateMap.devInfo.srcModuleGroups;
 dataCrosstalk = zeros(size(ml,1),1);
 dataCrosstalkLow = zeros(size(ml,1),1);
 
+
 for iML = 1:size(ml,1)
     iS = ml(iML,1);
     iD = ml(iML,2);
     iW = ml(iML,4);
+
+    % check if short separation detector
+    if iD> SSd1, iD = SSd1; end
 
     % determine source group for the given iS
     iSrcModule = ceil(iS/8);
@@ -46,7 +65,7 @@ end
 
 
 % Plot the results in data matrix form
-figure
+figure(2)
 set(gcf,'color',[1 1 1])
 
 subplot(2,2,1)
@@ -73,7 +92,7 @@ xlabel('Detector')
 
 
 % Plot the results in circle plot
-hf = figure;
+hf = figure(3);
 
 lst1 = find(ml(:,4)==1);
 convertBintoSnirfv3_plotCrossTalk( stateMap.nSD, dataCrosstalkLow, lst1, 1, sprintf('Low Power %d nm', stateMap.nSD.lambda(1)), hf )
@@ -86,5 +105,15 @@ convertBintoSnirfv3_plotCrossTalk( stateMap.nSD, dataCrosstalkLow, lst1, 3, spri
 
 lst1 = find(ml(:,4)==2);
 convertBintoSnirfv3_plotCrossTalk( stateMap.nSD, dataCrosstalk, lst1, 4, sprintf('High Power %d nm', stateMap.nSD.lambda(2)), hf )
+
+
+% Plot the results in circle plot
+hf = figure(4);
+
+lst1 = find(ml(:,4)==1);
+convertBintoSnirfv3_plotPowerLevel( stateMap.nSD, powerLevelSetting, lst1, 1, sprintf('Power level - %d nm', stateMap.nSD.lambda(1)), hf )
+
+lst1 = find(ml(:,4)==2);
+convertBintoSnirfv3_plotPowerLevel( stateMap.nSD, powerLevelSetting, lst1, 2, sprintf('Power level - %d nm', stateMap.nSD.lambda(2)), hf )
 
 
