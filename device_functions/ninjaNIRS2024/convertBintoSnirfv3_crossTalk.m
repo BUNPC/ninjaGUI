@@ -12,6 +12,7 @@ for iS=1:nS
     rhoSDS(iS,:) = (sum((posS - SD.DetPos3D).^2,2).^0.5)';
 end
 [lstSSr, lstSSc] = find(rhoSDS<12);
+SSd1 = 2 * max(rhoSDS(:));
 if ~isempty(lstSSc)
     SSd1 = min(lstSSc); % I assume 1 SS bundle for now
 end
@@ -71,21 +72,21 @@ set(gcf,'color',[1 1 1])
 subplot(2,2,1)
 imagesc( log10(abs(dataSDWP_LowHigh(:,:,1,1))), [-6 0] )
 ylabel("Source")
-title( sprintf('LOW Power, %d nm', stateMap.nSD.lambda(1)) )
+title( sprintf('LOW Power, %d nm', stateMap.nSD.Lambda(1)) )
 
 subplot(2,2,2)
 imagesc( log10(abs(dataSDWP_LowHigh(:,:,1,2))), [-6 0] )
-title( sprintf('HIGH Power, %d nm', stateMap.nSD.lambda(1)) )
+title( sprintf('HIGH Power, %d nm', stateMap.nSD.Lambda(1)) )
 
 subplot(2,2,3)
 imagesc( log10(abs(dataSDWP_LowHigh(:,:,2,1))), [-6 0] )
 ylabel("Source")
-title( sprintf('LOW Power, %d nm', stateMap.nSD.lambda(2)) )
+title( sprintf('LOW Power, %d nm', stateMap.nSD.Lambda(2)) )
 xlabel('Detector')
 
 subplot(2,2,4)
 imagesc( log10(abs(dataSDWP_LowHigh(:,:,2,2))), [-6 0] )
-title( sprintf('HIGH Power, %d nm', stateMap.nSD.lambda(2)) )
+title( sprintf('HIGH Power, %d nm', stateMap.nSD.Lambda(2)) )
 xlabel('Detector')
 
 
@@ -94,16 +95,16 @@ xlabel('Detector')
 hf = figure(3);
 
 lst1 = find(ml(:,4)==1);
-convertBintoSnirfv3_plotCrossTalk( stateMap.nSD, dataCrosstalkLow, lst1, 1, sprintf('Low Power %d nm', stateMap.nSD.lambda(1)), hf )
+convertBintoSnirfv3_plotCrossTalk( stateMap.nSD, dataCrosstalkLow, lst1, 1, sprintf('Low Power %d nm', stateMap.nSD.Lambda(1)), hf )
 
 lst1 = find(ml(:,4)==1);
-convertBintoSnirfv3_plotCrossTalk( stateMap.nSD, dataCrosstalk, lst1, 2, sprintf('High Power %d nm', stateMap.nSD.lambda(1)), hf )
+convertBintoSnirfv3_plotCrossTalk( stateMap.nSD, dataCrosstalk, lst1, 2, sprintf('High Power %d nm', stateMap.nSD.Lambda(1)), hf )
 
 lst1 = find(ml(:,4)==2);
-convertBintoSnirfv3_plotCrossTalk( stateMap.nSD, dataCrosstalkLow, lst1, 3, sprintf('Low Power %d nm', stateMap.nSD.lambda(2)), hf )
+convertBintoSnirfv3_plotCrossTalk( stateMap.nSD, dataCrosstalkLow, lst1, 3, sprintf('Low Power %d nm', stateMap.nSD.Lambda(2)), hf )
 
 lst1 = find(ml(:,4)==2);
-convertBintoSnirfv3_plotCrossTalk( stateMap.nSD, dataCrosstalk, lst1, 4, sprintf('High Power %d nm', stateMap.nSD.lambda(2)), hf )
+convertBintoSnirfv3_plotCrossTalk( stateMap.nSD, dataCrosstalk, lst1, 4, sprintf('High Power %d nm', stateMap.nSD.Lambda(2)), hf )
 
 
 
