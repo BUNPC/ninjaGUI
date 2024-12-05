@@ -231,4 +231,32 @@ if flagSave
     end
     save(fileSide,'stateMap','info','dataSDWP_LowHigh','powerLevelSetLowHigh','powerLevelSetting')
 
+    SD = stateMap.nSD;
+    SDo.SrcPos3D = SD.SrcPos3D;
+    SDo.DetPos3D = SD.DetPos3D;
+    SDo.SrcPos2D = SD.SrcPos2D;
+    SDo.DetPos2D = SD.DetPos2D;
+    SDo.Lambda = SD.Lambda;
+    SDo.MeasList = SD.MeasList;
+    ['"SD": ' jsonencode(SDo)]
+    ['"dataSDWP_LowHigh": ' jsonencode(dataSDWP_LowHigh)]     
+    ['"powerLevelSetting": ' jsonencode(powerLevelSetting)]
+    ['"powerLevelSetLowHigh": ' jsonencode(powerLevelSetLowHigh)]
+    ['"srcModuleGroups": ' jsonencode(stateMap.devInfo.srcModuleGroups)]
+
+    if ~isempty(folder)
+        fileSide = [folder filesep baseFileNameNoExt '.json'];
+    else
+        fileSide = [baseFileNameNoExt '.json'];
+    end
+    fid = fopen(fileSide,'w');
+    fprintf( fid, '{\n');
+    fprintf( fid, '%s,\n', ['"SD": ' jsonencode(SDo,"PrettyPrint",true)] );
+    fprintf( fid, '%s,\n', ['"dataSDWP_LowHigh": ' jsonencode(dataSDWP_LowHigh)] );
+    fprintf( fid, '%s,\n', ['"powerLevelSetting": ' jsonencode(powerLevelSetting)] );
+    fprintf( fid, '%s,\n', ['"powerLevelSetLowHigh": ' jsonencode(powerLevelSetLowHigh)] );
+    fprintf( fid, '%s,\n', ['"srcModuleGroups": ' jsonencode(stateMap.devInfo.srcModuleGroups,"PrettyPrint",true)] );
+    fprintf( fid, '%s\n', ['"dataSDWP_LowHigh": ' jsonencode(dataSDWP_LowHigh)] );
+    fprintf( fid, '}');
+    fclose( fid );
 end

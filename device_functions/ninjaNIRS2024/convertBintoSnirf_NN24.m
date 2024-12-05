@@ -30,6 +30,12 @@ stateMap = load([fName,'_stateMap.mat']);
 % load snirf file
 SD = stateMap.nSD;
 
+% ninjaGUIpy is saving 5 columns in SD.MeasList. Remove the 5th 
+if size(SD.MeasList,2)>4
+    SD.MeasList(:,5:end) = [];
+end
+
+
 subtractDark=1; % make it as 1 to subtract dark state
 
 foo=find(stateMap.stateMap(1,:,32)==1);
@@ -165,12 +171,17 @@ end
 
 
 % Add the calibration data to the AUX
-dataSDWP_LowHigh = convertBintoSnirf_NN24_LEDPowerCalibrationTools( fName, stateMap );
-
-if flagPlot
-    convertBintoSnirfv3_plotSigVsDistance( SD, dataSDWP_LowHigh, powerLevelSetting)
-    convertBintoSnirfv3_crossTalk( stateMap, dataSDWP_LowHigh )
+try
+    dataSDWP_LowHigh = convertBintoSnirf_NN24_LEDPowerCalibrationTools( fName, stateMap );
+    if flagPlot
+        convertBintoSnirfv3_plotSigVsDistance( SD, dataSDWP_LowHigh, powerLevelSetting)
+        convertBintoSnirfv3_crossTalk( stateMap, dataSDWP_LowHigh )
+    end
+catch
+    warning('Error - Could not find an appropriate LEDPowerCalibration dataset')
+    dataSDWP_LowHigh = [];
 end
+
 
 %dataSDWP_w1low_obj = AuxClass( dataSDWP_LowHigh(:,:,1,1), [1:stateMap.nSD.nSrcs]','Calibration, Wavelength 1, Low Power' );
 %dataSDWP_w1high_obj = AuxClass( dataSDWP_LowHigh(:,:,1,2), [1:stateMap.nSD.nSrcs]','Calibration, Wavelength 1, High Power' );
@@ -229,4 +240,32 @@ if flagSave
     save(fileSide,'stateMap','info','dataSDWP_LowHigh','powerLevelSetLowHigh','powerLevelSetting')
 
 
+    SD = stateMap.nSD;
+    SDo.SrcPos3D = SD.SrcPos3D;
+    SDo.DetPos3D = SD.DetPos3D;
+    SDo.SrcPos2D = SD.SrcPos2D;
+    SDo.DetPos2D = SD.DetPos2D;
+    SDo.Lambda = SD.Lambda;
+    SDo.MeasList = SD.MeasList;
+    ['"SD": ' jsonencode(SDo)]
+    ['"dataSDWP_LowHigh": ' jsonencode(dataSDWP_LowHigh)]     
+    ['"powerLevelSetting": ' jsonencode(powerLevelSetting)]
+    ['"powerLevelSetLowHigh": ' jsonencode(powerLevelSetLowHigh)]
+    ['"srcModuleGroups": ' jsonencode(stateMap.devInfo.srcModuleGroups)]
+
+    if ~isempty(folder)
+        fileSide = [folder filesep baseFileNameNoExt '.json'];
+    else
+        fileSide = [baseFileNameNoExt '.json'];
+    end
+    fid = fopen(fileSide,'w');
+    fprintf( fid, '{\n');
+    fprintf( fid, '%s,\n', ['"SD": ' jsonencode(SDo,"PrettyPrint",true)] );
+    fprintf( fid, '%s,\n', ['"dataSDWP_LowHigh": ' jsonencode(dataSDWP_LowHigh)] );
+    fprintf( fid, '%s,\n', ['"powerLevelSetting": ' jsonencode(powerLevelSetting)] );
+    fprintf( fid, '%s,\n', ['"powerLevelSetLowHigh": ' jsonencode(powerLevelSetLowHigh)] );
+    fprintf( fid, '%s,\n', ['"srcModuleGroups": ' jsonencode(stateMap.devInfo.srcModuleGroups,"PrettyPrint",true)] );
+    fprintf( fid, '%s\n', ['"dataSDWP_LowHigh": ' jsonencode(dataSDWP_LowHigh)] );
+    fprintf( fid, '}');
+    fclose( fid );
 end
