@@ -43,7 +43,7 @@ set(gca,'xtick',[0 20 40 60 80 100])
 xlabel('Distance (mm)')
 ylabel('log_{10}( Signal )')
 title('Low Power')
-legend([num2str(SD.lambda(1)) ' nm'], [num2str(SD.lambda(2)) ' nm'])
+legend([num2str(SD.Lambda(1)) ' nm'], [num2str(SD.Lambda(2)) ' nm'])
 
 xlim([0 100])
 ylim([-6 0])
@@ -79,7 +79,7 @@ set(gcf,'color',[1 1 1])
 % Plot the power level settings in circle plot
 ml = SD.MeasList;
 lst1 = find(ml(:,4)==1);
-convertBintoSnirfv3_plotPowerLevel( SD, powerLevelSetting, lst1, 3, sprintf('Power level - %d nm', SD.lambda(1)), hf )
+convertBintoSnirfv3_plotPowerLevel( SD, powerLevelSetting, lst1, 3, sprintf('Power level - %d nm', SD.Lambda(1)), hf )
 
 lst1 = find(ml(:,4)==2);
-convertBintoSnirfv3_plotPowerLevel( SD, powerLevelSetting, lst1, 6, sprintf('Power level - %d nm', SD.lambda(2)), hf )
+convertBintoSnirfv3_plotPowerLevel( SD, powerLevelSetting, lst1, 6, sprintf('Power level - %d nm', SD.Lambda(2)), hf )
