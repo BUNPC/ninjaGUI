@@ -254,6 +254,4 @@ if flagSave
     fprintf( fid, '%s\n', ['"dataSDWP_LowHigh": ' jsonencode(dataSDWP_LowHigh)] );
     fprintf( fid, '}');
     fclose( fid );
-    gzip(fileSide);
-    delete(fileSide);
 end
