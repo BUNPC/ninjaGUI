@@ -243,15 +243,15 @@ if flagSave
     SD = stateMap.nSD;
     SDo.SrcPos3D = SD.SrcPos3D;
     SDo.DetPos3D = SD.DetPos3D;
-    SDo.SrcPos2D = SD.SrcPos2D;
-    SDo.DetPos2D = SD.DetPos2D;
+    if isfield(SD,'SrcPos2D')
+        SDo.SrcPos2D = SD.SrcPos2D;
+        SDo.DetPos2D = SD.DetPos2D;
+    else
+        SDo.SrcPos2D = SD.SrcPos;
+        SDo.DetPos2D = SD.DetPos;
+    end
     SDo.Lambda = SD.Lambda;
     SDo.MeasList = SD.MeasList;
-    ['"SD": ' jsonencode(SDo)]
-    ['"dataSDWP_LowHigh": ' jsonencode(dataSDWP_LowHigh)]     
-    ['"powerLevelSetting": ' jsonencode(powerLevelSetting)]
-    ['"powerLevelSetLowHigh": ' jsonencode(powerLevelSetLowHigh)]
-    ['"srcModuleGroups": ' jsonencode(stateMap.devInfo.srcModuleGroups)]
 
     if ~isempty(folder)
         fileSide = [folder filesep baseFileNameNoExt '.json'];
@@ -268,4 +268,6 @@ if flagSave
     fprintf( fid, '%s\n', ['"dataSDWP_LowHigh": ' jsonencode(dataSDWP_LowHigh)] );
     fprintf( fid, '}');
     fclose( fid );
+    gzip(fileSide);
+    delete(fileSide);
 end

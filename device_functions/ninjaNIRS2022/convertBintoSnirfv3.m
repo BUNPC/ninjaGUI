@@ -238,11 +238,6 @@ if flagSave
     SDo.DetPos2D = SD.DetPos2D;
     SDo.Lambda = SD.Lambda;
     SDo.MeasList = SD.MeasList;
-    ['"SD": ' jsonencode(SDo)]
-    ['"dataSDWP_LowHigh": ' jsonencode(dataSDWP_LowHigh)]     
-    ['"powerLevelSetting": ' jsonencode(powerLevelSetting)]
-    ['"powerLevelSetLowHigh": ' jsonencode(powerLevelSetLowHigh)]
-    ['"srcModuleGroups": ' jsonencode(stateMap.devInfo.srcModuleGroups)]
 
     if ~isempty(folder)
         fileSide = [folder filesep baseFileNameNoExt '.json'];
@@ -259,4 +254,6 @@ if flagSave
     fprintf( fid, '%s\n', ['"dataSDWP_LowHigh": ' jsonencode(dataSDWP_LowHigh)] );
     fprintf( fid, '}');
     fclose( fid );
+    gzip(fileSide);
+    delete(fileSide);
 end
