@@ -12,7 +12,7 @@ for iS=1:nS
     rhoSDS(iS,:) = (sum((posS - SD.DetPos3D).^2,2).^0.5)';
 end
 [lstSSr, lstSSc] = find(rhoSDS<12);
-SSd1 = 2 * max(rhoSDS(:));
+SSd1 = nD+1;
 if ~isempty(lstSSc)
     SSd1 = min(lstSSc); % I assume 1 SS bundle for now
 end
