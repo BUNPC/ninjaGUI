@@ -261,11 +261,10 @@ if flagSave
     fid = fopen(fileSide,'w');
     fprintf( fid, '{\n');
     fprintf( fid, '%s,\n', ['"SD": ' jsonencode(SDo,"PrettyPrint",true)] );
-    fprintf( fid, '%s,\n', ['"dataSDWP_LowHigh": ' jsonencode(dataSDWP_LowHigh)] );
     fprintf( fid, '%s,\n', ['"powerLevelSetting": ' jsonencode(powerLevelSetting)] );
     fprintf( fid, '%s,\n', ['"powerLevelSetLowHigh": ' jsonencode(powerLevelSetLowHigh)] );
     fprintf( fid, '%s,\n', ['"srcModuleGroups": ' jsonencode(stateMap.devInfo.srcModuleGroups,"PrettyPrint",true)] );
-    fprintf( fid, '%s\n', ['"dataSDWP_LowHigh": ' jsonencode(dataSDWP_LowHigh)] );
+    fprintf( fid, '%s,\n', ['"dataSDWP_LowHigh": ' jsonencode(dataSDWP_LowHigh)] );
     fprintf( fid, '}');
     fclose( fid );
 end
