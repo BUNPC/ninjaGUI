@@ -207,9 +207,12 @@ if flagSave
     end
 
     [folder, baseFileNameNoExt, extension] = fileparts(fName);
+    baseFileNameNoExt_orig = baseFileNameNoExt;
+    subj_path = '';
     if ~isempty(subLabel) && ~isempty(taskLabel)
         if isempty(sesLabel)
             baseFileNameNoExt = sprintf('sub-%s_task-%s', subLabel, taskLabel );
+            subj_path = ['sub-' subLabel filesep 'nirs' filesep];
         else
             baseFileNameNoExt = sprintf('sub-%s_ses-%s_task-%s', subLabel, sesLabel, taskLabel );
         end
@@ -220,16 +223,22 @@ if flagSave
         end
     end
 
+    if ~isempty(subj_path)
+        if exist(['..' filesep '..' filesep '..' filesep subj_path], 'dir')
+            folder = ['..' filesep '..' filesep '..' filesep subj_path];
+        end
+    end
+
     snirf1.Save([folder baseFileNameNoExt '.snirf'])
 %    snirf1.Save([folder filesep baseFileNameNoExt '.snirf'])
 
-    % Save Sidecar File
-    if ~isempty(folder)
-        fileSide = [folder filesep baseFileNameNoExt '_sidecar.mat'];
-    else
-        fileSide = [baseFileNameNoExt '_NN22sidecar.mat'];
-    end
-    save(fileSide,'stateMap','info','dataSDWP_LowHigh','powerLevelSetLowHigh','powerLevelSetting')
+%     % Save Sidecar File
+%     if ~isempty(folder)
+%         fileSide = [folder filesep baseFileNameNoExt '_sidecar.mat'];
+%     else
+%         fileSide = [baseFileNameNoExt '_NN22sidecar.mat'];
+%     end
+%     save(fileSide,'stateMap','info','dataSDWP_LowHigh','powerLevelSetLowHigh','powerLevelSetting')
 
     SD = stateMap.nSD;
     SDo.SrcPos3D = SD.SrcPos3D;
@@ -246,6 +255,12 @@ if flagSave
     end
     fid = fopen(fileSide,'w');
     fprintf( fid, '{\n');
+    fprintf( fid, '%s,\n', ['"SourceDataRawFileName": ' jsonencode(baseFileNameNoExt_orig)] );
+    fprintf( fid, '%s,\n', ['"SamplingFrequency": ' jsonencode(fs)] );
+    fprintf( fid, '%s,\n', ['"NIRSChannelCount": ' jsonencode(size(ml,1))] );
+    fprintf( fid, '%s,\n', ['"NIRSSourceOptodeCount": ' jsonencode(nSD.nSrcs)] );
+    fprintf( fid, '%s,\n', ['"NIRSDetectorOptodeCount": ' jsonencode(nSD.nDets)] );
+    fprintf( fid, '%s,\n', ['"RecordingDuration": ' jsonencode(t(end))] );
     fprintf( fid, '%s,\n', ['"SD": ' jsonencode(SDo,"PrettyPrint",true)] );
     fprintf( fid, '%s,\n', ['"powerLevelSetting": ' jsonencode(powerLevelSetting)] );
     fprintf( fid, '%s,\n', ['"powerLevelSetLowHigh": ' jsonencode(powerLevelSetLowHigh)] );
@@ -253,4 +268,5 @@ if flagSave
     fprintf( fid, '%s\n', ['"dataSDWP_LowHigh": ' jsonencode(dataSDWP_LowHigh)] );
     fprintf( fid, '}');
     fclose( fid );
+    
 end

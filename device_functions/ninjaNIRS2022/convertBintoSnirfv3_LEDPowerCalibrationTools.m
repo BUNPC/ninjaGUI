@@ -77,7 +77,7 @@ end
 %%
 % Get the calibration data for the Low and High LED Powers utilized in the
 % measurements
-dataSDWP_LowHigh = zeros( size(dataSDWP,1), size(dataSDWP,2), 2, 2);
+dataSDWP_LowHigh = zeros( size(dataSDWP,1), size(dataSDWP,2), 2, 9);
 for iS = 1:SD.nSrcs
 
     % determine source group for the given iS
@@ -95,6 +95,9 @@ for iS = 1:SD.nSrcs
         for iPL = 1:2
             iPowerLevel = stateMap.devInfo.optPowerLevel(iSrc,iPL,iW,iSg);   
             dataSDWP_LowHigh( iS, :, iW, iPL) = dataSDWP( iS, :, iW, iPowerLevel) - dataSDWPdark( iS, :, iW, iPowerLevel);
+        end
+        for iPL = 1:7
+            dataSDWP_LowHigh( iS, :, iW, iPL+2) = dataSDWP( iS, :, iW, iPL) - dataSDWPdark( iS, :, iW, iPL);
         end
     end
 end

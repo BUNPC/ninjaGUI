@@ -76,7 +76,7 @@ end
 %%
 % Get the calibration data for the Low and High LED Powers utilized in the
 % measurements
-dataSDWP_LowHigh = zeros( size(dataSDWP,1), size(dataSDWP,2), 2, 2);
+dataSDWP_LowHigh = zeros( size(dataSDWP,1), size(dataSDWP,2), 2, 9);
 for iS = 1:SD.nSrcs
 
     % determine source group for the given iS
