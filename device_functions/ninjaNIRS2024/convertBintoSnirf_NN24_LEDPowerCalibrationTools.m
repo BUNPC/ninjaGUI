@@ -95,6 +95,9 @@ for iS = 1:SD.nSrcs
             iPowerLevel = stateMap.devInfo.optPowerLevel(iSrc,iPL,iW,iSg);   
             dataSDWP_LowHigh( iS, :, iW, iPL) = dataSDWP( iS, :, iW, iPowerLevel) - dataSDWPdark( iS, :, iW, iPowerLevel);
         end
+        for iPL = 1:7
+            dataSDWP_LowHigh( iS, :, iW, iPL+2) = dataSDWP( iS, :, iW, iPL) - dataSDWPdark( iS, :, iW, iPL);
+        end
     end
 end
 
