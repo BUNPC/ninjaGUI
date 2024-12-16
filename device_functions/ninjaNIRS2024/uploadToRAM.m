@@ -68,7 +68,7 @@ if data_relay % slow down transmission
     % uart to plug in boards is only half as fast as main uart to fpga
     for iseg = 1:8
         write(stat.s, buf( (iseg-1)*128*7 + (1:(128*7)) ), "uint8");
-        pause(0.01);
+        pause(0.1);
     end
 else % full speed
     write(stat.s, buf, "uint8");
