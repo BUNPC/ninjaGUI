@@ -210,9 +210,9 @@ if flagSave
     baseFileNameNoExt_orig = baseFileNameNoExt;
     subj_path = '';
     if ~isempty(subLabel) && ~isempty(taskLabel)
+        subj_path = ['sub-' subLabel filesep 'nirs' filesep];
         if isempty(sesLabel)
             baseFileNameNoExt = sprintf('sub-%s_task-%s', subLabel, taskLabel );
-            subj_path = ['sub-' subLabel filesep 'nirs' filesep];
         else
             baseFileNameNoExt = sprintf('sub-%s_ses-%s_task-%s', subLabel, sesLabel, taskLabel );
         end
