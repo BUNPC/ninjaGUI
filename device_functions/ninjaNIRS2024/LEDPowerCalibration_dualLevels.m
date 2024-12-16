@@ -101,11 +101,11 @@ for iSg = 1:length(srcModuleGroups)
             [ir,ic] = find( squeeze(numDetGood12(iSrc,:,:,iWav)) == max(max(numDetGood12(iSrc,:,:,iWav))) );
             [ir2,ic2] = find( squeeze(numDetGood12(iSrc,:,:,iWav)) == max(max(numDetGood12(iSrc,:,:,iWav))) & squeeze(numDetGood2(iSrc,:,:,iWav))>0);
             if 1
-                if 0
+                if 1
                     % just take the end, but then maybe no channels use
                     % high power
-                    optPowerLevel(iSrc,1,iWav,iSg) = ir(end); 
-                    optPowerLevel(iSrc,2,iWav,iSg) = ic(end);
+                    optPowerLevel(iSrc,1,iWav,iSg) = ir(1);%(end); 
+                    optPowerLevel(iSrc,2,iWav,iSg) = ic(1);%(end);
                 else
                     % require 1 or more channels to use the high power
                     optPowerLevel(iSrc,1,iWav,iSg) = ir2(end); 
@@ -196,27 +196,32 @@ maxPower = round(logspace(3,log10(2^16-1),7));
 
 % spatial multiplex 3 groups of source modules; one dark state after all low power; one dark state after each high power source (after both wavelengths)
 % low power state
+srcModuleGroups_o = srcModuleGroups;
+%srcModuleGroups = {[1 4 6],[2 3 5],[7]};
+srcModuleGroups = {[1 2 3 4 5 6 7]};
 for iSg = 1:length(srcModuleGroups)
     for iS = 1:8
         lstSMG = srcModuleGroups{iSg};
 
         for iSrcMod = 1:length(lstSMG)
-            srcram( lstSMG(iSrcMod), iState, 1:16 ) = bitget( maxPower(optPowerLevel(iS,1,1,iSg)), 1:16, 'uint16' ); % set the power
+%            srcram( lstSMG(iSrcMod), iState, 1:16 ) = bitget( maxPower(optPowerLevel(iS,1,1,iSg)), 1:16, 'uint16' ); % set the power
+            srcram( lstSMG(iSrcMod), iState, 1:16 ) = bitget( maxPower(optPowerLevel(iS,1,1,lstSMG(iSrcMod))), 1:16, 'uint16' ); % set the power
             srcram( lstSMG(iSrcMod), iState, 17:20) = bitget( (iS-1)*2, 1:4, 'uint16' ); % select the source for wavelength 1
             srcram( lstSMG(iSrcMod), iState, 21) = 0;
             srcram( lstSMG(iSrcMod), iState, 31) = 0;
         end
         iState = iState + 1;
         for iSrcMod = 1:length(lstSMG)
-            srcram( lstSMG(iSrcMod), iState, 1:16 ) = bitget( maxPower(optPowerLevel(iS,1,2,iSg)), 1:16, 'uint16' ); % set the power
+%            srcram( lstSMG(iSrcMod), iState, 1:16 ) = bitget( maxPower(optPowerLevel(iS,1,2,iSg)), 1:16, 'uint16' ); % set the power
+            srcram( lstSMG(iSrcMod), iState, 1:16 ) = bitget( maxPower(optPowerLevel(iS,1,2,lstSMG(iSrcMod))), 1:16, 'uint16' ); % set the power
             srcram( lstSMG(iSrcMod), iState, 17:20) = bitget( (iS-1)*2+1, 1:4, 'uint16' ); % select the source for wavelength 2
             srcram( lstSMG(iSrcMod), iState, 21) = 0;
             srcram( lstSMG(iSrcMod), iState, 31) = 0;
         end
-        iState = iState + 2;
-
+        iState = iState + 1;
     end
 end
+iState = iState + 1;
 
 % for iS = 1:8
 % 
@@ -255,22 +260,26 @@ end
 %         optPowerLevel(iS,1,2,iSg) = optPowerLevelLow(iS,2);
 %     end
 % end
-iState = iState + 1;
+%iState = iState + 1;
 
 % high power state
+%srcModuleGroups = srcModuleGroups_o;
+srcModuleGroups = {[1 4 6],[2 3 5],[7]};
 for iSg = 1:length(srcModuleGroups)
     for iS = 1:8
         lstSMG = srcModuleGroups{iSg};
 
         for iSrcMod = 1:length(lstSMG)
-            srcram( lstSMG(iSrcMod), iState, 1:16 ) = bitget( maxPower(optPowerLevel(iS,2,1,iSg)), 1:16, 'uint16' ); % set the power
+%            srcram( lstSMG(iSrcMod), iState, 1:16 ) = bitget( maxPower(optPowerLevel(iS,2,1,iSg)), 1:16, 'uint16' ); % set the power
+            srcram( lstSMG(iSrcMod), iState, 1:16 ) = bitget( maxPower(optPowerLevel(iS,2,1,lstSMG(iSrcMod))), 1:16, 'uint16' ); % set the power
             srcram( lstSMG(iSrcMod), iState, 17:20) = bitget( (iS-1)*2, 1:4, 'uint16' ); % select the source for wavelength 1
             srcram( lstSMG(iSrcMod), iState, 21) = 0;
             srcram( lstSMG(iSrcMod), iState, 31) = 0;
         end
         iState = iState + 1;
         for iSrcMod = 1:length(lstSMG)
-            srcram( lstSMG(iSrcMod), iState, 1:16 ) = bitget( maxPower(optPowerLevel(iS,2,2,iSg)), 1:16, 'uint16' ); % set the power
+%            srcram( lstSMG(iSrcMod), iState, 1:16 ) = bitget( maxPower(optPowerLevel(iS,2,2,iSg)), 1:16, 'uint16' ); % set the power
+            srcram( lstSMG(iSrcMod), iState, 1:16 ) = bitget( maxPower(optPowerLevel(iS,2,2,lstSMG(iSrcMod))), 1:16, 'uint16' ); % set the power
             srcram( lstSMG(iSrcMod), iState, 17:20) = bitget( (iS-1)*2+1, 1:4, 'uint16' ); % select the source for wavelength 2
             srcram( lstSMG(iSrcMod), iState, 21) = 0;
             srcram( lstSMG(iSrcMod), iState, 31) = 0;
