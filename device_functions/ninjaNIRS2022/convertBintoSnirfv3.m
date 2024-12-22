@@ -258,8 +258,8 @@ if flagSave
     fprintf( fid, '%s,\n', ['"SourceDataRawFileName": ' jsonencode(baseFileNameNoExt_orig)] );
     fprintf( fid, '%s,\n', ['"SamplingFrequency": ' jsonencode(fs)] );
     fprintf( fid, '%s,\n', ['"NIRSChannelCount": ' jsonencode(size(ml,1))] );
-    fprintf( fid, '%s,\n', ['"NIRSSourceOptodeCount": ' jsonencode(nSD.nSrcs)] );
-    fprintf( fid, '%s,\n', ['"NIRSDetectorOptodeCount": ' jsonencode(nSD.nDets)] );
+    fprintf( fid, '%s,\n', ['"NIRSSourceOptodeCount": ' jsonencode(max(nSD.MeasList(:,1)))] );
+    fprintf( fid, '%s,\n', ['"NIRSDetectorOptodeCount": ' jsonencode(max(nSD.MeasList(:,1)))] );
     fprintf( fid, '%s,\n', ['"RecordingDuration": ' jsonencode(t(end))] );
     fprintf( fid, '%s,\n', ['"SD": ' jsonencode(SDo,"PrettyPrint",true)] );
     fprintf( fid, '%s,\n', ['"powerLevelSetting": ' jsonencode(powerLevelSetting)] );
