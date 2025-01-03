@@ -217,6 +217,7 @@ if flagSave
     subj_path = '';
     if ~isempty(subLabel) && ~isempty(taskLabel)
         subj_path = ['sub-' subLabel filesep 'nirs' filesep];
+        subj_path0 = ['sub-' subLabel filesep];
         if isempty(sesLabel)
             baseFileNameNoExt = sprintf('sub-%s_task-%s', subLabel, taskLabel );
         else
@@ -232,6 +233,12 @@ if flagSave
     if ~isempty(subj_path)
         if exist(['..' filesep '..' filesep '..' filesep subj_path], 'dir')
             folder = ['..' filesep '..' filesep '..' filesep subj_path];
+        elseif exist(['..' filesep '..' filesep '..' filesep 'sourcedata'], 'dir')
+            folder = ['..' filesep '..' filesep '..' filesep subj_path];
+            if ~exist( ['..' filesep '..' filesep '..' filesep subj_path0], 'dir' )
+                mkdir( ['..' filesep '..' filesep '..' filesep subj_path0] );
+            end
+            mkdir( ['..' filesep '..' filesep '..' filesep subj_path] );
         end
     end
     snirf1.Save([folder baseFileNameNoExt '.snirf'])
