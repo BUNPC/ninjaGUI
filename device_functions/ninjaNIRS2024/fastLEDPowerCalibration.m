@@ -55,6 +55,7 @@ app.deviceFunctions.Acquisition(app,'start');
 pause(1)
 %stop acquisition
 app.deviceFunctions.Acquisition(app,'stop');
+
 [data,~,~,~,~,~,~,dataDarkTmp,B] = app.deviceFunctions.ReadBytesAvailable(app);
 dataDark = mean(dataDarkTmp,2,'omitnan'); % really only need the lowest power level
 B_Dark = B;
@@ -84,9 +85,22 @@ app.deviceFunctions.Acquisition(app,'start');
 pause(1)
 %stop acquisition
 app.deviceFunctions.Acquisition(app,'stop');
-srcPowerLowHigh = ones(8 * 7, len(app.nSD.MeasList), 2, 'uint8')
+
+% read raw byets
+s=app.sp; %serial port
+dev=app.deviceInformation; %config file
+SD=app.nSD; %probe file
+prevrbytes=app.rbytes; %remainder bytes from the previous read operation
+fID=app.fstreamID;  %file streamer for debug mode; this can be used to stream the bytes directly to file as a backup
+ba=s.NumBytesAvailable;
+raw = read(s,ba,'uint8')';
+if ~isempty(fID)
+    fwrite(fID,raw,'uchar');
+end
+srcPowerLowHigh = ones(8 * 7, len(app.nSD.MeasList), 2, 'uint8');
 for iPower = 1:7
-    [data,~,~,~,~,~,~,dataDarkTmp,B] = app.deviceFunctions.ReadBytesAvailable(app);
+    mappedIndices = mapToMeasurementList(srcram, measList, iPower*srcPowerLowHigh);
+    [data,~,~,~,~,~,~,dataDarkTmp,B] = ReadBytesAvailable_powerCalib(app, raw, mappedIndices);
     if iPower == 1
         Bpow = zeros(size(B,2),size(B,3),7);
         dataLEDPowerCalibration = zeros(size(dataDarkTmp,2),7);
