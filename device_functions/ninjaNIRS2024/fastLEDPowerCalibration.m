@@ -30,13 +30,15 @@ app.deviceInformation.stateIndices = mapToMeasurementList(app.deviceInformation.
 rama = zeros(1024,32);
 rama(nStates:end,9) = 1; % mark sequence end
 
+% backup normal fID
+standardfID=app.fstreamID;
 uploadToRAM( stat, rama, 'a', false);
 for isrcb = 1:7
     if stat.srcb_active(isrcb)
         uploadToRAM(stat, squeeze(srcram(isrcb,:,:)), 'src', false, isrcb);
     end
 end
-
+fname=char(datetime('now','Format','y-MM-dd-HH-mm-ss'));
 foldname=char(datetime('now','Format','y-MM-dd'));
 foldname2 = 'LEDPowerCalibration';
 if ~exist(['.\' foldname],'dir')
@@ -97,13 +99,13 @@ raw = read(s,ba,'uint8')';
 if ~isempty(fID)
     fwrite(fID,raw,'uchar');
 end
-srcPowerLowHigh = ones(8 * 7, len(app.nSD.MeasList), 2, 'uint8');
+srcPowerLowHigh = ones(8 * 7, length(app.nSD.MeasList), 2, 'uint8');
 for iPower = 1:7
     mappedIndices = mapToMeasurementList(srcram, measList, iPower*srcPowerLowHigh);
     [data,~,~,~,~,~,~,dataDarkTmp,B] = ReadBytesAvailable_powerCalib(app, raw, mappedIndices);
     if iPower == 1
         Bpow = zeros(size(B,2),size(B,3),7);
-        dataLEDPowerCalibration = zeros(size(dataDarkTmp,2),7);
+        % dataLEDPowerCalibration = zeros(size(dataDarkTmp,2),7);
     end
     dataLEDPowerCalibration(:,iPower) = squeeze(mean(data,2,'omitnan'));
     Bpow(:,:,iPower) = squeeze( mean(B,1,'omitnan') );
