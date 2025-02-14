@@ -21,7 +21,7 @@ measList(:,5) = rhoSDS;
 set( hAxes.txa_pow,'value',sprintf('doing power calibration...'));
 
 % Collect dark state
-srcram = createLEDPowerCalibrationSrcRAM( app.nSD, 0 );
+srcram = createLEDPowerCalibrationSrcRAM( app.nSD, 0);
 app.deviceInformation.srcram = srcram ;
 foo=find(srcram(1,:,32)==1);
 nStates=foo(1);

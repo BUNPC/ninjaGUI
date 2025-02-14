@@ -36,6 +36,7 @@ if flagMakeGUI
     txa_sds = uitextarea(fig,'position',[680 710 100 20],'value','SDS range','backgroundcolor',get(fig,'color'),'horizontalalignment','right');
     sds = uieditfield(fig,'text','position',[790 710 80 20],'value','[0 35]');
     cb = uicheckbox(fig,'position',[680 735 190 20],'text','Spatial Multiplexing','value',0);
+    cb_fastPW = uicheckbox(fig,'position',[805 735 75 20],'text','fastPW','value',1);
     acc_stat = uitextarea(fig,'position',[680 760 190 35]);
 
 %    str = sprintf('{''line 1'';''line 2'';''line 3''}');
@@ -89,6 +90,7 @@ if flagMakeGUI
     app.deviceInformation.handlesReportSigLevel.ax2 = ax2;
     app.deviceInformation.handlesReportSigLevel.ax3 = ax3;
     app.deviceInformation.handlesReportSigLevel.cb = cb;
+    app.deviceInformation.handlesReportSigLevel.cb_fastPW = cb_fastPW;
     app.deviceInformation.handlesReportSigLevel.acc_stat = acc_stat;
 else
     bg = app.deviceInformation.handlesReportSigLevel.bg;
@@ -100,6 +102,7 @@ else
     ax2 = app.deviceInformation.handlesReportSigLevel.ax2;
     ax3 = app.deviceInformation.handlesReportSigLevel.ax3;
     cb = app.deviceInformation.handlesReportSigLevel.cb;
+    cb_fastPW = app.deviceInformation.handlesReportSigLevel.cb_fastPW;
     acc_stat = app.deviceInformation.handlesReportSigLevel.acc_stat;
     txa_sds = app.deviceInformation.handlesReportSigLevel.txa_sds;
     sds = app.deviceInformation.handlesReportSigLevel.sds;
@@ -145,10 +148,15 @@ if flagCalibratePowerLevel==1
     hAxes.ax2 = ax2;
     hAxes.ax3 = ax3;
     hAxes.cb = cb;
+    hAxes.cb_fastPW = cb_fastPW;
     hAxes.txa_pow = txa_pow;
     hAxes.sds = sds;
     set(app.togglebuttonStartStop,'enable','off')
-    LEDPowerCalibration( app, hAxes )
+    if get(cb_fastPW,'value')
+        fastLEDPowerCalibration( app, hAxes );
+    else
+        LEDPowerCalibration( app, hAxes );
+    end
     drawnow
     set(tb1,'value',1)
 end
@@ -315,8 +323,13 @@ while get(tb1,'value') || get(tb2,'value')
         hAxes.ax2 = ax2;
         hAxes.ax3 = ax3;
         hAxes.cb = cb;
+        hAxes.cb_fastPW = cb_fastPW;
         hAxes.txa_pow = txa_pow;
-        LEDPowerCalibration( app, hAxes );
+        if get(cb_fastPW,'value')
+            fastLEDPowerCalibration( app, hAxes );
+        else
+            LEDPowerCalibration( app, hAxes );
+        end
         drawnow
         set(tb1,'value',1)
 
