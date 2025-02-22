@@ -227,12 +227,22 @@ if flagSave
     if ~isempty(subj_path)
         if exist(['..' filesep '..' filesep '..' filesep subj_path], 'dir')
             folder = ['..' filesep '..' filesep '..' filesep subj_path];
-        elseif exist(['..' filesep '..' filesep '..' filesep 'sourcedata'], 'dir')
+        elseif exist(['..' filesep '..' filesep '..' filesep 'sourcedata'], 'dir') % e.g. /sourcedata/raw/sub-id
             folder = ['..' filesep '..' filesep '..' filesep subj_path];
             if ~exist( ['..' filesep '..' filesep '..' filesep subj_path0], 'dir' )
                 mkdir( ['..' filesep '..' filesep '..' filesep subj_path0] );
             end
-            mkdir( ['..' filesep '..' filesep '..' filesep subj_path] );
+            if ~exist( ['..' filesep '..' filesep '..' filesep subj_path], 'dir' )
+                mkdir( ['..' filesep '..' filesep '..' filesep subj_path] );
+            end
+        elseif exist(['..' filesep '..' filesep '..' filesep '..' filesep 'sourcedata'], 'dir') % e.g. /sourcedata/raw/sub-id/nirs
+            folder = ['..' filesep '..' filesep '..' filesep '..' filesep subj_path];
+            if ~exist( ['..' filesep '..' filesep '..' filesep '..' filesep subj_path0], 'dir' )
+                mkdir( ['..' filesep '..' filesep '..' filesep '..' filesep subj_path0] );
+            end
+            if ~exist( ['..' filesep '..' filesep '..' filesep '..' filesep subj_path], 'dir' )
+                mkdir( ['..' filesep '..' filesep '..' filesep '..' filesep subj_path] );
+            end
         end
     end
 
