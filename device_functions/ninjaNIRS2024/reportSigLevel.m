@@ -35,7 +35,7 @@ if flagMakeGUI
 
     txa_sds = uitextarea(fig,'position',[680 710 100 20],'value','SDS range','backgroundcolor',get(fig,'color'),'horizontalalignment','right');
     sds = uieditfield(fig,'text','position',[790 710 80 20],'value','[0 35]');
-    cb = uicheckbox(fig,'position',[680 735 190 20],'text','Spatial Multiplexing','value',0);
+    cb = uicheckbox(fig,'position',[680 735 190 20],'text','Spatial Multiplexing','value',1);
     cb_fastPW = uicheckbox(fig,'position',[805 735 75 20],'text','fastPW','value',1);
     acc_stat = uitextarea(fig,'position',[680 760 190 35]);
 

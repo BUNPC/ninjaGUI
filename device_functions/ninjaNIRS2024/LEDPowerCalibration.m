@@ -171,12 +171,12 @@ app.deviceInformation.dSig = dSig;
 app.deviceInformation.srcModuleGroups = srcModuleGroups;
 app.deviceInformation.flagSpatialMultiplex = flagSpatialMultiplex;
 nSD = app.nSD;
-save('dualPowerStateMapandIndices.mat','srcram','stateIndices','optPowerLevel','srcPowerLowHigh','dSig','Bpow','nSD','thresholds')
+save('dualPowerStateMapandIndices.mat','dataLEDPowerCalibration','srcram','stateIndices','optPowerLevel','srcPowerLowHigh','dSig','Bpow','nSD','thresholds')
 
 % check if source multiplexing
 flagSpatialMultiplex = 0;
 for ii=1:length(srcModuleGroups)
-    if length(srcModuleGroups(ii))>1
+    if length(srcModuleGroups{ii})>1
         flagSpatialMultiplex = 1;
     end
 end

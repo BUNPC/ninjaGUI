@@ -12,7 +12,7 @@ function srcram = createLEDPowerCalibrationSrcRAM_allPowerLevels( SD)
     
     iState = 1;
     
-    maxPower = round(logspace(2,log10(2^16-1),7));
+    maxPower = round(logspace(3,log10(2^16-1),7));
 
     for iS = 1:length(lstS)
         iSrcMod = ceil((lstS(iS)-0.1)/8); 
@@ -25,7 +25,7 @@ function srcram = createLEDPowerCalibrationSrcRAM_allPowerLevels( SD)
             iState = iState + 1;
         end
 
-        iState = iState + 1;
+        iState = iState + 2;
         for iPower = 1:length(maxPower)
             srcram(iSrcMod, iState, 1:16) = bitget(maxPower(iPower), 1:16, 'uint16');
             srcram(iSrcMod, iState, 17:20) = bitget(iSrc*2+1, 1:4, 'uint16');
@@ -33,7 +33,7 @@ function srcram = createLEDPowerCalibrationSrcRAM_allPowerLevels( SD)
             srcram(iSrcMod, iState, 31) = 0;
             iState = iState + 1;
         end
-        iState = iState + 1;
+        iState = iState + 2;
     end
     srcram(:,(iState-1):end,32) = 1; % mark sequence end
 end

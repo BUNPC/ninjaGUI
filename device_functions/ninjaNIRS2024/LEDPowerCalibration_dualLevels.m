@@ -30,13 +30,13 @@ ml = SD.MeasList;
 % rhoSDS to 5th column of measList
 ml(:,5) = rhoSDS;
 
-%srcModuleGroups = {[1 2 3 4 5 6 7]};
-if flagSpatialMultiplex==1 & SD.nSrcs==56
-    srcModuleGroups = {[1 3 5],[2 4 6],[7]};
-else
-    srcModuleGroups = {1,2,3,4,5,6,7};
-    srcModuleGroups = srcModuleGroups( 1:ceil((SD.nSrcs-0.1)/8) );
-end
+srcModuleGroups = {1,2,3,4,5,6,7};
+% if flagSpatialMultiplex==1 & SD.nSrcs==56
+%     srcModuleGroups = {[1 3 5],[2 4 6],[7]};
+% else
+%     srcModuleGroups = {1,2,3,4,5,6,7};
+%     srcModuleGroups = srcModuleGroups( 1:ceil((SD.nSrcs-0.1)/8) );
+% end
 
 % Get the list of indices into the measlist for measurements for a given
 % LED in a srcModuleGroup.
@@ -264,7 +264,14 @@ iState = iState + 1;
 
 % high power state
 %srcModuleGroups = srcModuleGroups_o;
-srcModuleGroups = {[1 4 6],[2 3 5],[7]};
+% srcModuleGroups = {[1 3 5],[2 4 6],[7]}; % BOSTON
+%srcModuleGroups = {[1 4 6],[2 3 5],[7]}; % TUB
+if flagSpatialMultiplex==1 & SD.nSrcs==56
+    srcModuleGroups = {[1 3 5],[2 4 6],[7]};
+else
+    srcModuleGroups = {1,2,3,4,5,6,7};
+    srcModuleGroups = srcModuleGroups( 1:ceil((SD.nSrcs-0.1)/8) );
+end
 for iSg = 1:length(srcModuleGroups)
     for iS = 1:8
         lstSMG = srcModuleGroups{iSg};

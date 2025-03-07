@@ -68,7 +68,7 @@ end
 %accuracy; otherwise there will be misidentified packages
 
 %% identify number of states in data read
-estados=1+raw(indicator+length(header_indicator));
+estados=1+raw(indicator+length(header_indicator)) + 256*(raw(indicator+1+length(header_indicator)));
 states=unique(estados);
 
 %use the states to figure out if there is a packet that shouldn't be a
@@ -142,7 +142,8 @@ end
 %should be done when we have the whole bytestream. For a partial
 %bytestream, we should instead read from the statemap
 %number of states
-estados=1+raw(indicator+length(header_indicator));
+estados=1+raw(indicator+length(header_indicator)) + 256*(raw(indicator+1+length(header_indicator)));
+%estados=1+raw(indicator+length(header_indicator));
 foo=find(srcram(1,:,32)==1);
 N_STATES=foo(1);
 states=1:N_STATES;

@@ -39,7 +39,7 @@ if isfield(app.deviceInformation,'subtractDark')
 else
     subtractDark=0;
 end
-
+ 
 
 
 %% parse app variables
