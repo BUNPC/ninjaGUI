@@ -48,7 +48,7 @@ if ~exist(['.\' foldname '\' foldname2],'dir')
     mkdir([foldname '\' foldname2])
 end
 
-fnameDark=sprintf('%s\\%s\\LEDPowerCalibration_a00_%s.bin',foldname,foldname2,fname);
+fnameDark=sprintf('%s\\%s\\LEDPowerCalibration_fast00_%s.bin',foldname,foldname2,fname);
 fileID=fopen(fnameDark,'w');
 app.fstreamID=fileID;
 
@@ -79,7 +79,7 @@ for isrcb = 1:7
     end
 end
 
-fnameDark=sprintf('%s\\%s\\LEDPowerCalibration_a01_%s.bin',foldname,foldname2,fname);
+fnameDark=sprintf('%s\\%s\\LEDPowerCalibration_fast01_%s.bin',foldname,foldname2,fname);
 fileID=fopen(fnameDark,'w');
 app.fstreamID=fileID;
 % turn acquisition on
