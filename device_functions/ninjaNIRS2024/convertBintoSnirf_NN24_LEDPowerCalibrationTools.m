@@ -12,63 +12,106 @@ SD = stateMap.nSD;
 
 % I need the stateMap for the acquired file and then find the
 % LEDPowerCalibration time stamp just before the acquired file
-files=dir(['LEDPowerCalibration',filesep,'LEDPowerCalibration_00_*.bin']);
-iFileSel = [];
+% files=dir(['LEDPowerCalibration',filesep,'LEDPowerCalibration_00_*.bin']);
+files1=dir('LEDPowerCalibration/LEDPowerCalibration_00_*.bin');
+files2 = dir('LEDPowerCalibration/LEDPowerCalibration_fast00_*.bin');
+files = [files1; files2];
+
+targetTime = datetime(fNamePart, 'Format', 'yyyy-MM-dd-HH-mm-ss');
 for iFile = 1:length(files)
-    if files(iFile).name < sprintf("LEDPowerCalibration_00_%s.bin",fNamePart)
-        iFileSel = iFile;
-    end
+    filename = files(iFile).name;
+    nameWithoutExt = erase(filename, '.bin'); % Remove the .bin extension
+    parts = split(nameWithoutExt, '_'); % Split by underscore
+    timestampStr = parts{end}; 
+    fileTimes(iFile) = datetime(timestampStr, 'Format', 'yyyy-MM-dd-HH-mm-ss');
 end
+timeDifferences = targetTime - fileTimes;
+beforeTargetIndices = find(timeDifferences > 0); 
+if isempty(beforeTargetIndices)
+        iFileSel = [];
+else
+    timeDifferencesBefore = timeDifferences(beforeTargetIndices);
+    [minDifference, minIndex] = min(timeDifferencesBefore);
+    iFileSel = beforeTargetIndices(minIndex);
+end
+% iFileSel = [];
+% for iFile = 1:length(files)
+%     if files(iFile).name < sprintf("LEDPowerCalibration_00_%s.bin",fNamePart) || files(iFile).name < sprintf("LEDPowerCalibration_a00_%s.bin",fNamePart)
+%         iFileSel = iFile;
+%     end
+% end
 
 if ~isempty(iFileSel)
-    fNamePartCal = files(iFileSel).name(24:end);
+    fNamePartCal = files(iFileSel).name(end-22:end);
 else
     error('Could not find an appropriate LEDPowerCalibration dataset')
 end
+acc_active=stateMap.devInfo.acc_active;
+aux_active=stateMap.devInfo.aux_active;
+N_DETECTOR_BOARDS =stateMap.devInfo.N_DETECTOR_BOARDS;
+stat_n_smp = stateMap.devInfo.stat.n_smp;
+if contains(files(iFileSel).name, '_fast00')
+        fName = sprintf('LEDPowerCalibration_fast%02d_%s',1,fNamePartCal);
 
-for iPowerLevel = 1:7
-    fName = sprintf('LEDPowerCalibration_%02d_%s',iPowerLevel,fNamePartCal);
+        fID=fopen(['LEDPowerCalibration',filesep,fName]);
+        inputBytes=fread(fID,'uint8');
+        fclose(fID);
 
-    fID=fopen(['LEDPowerCalibration',filesep,fName]);
-    inputBytes=fread(fID,'uint8');
-    fclose(fID);
-
-    % translateBytes
-
-    srcramCal = createLEDPowerCalibrationSrcRAM( SD, iPowerLevel );
-
-
-    subtractDark=1; % make it as 1 to subtract dark state
-    % for LED power calibration we do not subtract it
-
-    foo=find(srcramCal(1,:,32)==1);
-    nStates=foo(1);
-    fs=stateMap.devInfo.state_fs/nStates;
-    acc_active=stateMap.devInfo.acc_active;
-    aux_active=stateMap.devInfo.aux_active;
-    N_DETECTOR_BOARDS =stateMap.devInfo.N_DETECTOR_BOARDS;
-    stat_n_smp = stateMap.devInfo.stat.n_smp;
-    [B, unusedBytes, avgDet, Auxdata, TGAdata, info] = translateNinja2022Bytesv3_BZ20230817_NN24(inputBytes,srcramCal,N_DETECTOR_BOARDS,acc_active,aux_active);
-    B=circshift(B,-1,3);
-
-    disp( sprintf('Power Level %d - Lost %d states amongst the %d that were recorded (%.1f%%)',iPowerLevel, length(info.lstGaps),length(info.estados),length(info.lstGaps)/(length(info.lstGaps)+length(info.estados)) ) )
-
-    % normslize data to mskr values between 0 and 1
-    %B = B./(app.deviceInformation.stat.n_smp*(2^15-1));
-    B = B./(stat_n_smp*(2^15-1));
+        srcramCal = createLEDPowerCalibrationSrcRAM_allPowerLevels(SD);
+        [B, unusedBytes, avgDet, Auxdata, TGAdata, info] = translateNinja2022Bytesv3_BZ20230817_NN24(inputBytes,srcramCal,N_DETECTOR_BOARDS,acc_active,aux_active);
+        B=circshift(B,-1,3);
+        B = B./(stat_n_smp*(2^15-1));
+        B = squeeze(mean(B,1,'omitnan'))';
+        dataSDWP = zeros(size(B,1)/18,size(B,2),2,7);
+        dataSDWPdark = zeros(size(B,1)/18,size(B,2),2,7);
+        for iPowerLevel = 1:7
+            dataSDWP(:,:,1,iPowerLevel) = B(iPowerLevel:18:end,:);
+            dataSDWP(:,:,2,iPowerLevel) = B(iPowerLevel+9:18:end,:);
+            dataSDWPdark(:,:,1,iPowerLevel) = B(9:18:end,:);
+            dataSDWPdark(:,:,2,iPowerLevel) = B(18:18:end,:);
+        end
+else
+    for iPowerLevel = 1:7
+        fName = sprintf('LEDPowerCalibration_%02d_%s',iPowerLevel,fNamePartCal);
     
-    % get dataSDWP (#s,#d,#wl,#power levels)
-    if iPowerLevel == 1
-        dataSDWP = zeros(size(B,3)/4,size(B,2),2,7);
-        dataSDWPdark = zeros(size(B,3)/4,size(B,2),2,7);
+        fID=fopen(['LEDPowerCalibration',filesep,fName]);
+        inputBytes=fread(fID,'uint8');
+        fclose(fID);
+    
+        % translateBytes
+    
+        srcramCal = createLEDPowerCalibrationSrcRAM( SD, iPowerLevel );
+    
+    
+        subtractDark=1; % make it as 1 to subtract dark state
+        % for LED power calibration we do not subtract it
+    
+        foo=find(srcramCal(1,:,32)==1);
+        nStates=foo(1);
+        fs=stateMap.devInfo.state_fs/nStates;
+        
+        [B, unusedBytes, avgDet, Auxdata, TGAdata, info] = translateNinja2022Bytesv3_BZ20230817_NN24(inputBytes,srcramCal,N_DETECTOR_BOARDS,acc_active,aux_active);
+        B=circshift(B,-1,3);
+    
+        disp( sprintf('Power Level %d - Lost %d states amongst the %d that were recorded (%.1f%%)',iPowerLevel, length(info.lstGaps),length(info.estados),length(info.lstGaps)/(length(info.lstGaps)+length(info.estados)) ) )
+    
+        % normslize data to mskr values between 0 and 1
+        %B = B./(app.deviceInformation.stat.n_smp*(2^15-1));
+        B = B./(stat_n_smp*(2^15-1));
+        
+        % get dataSDWP (#s,#d,#wl,#power levels)
+        if iPowerLevel == 1
+            dataSDWP = zeros(size(B,3)/4,size(B,2),2,7);
+            dataSDWPdark = zeros(size(B,3)/4,size(B,2),2,7);
+        end
+        B = squeeze(mean(B,1,'omitnan'))'; % mean temporal samples and transpose to get #states x #d
+        Bdark = B(2:2:end,:); % get the dark states
+        B = B(1:2:end,:); % strip the dark states
+        dataSDWP(:,:,1,iPowerLevel) = B(1:2:end,:);
+        dataSDWP(:,:,2,iPowerLevel) = B(2:2:end,:);
+        dataSDWPdark(:,:,1,iPowerLevel) = Bdark(1:2:end,:);
+        dataSDWPdark(:,:,2,iPowerLevel) = Bdark(2:2:end,:);
     end
-    B = squeeze(mean(B,1,'omitnan'))'; % mean temporal samples and transpose to get #states x #d
-    Bdark = B(2:2:end,:); % get the dark states
-    B = B(1:2:end,:); % strip the dark states
-    dataSDWP(:,:,1,iPowerLevel) = B(1:2:end,:);
-    dataSDWP(:,:,2,iPowerLevel) = B(2:2:end,:);
-    dataSDWPdark(:,:,1,iPowerLevel) = Bdark(1:2:end,:);
-    dataSDWPdark(:,:,2,iPowerLevel) = Bdark(2:2:end,:);
 end
 
 
