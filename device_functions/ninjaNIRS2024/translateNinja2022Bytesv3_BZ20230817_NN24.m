@@ -1,4 +1,4 @@
-function [data,unusedBytes,darkLevelAvg, Auxdata,TGAdata,info]=translateNinja2022Bytesv3_BZ20230817_NN24(inputBytes,srcram,N_DETECTOR_BOARDS,acc_active,aux_active)
+function [data,unusedBytes,darkLevelAvg, imu_data, Auxdata,TGAdata,info]=translateNinja2022Bytesv3_BZ20230817_NN24(inputBytes,srcram,N_DETECTOR_BOARDS,N_IMU_BOARDS,acc_active,aux_active)
 % data is the translated data output. It has 3 dimensions: 1 is time
 % (samples) 2 is detectors; the third dimension is the state number, which
 % could be a proxy for detector number if the state acquisition sequence is
@@ -10,6 +10,7 @@ raw=inputBytes;
 
 header_indicator=254; %byte indicating the header
 detector_header_indicator=[253,252]; %bytes indicating the detector header
+imu_header_indicator=[253,251]; %bytes indicating the detector header
 state_number_length=2;
 sample_counter_length=1;
 aux_header_detector = 250;
@@ -27,7 +28,7 @@ N_BYTES_PER_DET = 3;
 
 N_DETECTORS=N_DET_PER_BOARD*N_DETECTOR_BOARDS;
 
-offsetBoard=N_DET_PER_BOARD*N_BYTES_PER_DET+length(detector_header_indicator)+sample_counter_length+1;
+% offsetBoard=N_DET_PER_BOARD*N_BYTES_PER_DET+length(detector_header_indicator)+sample_counter_length+1;
 if acc_active
     acc_bytes = 18;
 else
@@ -41,8 +42,8 @@ end
 % payloadSize=N_DETECTOR_BOARDS*offsetBoard;
 % offset=length(header_indicator)+state_number_length+aux_bytes; %offset for first payload byte
 % packageLength=offset+payloadSize+acc_bytes;  
-offsetBoard=N_DET_PER_BOARD*N_BYTES_PER_DET+length(detector_header_indicator)+sample_counter_length+1;
-payloadSize=N_DETECTOR_BOARDS*offsetBoard;
+offsetBoard= N_DET_PER_BOARD*N_BYTES_PER_DET+length(detector_header_indicator)+sample_counter_length+1;
+payloadSize= (N_DETECTOR_BOARDS+N_IMU_BOARDS)*offsetBoard;
 auxloadSize = length(aux_header_detector)+aux_bytes_count;
 offset=length(header_indicator)+state_number_length+auxloadSize; %offset for first payload byte
 packageLength=offset+payloadSize+acc_bytes; 
@@ -147,13 +148,12 @@ end
 %% translate
 
 B=nan(length(indicator),N_DETECTORS); 
-
 for ki=1:N_DETECTOR_BOARDS
     ii=1;
 
     indicator_matrix=indicator+offset+(0:N_BYTES_PER_DET:(N_DET_PER_BOARD*N_BYTES_PER_DET)-1)+(ki-1)*offsetBoard+length(detector_header_indicator)+sample_counter_length;
     
-    A=raw(ii-1+indicator_matrix)*256^(ii-1);
+    A = raw(ii-1+indicator_matrix)*256^(ii-1);
     
     for ii=2:N_BYTES_PER_DET
         A=A+raw(ii-1+indicator_matrix)*256^(ii-1);
@@ -163,11 +163,27 @@ for ki=1:N_DETECTOR_BOARDS
     A = (A > 2^23-1).*2^24 - A;
     B(:,(1:N_DET_PER_BOARD)+(ki-1)*N_DET_PER_BOARD)=A;
 end
+%% translate IMU data
+N_IMUs = N_IMU_BOARDS*N_DET_PER_BOARD;
+imu_data_states = nan(length(indicator),N_IMU_BOARDS,8);
+% imu_data = nan(ceil(length(indicator)/8),8,N_IMU_BOARDS,7);
+for ni=1:N_IMU_BOARDS
+    ki = ni+N_DETECTOR_BOARDS;
+    ii=1;
+    % indicator_matrix=indicator+offset+(0:N_BYTES_PER_DET:(N_DET_PER_BOARD*N_BYTES_PER_DET)-1)+(ki-1)*offsetBoard+length(detector_header_indicator)+sample_counter_length;
+    indicator_matrix = indicator+offset+(N_DETECTOR_BOARDS+(ni-1))*(N_DET_PER_BOARD*N_BYTES_PER_DET+length(detector_header_indicator)+sample_counter_length+1)+sample_counter_length+2;
+    imu_data_states(:,ni,1) = raw(indicator_matrix-1);
+    imu_data_states(:,ni,2:end) = raw(indicator_matrix+(0:2:13))+256.*raw(indicator_matrix+(1:2:13));
+end
+% imu_data = imu_data - (imu_data > 2^15-1).*2^16;
+% imu_data(:,:,1) = imu_data(:,:,1)/256+25;
+% imu_data(:,:,2:4) = imu_data(:,:,2:4)./(2^15-1);
+% imu_data(:,:,5:7) = imu_data(:,:,5:7)./(2^15-1);
 
 %% translate Temparature, Gyroscope and Accelarometer data
 TGAdata = [];
 if acc_active
-    indicator_matrix = indicator+offset+N_DETECTOR_BOARDS*(N_DET_PER_BOARD*N_BYTES_PER_DET+length(detector_header_indicator)+sample_counter_length+1)+sample_counter_length+2;
+    indicator_matrix = indicator+offset+(N_DETECTOR_BOARDS+N_IMU_BOARDS)*(N_DET_PER_BOARD*N_BYTES_PER_DET+length(detector_header_indicator)+sample_counter_length+1)+sample_counter_length+2;
     TGAdata = raw(indicator_matrix+(0:2:13))+256.*raw(indicator_matrix+(1:2:13));
     TGAdata = TGAdata - (TGAdata > 2^15-1).*2^16;
     TGAdata(:,1) = TGAdata(:,1)/256+25;
@@ -226,6 +242,22 @@ dataOrganizedByState( lstMaster, : ) = B;
 
 dataOrganizedByState = reshape( dataOrganizedByState, [N_STATES, nFrames, N_DET_PER_BOARD*N_DETECTOR_BOARDS] );
 dataOrganizedByState = permute( dataOrganizedByState, [2 3 1]);
+
+total_states_imu = ceil((N_STATES * nFrames)/8);
+imu_data_states_organised = nan(total_states_imu*8,N_IMU_BOARDS, 7);
+imu_channel_index = mod(squeeze(imu_data_states(:,:,1)), 8)+1;
+imu_data_states_organised(lstMaster,:,:) = imu_data_states(:,:,2:end); 
+imu_data = nan(total_states_imu,8,N_IMU_BOARDS, 7);
+for i_imu = 1:N_IMU_BOARDS
+    for ii=1:8
+        ni = imu_channel_index(ii,i_imu,1);
+        imu_data(:,ni,i_imu,:) = imu_data_states_organised(ii:8:end,i_imu,:);
+    end
+end
+imu_data= imu_data - (imu_data > 2^15-1).*2^16;
+imu_data(:,:,:,1) = imu_data(:,:,:,1)/256+25;
+imu_data(:,:,:,2:4) = imu_data(:,:,:,2:4)./(2^15-1);
+imu_data(:,:,:,5:7) = imu_data(:,:,:,5:7)./(2^15-1);
 
 %dataOrganizedByState=nan(maxSamples,N_DET_PER_BOARD*N_DETECTOR_BOARDS,N_STATES);
 

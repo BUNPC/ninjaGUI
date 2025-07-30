@@ -16,8 +16,6 @@ if ~exist('flagPlot')
     flagPlot = 0;
 end
 
-
-
 % load bin file
 fID=fopen([fName,'.bin']);
 inputBytes=fread(fID,'uint8');
@@ -44,10 +42,14 @@ fs=stateMap.devInfo.state_fs/nStates;
 acc_active=stateMap.devInfo.acc_active;
 aux_active=stateMap.devInfo.aux_active;
 N_DETECTOR_BOARDS = stateMap.devInfo.N_DETECTOR_BOARDS;
+if isfield(stateMap.devInfo,'N_IMU_BOARDS')
+    N_IMU_BOARDS = stateMap.devInfo.N_IMU_BOARDS;
+else
+    N_IMU_BOARDS = 0;
+end
 stat_n_smp = stateMap.devInfo.stat.n_smp;
-[B, unusedBytes, avgDet, Auxdata, TGAdata, info] = translateNinja2022Bytesv3_BZ20230817_NN24(inputBytes,stateMap.stateMap,N_DETECTOR_BOARDS,acc_active,aux_active);
+[B, unusedBytes, avgDet, imu_data, Auxdata, TGAdata, info] = translateNinja2022Bytesv3_BZ20230817_NN24(inputBytes,stateMap.stateMap,N_DETECTOR_BOARDS,N_IMU_BOARDS,acc_active,aux_active);
 B=circshift(B,-1,3);
-
 disp( sprintf('Lost %d states amongst the %d that were recorded (%.1f%%)',length(info.lstGaps),length(info.estados),length(info.lstGaps)/(length(info.lstGaps)+length(info.estados)) ) )
 
 % normslize data to mskr values between 0 and 1
@@ -113,7 +115,7 @@ for iML = 1:size(ml,1)
     iSrcModule = ceil(ml(iML,1)/8);
     iSg = 0;
     for ii=1:length(stateMap.devInfo.srcModuleGroups)
-        if sum(ismember(stateMap.devInfo.srcModuleGroups{ii},iSrcModule))>0
+        if sum(ismember(stateMap.devInfo.srcModuleGroups(ii),iSrcModule))>0
             iSg = ii;
             break
         end
@@ -169,6 +171,23 @@ if acc_active
     snirf1.aux = [snirf1.aux temp_obj gyro_x_obj gyro_y_obj gyro_z_obj acc_x_obj acc_y_obj acc_z_obj]; 
 end
 
+if N_IMU_BOARDS > 0
+    for i_board = 1:N_IMU_BOARDS
+        for i_imu = 1:8
+            t_acc =  [1:size(imu_data,1)]'/(devInfo.state_fs/8);
+            temp_obj = AuxClass(imu_data(:,i_imu,i_board,1),t_acc,sprintf('temperature_%d_%d',i_imu,i_board));
+            gyro_data = squeeze(imu_data(:,i_imu,i_board,2:4)*devInfo.stat.gyrofs);
+            gyro_x_obj = AuxClass(gyro_data(:,1),t_acc,sprintf('GYRO_X_%d_%d',i_imu,i_board));
+            gyro_y_obj = AuxClass(gyro_data(:,2),t_acc,sprintf('GYRO_Y_%d_%d',i_imu,i_board));
+            gyro_z_obj = AuxClass(gyro_data(:,3),t_acc,sprintf('GYRO_Z_%d_%d',i_imu,i_board));
+            acc_data = squeeze(imu_data(:,i_imu,i_board,5:7)*devInfo.stat.accfs);
+            acc_x_obj = AuxClass(acc_data(:,1),t_acc,sprintf('ACCEL_X_%d_%d',i_imu,i_board));
+            acc_y_obj = AuxClass(acc_data(:,2),t_acc,sprintf('ACCEL_Y_%d_%d',i_imu,i_board));
+            acc_z_obj = AuxClass(acc_data(:,3),t_acc,sprintf('ACCEL_Z_%d_%d',i_imu,i_board));
+            snirf1.aux = [snirf1.aux temp_obj gyro_x_obj gyro_y_obj gyro_z_obj acc_x_obj acc_y_obj acc_z_obj]; 
+        end
+    end
+end
 
 % Add the calibration data to the AUX
 try
