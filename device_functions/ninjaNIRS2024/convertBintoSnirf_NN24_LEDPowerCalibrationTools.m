@@ -49,6 +49,11 @@ end
 acc_active=stateMap.devInfo.acc_active;
 aux_active=stateMap.devInfo.aux_active;
 N_DETECTOR_BOARDS =stateMap.devInfo.N_DETECTOR_BOARDS;
+if isfield(stateMap.devInfo,'N_IMU_BOARDS')
+    N_IMU_BOARDS = stateMap.devInfo.N_IMU_BOARDS;
+else
+    N_IMU_BOARDS = 0;
+end
 stat_n_smp = stateMap.devInfo.stat.n_smp;
 if contains(files(iFileSel).name, '_fast00')
         fName = sprintf('LEDPowerCalibration_fast%02d_%s',1,fNamePartCal);
@@ -58,7 +63,7 @@ if contains(files(iFileSel).name, '_fast00')
         fclose(fID);
 
         srcramCal = createLEDPowerCalibrationSrcRAM_allPowerLevels(SD);
-        [B, unusedBytes, avgDet, Auxdata, TGAdata, info] = translateNinja2022Bytesv3_BZ20230817_NN24(inputBytes,srcramCal,N_DETECTOR_BOARDS,acc_active,aux_active);
+        [B, unusedBytes, avgDet, imu_data, Auxdata, TGAdata, info] = translateNinja2022Bytesv3_BZ20230817_NN24(inputBytes,srcramCal,N_DETECTOR_BOARDS,N_IMU_BOARDS,acc_active,aux_active);
         B=circshift(B,-1,3);
         B = B./(stat_n_smp*(2^15-1));
         B = squeeze(mean(B,1,'omitnan'))';
@@ -90,7 +95,7 @@ else
         nStates=foo(1);
         fs=stateMap.devInfo.state_fs/nStates;
         
-        [B, unusedBytes, avgDet, Auxdata, TGAdata, info] = translateNinja2022Bytesv3_BZ20230817_NN24(inputBytes,srcramCal,N_DETECTOR_BOARDS,acc_active,aux_active);
+        [B, unusedBytes, avgDet, imu_data, Auxdata, TGAdata, info] = translateNinja2022Bytesv3_BZ20230817_NN24(inputBytes,srcramCal,N_DETECTOR_BOARDS,N_IMU_BOARDS,acc_active,aux_active);
         B=circshift(B,-1,3);
     
         disp( sprintf('Power Level %d - Lost %d states amongst the %d that were recorded (%.1f%%)',iPowerLevel, length(info.lstGaps),length(info.estados),length(info.lstGaps)/(length(info.lstGaps)+length(info.estados)) ) )
@@ -126,6 +131,9 @@ for iS = 1:SD.nSrcs
     iSrcModule = ceil(iS/8);
     iSrc = iS - (iSrcModule-1)*8;
     iSg = 0;
+    if ~iscell(stateMap.devInfo.srcModuleGroups)
+        stateMap.devInfo.srcModuleGroups = {stateMap.devInfo.srcModuleGroups};
+    end
     for ii=1:length(stateMap.devInfo.srcModuleGroups)
         if sum(ismember(stateMap.devInfo.srcModuleGroups{ii},iSrcModule))>0
             iSg = ii;

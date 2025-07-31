@@ -114,8 +114,11 @@ for iML = 1:size(ml,1)
     % determine source group for the given ml(iML,1)
     iSrcModule = ceil(ml(iML,1)/8);
     iSg = 0;
+    if ~iscell(stateMap.devInfo.srcModuleGroups)
+        stateMap.devInfo.srcModuleGroups = {stateMap.devInfo.srcModuleGroups};
+    end
     for ii=1:length(stateMap.devInfo.srcModuleGroups)
-        if sum(ismember(stateMap.devInfo.srcModuleGroups(ii),iSrcModule))>0
+        if sum(ismember(stateMap.devInfo.srcModuleGroups{ii},iSrcModule))>0
             iSg = ii;
             break
         end
