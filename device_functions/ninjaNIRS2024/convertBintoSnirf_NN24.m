@@ -101,6 +101,17 @@ snirf1=SnirfClass(struct( ...
 snirf1.metaDataTags = MetaDataTagsClass();
 snirf1.metaDataTags.tags.TimeUnit = 's';
 
+% Verify whether the 2D optode positions from SD to SNIRF are correctly transferred.
+% If not, copy them manually. 
+% Note: This should be handled during SNIRF file creation above and needs to be fixed in HOMER.
+if all(snirf1.probe.sourcePos2D(:) == 0) && ~all(SD.SrcPos2D(:) == 0)
+    snirf1.probe.sourcePos2D = SD.SrcPos2D;
+end
+
+if all(snirf1.probe.detectorPos2D(:) == 0) && ~all(SD.DetPos2D(:) == 0)
+    snirf1.probe.detectorPos2D = SD.DetPos2D;
+end
+
 % add sourcePower to the measurementList
 flagWarning = 0;
 powerLevelSetLowHigh = zeros(size(ml,1),1);
