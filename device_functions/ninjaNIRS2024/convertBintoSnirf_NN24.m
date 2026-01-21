@@ -113,6 +113,7 @@ if all(snirf1.probe.detectorPos2D(:) == 0) && ~all(SD.DetPos2D(:) == 0)
     snirf1.probe.detectorPos2D = SD.DetPos2D;
 end
 
+
 % add sourcePower to the measurementList
 flagWarning = 0;
 powerLevelSetLowHigh = zeros(size(ml,1),1);
@@ -329,11 +330,17 @@ if flagSave
     fprintf( fid, '%s,\n', ['"powerLevelSetting": ' jsonencode(powerLevelSetting)] );
     fprintf( fid, '%s,\n', ['"powerLevelSetLowHigh": ' jsonencode(powerLevelSetLowHigh)] );
     fprintf( fid, '%s,\n', ['"srcModuleGroups": ' jsonencode(stateMap.devInfo.srcModuleGroups,"PrettyPrint",true)] );
-    fprintf( fid, '%s\n', ['"dataSDWP_LowHigh": ' jsonencode(dataSDWP_LowHigh)] );
-    fprintf( fid, '%s\n', ['"Gaps": ' jsonencode(gaps, "PrettyPrint",true )] );
-    if isfield(stateMap.devInfo,'thresholds')
+    fprintf( fid, '%s,\n', ['"dataSDWP_LowHigh": ' jsonencode(dataSDWP_LowHigh)] );
+
+    % If thresholds exists, Gaps must end with a comma (because more fields follow)
+    hasThresholds = isfield(stateMap.devInfo,'thresholds');
+    
+    if hasThresholds
+        fprintf( fid, '%s,\n', ['"Gaps": ' jsonencode(gaps, "PrettyPrint", true)] );
         thresholds = stateMap.devInfo.thresholds;
-        fprintf( fid, '%s\n', ['"thesholds": ' jsonencode(thresholds)] );
+        fprintf( fid, '%s\n',  ['"thresholds": ' jsonencode(thresholds)] );  % fixed key spelling
+    else
+        fprintf( fid, '%s\n',  ['"Gaps": ' jsonencode(gaps, "PrettyPrint", true)] );
     end
     fprintf( fid, '}');
     fclose( fid );
