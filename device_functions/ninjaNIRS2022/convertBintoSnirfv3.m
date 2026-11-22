@@ -125,7 +125,14 @@ for iML = 1:size(ml,1)
         end
     end
     powerLevelSetLowHigh(iML) = iLowHigh;
-    iPL = stateMap.devInfo.optPowerLevel(iSrc,iLowHigh,iW,iSg);
+    % optPowerLevel(slot, low/high, wavelength, k): k is the source MODULE for calibrations that set power
+    % per module (size(optPowerLevel,4) > number of module groups), or the module GROUP for older calibrations
+    if size(stateMap.devInfo.optPowerLevel,4) > length(stateMap.devInfo.srcModuleGroups)
+        iOptDim4 = iSrcModule;
+    else
+        iOptDim4 = iSg;
+    end
+    iPL = stateMap.devInfo.optPowerLevel(iSrc,iLowHigh,iW,iOptDim4);
     snirf1.data.measurementList(iML).sourcePower = iPL;
     powerLevelSetting(iML) = iPL;
 end
@@ -276,7 +283,7 @@ if flagSave
     fprintf( fid, '%s,\n', ['"SamplingFrequency": ' jsonencode(fs)] );
     fprintf( fid, '%s,\n', ['"NIRSChannelCount": ' jsonencode(size(ml,1))] );
     fprintf( fid, '%s,\n', ['"NIRSSourceOptodeCount": ' jsonencode(max(nSD.MeasList(:,1)))] );
-    fprintf( fid, '%s,\n', ['"NIRSDetectorOptodeCount": ' jsonencode(max(nSD.MeasList(:,1)))] );
+    fprintf( fid, '%s,\n', ['"NIRSDetectorOptodeCount": ' jsonencode(max(nSD.MeasList(:,2)))] );
     fprintf( fid, '%s,\n', ['"RecordingDuration": ' jsonencode(t(end))] );
     fprintf( fid, '%s,\n', ['"SD": ' jsonencode(SDo,"PrettyPrint",true)] );
     fprintf( fid, '%s,\n', ['"powerLevelSetting": ' jsonencode(powerLevelSetting)] );
