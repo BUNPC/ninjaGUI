@@ -81,6 +81,11 @@ indicator=indicator(raw(indicator+offset_aux_header)==aux_header_detector);
 
 %% identify number of states in data read
 estados=1+raw(indicator+length(header_indicator)) + 256*(raw(indicator+1+length(header_indicator)));
+% a valid packet carries a state number between 1 and N_STATES; anything else is a false packet match
+N_STATES_valid = find(srcram(1,:,32)==1,1,'first');
+isValidState = estados>=1 & estados<=N_STATES_valid;
+indicator = indicator(isValidState);
+estados = estados(isValidState);
 states=unique(estados);
 
 %use the states to figure out if there is a packet that shouldn't be a
@@ -134,6 +139,8 @@ else
         Auxdata = [];
         TGAdata = [];
         info = [];
+        data = [];
+        imu_data = [];
         return
     elseif lastFrameEnd>lastFrameStart % last frame is complete
         unusedBytes=[];
@@ -220,16 +227,33 @@ states=1:N_STATES;
 
 %% now sort the data
 lstMaster = [1:length(estados)] + estados(1) - 1;
-lstGaps = find(diff(estados)~=1 & diff(estados)~=(1-N_STATES)); 
-if ~isempty(lstGaps) 
-    disp( sprintf('lstGaps %d',length(lstGaps)) ) 
+
+% Lost packets. The state number repeats every N_STATES packets, so it only gives the loss modulo N_STATES
+% and cannot see the loss of whole frames. Each detector board also sends a packet counter (the byte after
+% the 2-byte detector header) that increases by 1 per packet (mod 256). Combining the two resolves losses of
+% up to lcm(N_STATES,256) packets. If the counter does not behave like a packet counter in this file, we fall
+% back to the state number alone (the previous behavior).
+dState = mod(diff(estados)-1, N_STATES);
+cnt = raw(indicator + offset + length(detector_header_indicator));
+dCnt = mod(diff(cnt)-1, 256);
+counterUsable = ~isempty(dCnt) && (mean(dCnt==0) >= 0.9);
+lost = dState;
+if counterUsable
+    lstPairs = find(dCnt~=0 | dState~=0);
+    for iPair = lstPairs(:)'
+        t = find(mod(dState(iPair) + N_STATES*(0:255), 256) == dCnt(iPair), 1, 'first');
+        if ~isempty(t)
+            lost(iPair) = dState(iPair) + N_STATES*(t-1);
+        end
+    end
+end
+lstGaps = find(lost>0);
+if ~isempty(lstGaps)
+    disp( sprintf('lstGaps %d',length(lstGaps)) )
 end
 sumGaps = 0;
 for iGap = 1:length(lstGaps)
-    gap = estados( lstGaps(iGap)+1 ) - estados( lstGaps(iGap) ) - 1;
-    if gap<0
-        gap = gap + N_STATES;
-    end
+    gap = lost( lstGaps(iGap) );
     lstMaster( (lstGaps(iGap)+1):end ) = lstMaster( (lstGaps(iGap)+1):end ) + gap;
     sumGaps = sumGaps + gap;
 end
@@ -270,7 +294,7 @@ darkStateIdx=find(srcram(1,states,21)==1);
 % sort dark states by detector
 darkSamplesbyState=dataOrganizedByState(:,:,darkStateIdx);
 % summarize dark state intensity for each detector
-darkLevelAvg=nanmean(nanmean(darkSamplesbyState,3),1);
+darkLevelAvg=mean(mean(darkSamplesbyState,3,'omitnan'),1,'omitnan');
 
 %% output
 
@@ -279,4 +303,7 @@ data=dataOrganizedByState;
 info.estados = estados;
 info.lstGaps = lstGaps;
 info.lstMaster = lstMaster;
+info.lostStates = sumGaps;          % total number of lost packets (states)
+info.gapSizes = lost(lstGaps);      % lost packets at each gap event
+info.counterUsed = counterUsable;   % true if the per-board packet counter was used to detect losses
 
