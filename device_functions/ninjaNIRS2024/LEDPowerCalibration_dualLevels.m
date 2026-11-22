@@ -3,8 +3,8 @@ function [srcram, stateIndices, optPowerLevel, srcPowerLowHigh, dSig, srcModuleG
 % stateIndices (# ml x 3) - Tell us which state to use for each
 %       measurement (1st column), the dark state to use for that
 %       measurement (3rd column), and which detector (2nd column)
-% optPowerLevel (# srcs x 2 power levels x 2 wavelengths x # source groups)
-%       - This is the power level used for each source in each source group
+% optPowerLevel (# srcs x 2 power levels x 2 wavelengths x # source modules)
+%       - This is the power level used for each source in each source MODULE
 % srcPowerLowHigh (# srcs x # dets x # wavelengths) - tells us the optimal
 %       power setting to choose for each source and detector pair, used to
 %       get stateIndices 
