@@ -93,7 +93,13 @@ for iS = 1:SD.nSrcs
 
     for iW = 1:2
         for iPL = 1:2
-            iPowerLevel = stateMap.devInfo.optPowerLevel(iSrc,iPL,iW,iSg);   
+            % optPowerLevel(...,k): k is the source MODULE for per-module calibrations, or the module GROUP for older ones
+            if size(stateMap.devInfo.optPowerLevel,4) > length(stateMap.devInfo.srcModuleGroups)
+                iOptDim4 = iSrcModule;
+            else
+                iOptDim4 = iSg;
+            end
+            iPowerLevel = stateMap.devInfo.optPowerLevel(iSrc,iPL,iW,iOptDim4);   
             dataSDWP_LowHigh( iS, :, iW, iPL) = dataSDWP( iS, :, iW, iPowerLevel) - dataSDWPdark( iS, :, iW, iPowerLevel);
         end
         for iPL = 1:7

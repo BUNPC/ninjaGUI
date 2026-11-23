@@ -50,9 +50,12 @@ end
 stat_n_smp = stateMap.devInfo.stat.n_smp;
 [B, unusedBytes, avgDet, imu_data, Auxdata, TGAdata, info] = translateNinja2022Bytesv3_BZ20230817_NN24(inputBytes,stateMap.stateMap,N_DETECTOR_BOARDS,N_IMU_BOARDS,acc_active,aux_active);
 B=circshift(B,-1,3);
-disp( sprintf('Lost %d states amongst the %d that were recorded (%.1f%%)',length(info.lstGaps),length(info.estados),length(info.lstGaps)/(length(info.lstGaps)+length(info.estados)) ) )
-gaps.lostStates= length(info.lstGaps);
-gaps.totalStates = length(info.estados);
+nLost = info.lostStates;
+nExpected = length(info.estados) + nLost;
+disp( sprintf('Lost %d states (%d gap events) amongst the %d expected (%.3f%%)', nLost, length(info.lstGaps), nExpected, 100*nLost/nExpected ) )
+gaps.lostStates = nLost;                    % number of lost states (previously: number of gap events)
+gaps.gapEvents = length(info.lstGaps);
+gaps.totalStates = nExpected;               % received + lost (previously: received only)
 % normslize data to mskr values between 0 and 1
 %B = B./(app.deviceInformation.stat.n_smp*(2^15-1));
 B = B./(stat_n_smp*(2^15-1));
@@ -73,14 +76,20 @@ for ki=1:size(SD.MeasList,1)
     if subtractDark
 %            darkState=B(:,indices(ki,2),indices(ki,1)+1);
 %        darkState=B(:,indices(ki,2),indices(ki,3));
-        %subtracts the adjacent state (after the current). Assumes
-        %there is a dark state between each active state
+        %subtracts the next dark state of this source module: adjacent for high-power states; for low-power
+        %states all modules fire together and the dark state follows the whole low-power block (up to ~16 states later)
         organizedData(:,ki)=organizedData(:,ki)-organizedDataDark(:,ki);
         cumDark=cumDark+mean(organizedDataDark(:,ki));
     end
 end
 
+% Signals at or below the dark level cannot be used. They are set to a small positive floor so log() stays
+% finite, but the fraction of affected samples is kept per channel so that dead channels remain visible.
+belowDarkFrac = sum(organizedData<0,1) / size(organizedData,1);
 organizedData(organizedData<0)=1e-6;
+if any(belowDarkFrac>0.5)
+    warning('%d channels have more than 50%% of their samples at or below the dark level (set to 1e-6): likely dead or disconnected.', sum(belowDarkFrac>0.5))
+end
 
 t=(0:size(organizedData,1)-1)./fs;
 temp1=sum(~isnan(organizedData)); 
@@ -141,7 +150,7 @@ for iML = 1:size(ml,1)
         iLowHigh = devInfo.srcPowerLowHigh(ml(iML,1),iD,iW);  
     else % For backward compatibility, this should break if srcPowerLowHigh doesn't exist... Just spit out a wanring that we are assuming low high
         flagWarning = 1;
-        rho = sqrt(sum(SD.SrcPos3D(iS,:)-SD.DetPos3D(iD,:)).^2);
+        rho = sqrt(sum((SD.SrcPos3D(iS,:)-SD.DetPos3D(iD,:)).^2));
         if rho<22 % FIXME - this is hard coded for the wholehead probe we are using
             iLowHigh = 1;
         else
@@ -149,7 +158,14 @@ for iML = 1:size(ml,1)
         end
     end
     powerLevelSetLowHigh(iML) = iLowHigh;
-    iPL = stateMap.devInfo.optPowerLevel(iSrc,iLowHigh,iW,iSg);
+    % optPowerLevel(slot, low/high, wavelength, k): k is the source MODULE for calibrations that set power
+    % per module (size(optPowerLevel,4) > number of module groups), or the module GROUP for older calibrations
+    if size(stateMap.devInfo.optPowerLevel,4) > length(stateMap.devInfo.srcModuleGroups)
+        iOptDim4 = iSrcModule;
+    else
+        iOptDim4 = iSg;
+    end
+    iPL = stateMap.devInfo.optPowerLevel(iSrc,iLowHigh,iW,iOptDim4);
     snirf1.data.measurementList(iML).sourcePower = iPL;
     powerLevelSetting(iML) = iPL;
 end
@@ -212,8 +228,8 @@ try
         convertBintoSnirfv3_plotSigVsDistance( SD, dataSDWP_LowHigh, powerLevelSetting)
         convertBintoSnirfv3_crossTalk( stateMap, dataSDWP_LowHigh )
     end
-catch
-    warning('Error - Could not find an appropriate LEDPowerCalibration dataset')
+catch ME
+    warning('LEDPowerCalibration data could not be processed (%s: %s). dataSDWP_LowHigh will be empty.', ME.identifier, ME.message)
     dataSDWP_LowHigh = [];
 end
 
@@ -234,17 +250,17 @@ if flagSave
     % subLabel, sesLabel, taskLabel, runIndex )
     % BIDS file name structure
     %    sub-<label>[_ses-<label>]_task-<label>[_acq-<label>][_run-<index>]_nirs.snirf
-    if ~exist('subLabel')
+    if ~exist('subLabel','var')
         subLabel = '';
     end
-    if ~exist('sesLabel')
-        subLabel = '';
+    if ~exist('sesLabel','var')
+        sesLabel = '';
     end
-    if ~exist('taskLabel')
-        subLabel = '';
+    if ~exist('taskLabel','var')
+        taskLabel = '';
     end
-    if ~exist('runIndex')
-        subLabel = '';
+    if ~exist('runIndex','var')
+        runIndex = '';
     end
 
     [folder, baseFileNameNoExt, extension] = fileparts(fName);
@@ -286,7 +302,7 @@ if flagSave
             end
         end
     end
-    snirf1.Save([folder baseFileNameNoExt '.snirf'])
+    snirf1.Save(fullfile(folder, [baseFileNameNoExt '.snirf']))
 %    snirf1.Save([folder filesep baseFileNameNoExt '.snirf'])
 
     % Save Sidecar File
@@ -296,7 +312,7 @@ if flagSave
 %         fileSide = [baseFileNameNoExt '_NN24sidecar.mat'];
 %     end
 % 
-%     % stateMap.devInfo.optPowerLevel( Src #, PowerLevel (1-L, 2-H), wavelength, Src Grp )
+%     % stateMap.devInfo.optPowerLevel( Src #, PowerLevel (1-L, 2-H), wavelength, Src Module (or module group for older calibrations) )
 %     save(fileSide,'stateMap','info','dataSDWP_LowHigh','powerLevelSetLowHigh','powerLevelSetting')
 
 
@@ -311,10 +327,10 @@ if flagSave
         SDo.DetPos2D = SD.DetPos;
     end
     SDo.Lambda = SD.Lambda;
-    SDo.MeasList = SD.MeasList;
+    SDo.MeasList = SD.MeasList(:,1:4);   % same 4 columns as the snirf (ninjaGUIpy adds a 5th: rho)
 
     if ~isempty(folder)
-        fileSide = [folder filesep baseFileNameNoExt '.json'];
+        fileSide = fullfile(folder, [baseFileNameNoExt '.json']);
     else
         fileSide = [baseFileNameNoExt '.json'];
     end
@@ -324,13 +340,14 @@ if flagSave
     fprintf( fid, '%s,\n', ['"SamplingFrequency": ' jsonencode(fs)] );
     fprintf( fid, '%s,\n', ['"NIRSChannelCount": ' jsonencode(size(ml,1))] );
     fprintf( fid, '%s,\n', ['"NIRSSourceOptodeCount": ' jsonencode(max(nSD.MeasList(:,1)))] );
-    fprintf( fid, '%s,\n', ['"NIRSDetectorOptodeCount": ' jsonencode(max(nSD.MeasList(:,1)))] );
+    fprintf( fid, '%s,\n', ['"NIRSDetectorOptodeCount": ' jsonencode(max(nSD.MeasList(:,2)))] );
     fprintf( fid, '%s,\n', ['"RecordingDuration": ' jsonencode(t(end))] );
     fprintf( fid, '%s,\n', ['"SD": ' jsonencode(SDo,"PrettyPrint",true)] );
     fprintf( fid, '%s,\n', ['"powerLevelSetting": ' jsonencode(powerLevelSetting)] );
     fprintf( fid, '%s,\n', ['"powerLevelSetLowHigh": ' jsonencode(powerLevelSetLowHigh)] );
     fprintf( fid, '%s,\n', ['"srcModuleGroups": ' jsonencode(stateMap.devInfo.srcModuleGroups,"PrettyPrint",true)] );
     fprintf( fid, '%s,\n', ['"dataSDWP_LowHigh": ' jsonencode(dataSDWP_LowHigh)] );
+    fprintf( fid, '%s,\n', ['"BelowDarkFraction": ' jsonencode(belowDarkFrac)] );
 
     % If thresholds exists, Gaps must end with a comma (because more fields follow)
     hasThresholds = isfield(stateMap.devInfo,'thresholds');

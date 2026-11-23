@@ -1,8 +1,10 @@
-function dataSDWP_LowHigh = convertBintoSnirfv3_LEDPowerCalibrationTools( fname, stateMap )
+function dataSDWP_LowHigh = convertBintoSnirf_NN24_LEDPowerCalibrationTools( fname, stateMap )
 
 
 % file name part for acquired run
-fNamePart = fname(15:end); %  '2024-07-18-10-26-20';
+tok = regexp(fname,'\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}','match');   % time stamp at the end of the file name, e.g. '2024-07-18-10-26-20'
+if isempty(tok), error('No time stamp found in file name %s', fname), end
+fNamePart = tok{end};
 
 SD = stateMap.nSD;
 
@@ -17,13 +19,13 @@ files1=dir('LEDPowerCalibration/LEDPowerCalibration_00_*.bin');
 files2 = dir('LEDPowerCalibration/LEDPowerCalibration_fast00_*.bin');
 files = [files1; files2];
 
-targetTime = datetime(fNamePart, 'Format', 'yyyy-MM-dd-HH-mm-ss');
+targetTime = datetime(fNamePart, 'InputFormat', 'yyyy-MM-dd-HH-mm-ss');
 for iFile = 1:length(files)
     filename = files(iFile).name;
     nameWithoutExt = erase(filename, '.bin'); % Remove the .bin extension
     parts = split(nameWithoutExt, '_'); % Split by underscore
     timestampStr = parts{end}; 
-    fileTimes(iFile) = datetime(timestampStr, 'Format', 'yyyy-MM-dd-HH-mm-ss');
+    fileTimes(iFile) = datetime(timestampStr, 'InputFormat', 'yyyy-MM-dd-HH-mm-ss');
 end
 timeDifferences = targetTime - fileTimes;
 beforeTargetIndices = find(timeDifferences > 0); 
@@ -98,7 +100,7 @@ else
         [B, unusedBytes, avgDet, imu_data, Auxdata, TGAdata, info] = translateNinja2022Bytesv3_BZ20230817_NN24(inputBytes,srcramCal,N_DETECTOR_BOARDS,N_IMU_BOARDS,acc_active,aux_active);
         B=circshift(B,-1,3);
     
-        disp( sprintf('Power Level %d - Lost %d states amongst the %d that were recorded (%.1f%%)',iPowerLevel, length(info.lstGaps),length(info.estados),length(info.lstGaps)/(length(info.lstGaps)+length(info.estados)) ) )
+        disp( sprintf('Power Level %d - Lost %d states (%d gap events) amongst the %d expected (%.3f%%)',iPowerLevel, info.lostStates, length(info.lstGaps), length(info.estados)+info.lostStates, 100*info.lostStates/(length(info.estados)+info.lostStates) ) )
     
         % normslize data to mskr values between 0 and 1
         %B = B./(app.deviceInformation.stat.n_smp*(2^15-1));
@@ -143,7 +145,13 @@ for iS = 1:SD.nSrcs
 
     for iW = 1:2
         for iPL = 1:2
-            iPowerLevel = stateMap.devInfo.optPowerLevel(iSrc,iPL,iW,iSg);   
+            % optPowerLevel(...,k): k is the source MODULE for per-module calibrations, or the module GROUP for older ones
+            if size(stateMap.devInfo.optPowerLevel,4) > length(stateMap.devInfo.srcModuleGroups)
+                iOptDim4 = iSrcModule;
+            else
+                iOptDim4 = iSg;
+            end
+            iPowerLevel = stateMap.devInfo.optPowerLevel(iSrc,iPL,iW,iOptDim4);   
             dataSDWP_LowHigh( iS, :, iW, iPL) = dataSDWP( iS, :, iW, iPowerLevel) - dataSDWPdark( iS, :, iW, iPowerLevel);
         end
         for iPL = 1:7

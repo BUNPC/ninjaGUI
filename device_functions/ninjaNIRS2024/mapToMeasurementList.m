@@ -64,6 +64,8 @@ for ki=1:size(measList,1)
         estados2(ki) = iDark;
 
         estados_det(ki) = detID;
+    catch ME
+        warning('mapToMeasurementList: measurement %d [%s] could not be mapped to a state (%s)', ki, num2str(meas), ME.message);
     end
 end
 % estados now contains a list of which measurement list corresponds with
